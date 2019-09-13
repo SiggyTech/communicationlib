@@ -37,6 +37,8 @@ public class MessengerService extends Service {
     public Context context;
 
     public static String packageName;
+    public static String messageTittle;
+    public static String messageText;
 
     public MessengerService(Context applicationContext) {
         super();
@@ -59,6 +61,9 @@ public class MessengerService extends Service {
                 Log.d("Service", "not null");
 
                 packageName = extras.get("packageName").toString();
+                messageText = extras.get("messageText").toString();
+                messageTittle = extras.get("messageTittle").toString();
+
 
             }
         }
@@ -249,7 +254,7 @@ public class MessengerService extends Service {
                     byte[]readBuf =(byte[])msg.obj;
                     String readMessage=new String(readBuf,0,msg.arg1);
                     //addNotification(); //muestro notificación cuando llega mensaje
-                    addNotification("Titulo del Mensaje","Este es el texto del mensaje",packageName);
+                    addNotification(messageTittle,messageText,packageName);
 
                     break;
             }

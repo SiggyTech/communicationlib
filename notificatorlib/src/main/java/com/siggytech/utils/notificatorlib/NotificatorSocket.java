@@ -60,7 +60,7 @@ public class NotificatorSocket extends AppCompatActivity {
         stopService(new Intent(this, MessengerService.class));
     }
 
-    public NotificatorSocket(Context context, String packageName){
+    public NotificatorSocket(Context context, String packageName, String messageTittle, String messageText){
 
         this.packageName = packageName;
         this.context = context;
@@ -68,6 +68,10 @@ public class NotificatorSocket extends AppCompatActivity {
         Intent broadcastedIntent = new Intent(context, MyScheduleReceiver.class);
         broadcastedIntent.putExtra("FREC", 10);//en segundos
         broadcastedIntent.putExtra("packageName", packageName);
+        broadcastedIntent.putExtra("messageTittle", messageTittle);
+        broadcastedIntent.putExtra("messageText", messageText);
+
+
         context.sendBroadcast(broadcastedIntent);
 
         //register();
