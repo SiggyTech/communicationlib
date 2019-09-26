@@ -254,6 +254,33 @@ public class PTTButton extends Button implements View.OnTouchListener {
             //do here
         }
 
+        this.setOnTouchListener(new View.OnTouchListener()
+        {
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                switch (event.getAction())
+                {
+                    case MotionEvent.ACTION_DOWN:
+                    {
+                        Log.d("log", "onTouch: push");
+                        status = true;
+                        startStreaming();
+                    }
+
+                    case MotionEvent.ACTION_UP:
+                    {
+                        Log.d("log", "onTouch: release");
+                        status = false;
+                        recorder.release();
+                    }
+                }
+
+
+
+                return false;
+            }
+        });
+
         mPadding = new Padding();
         mPadding.left = getPaddingLeft();
         mPadding.right = getPaddingRight();
