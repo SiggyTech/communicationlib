@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <color name="bt_white">#ffffffff</color>
+    <color name="bt_purple">#ffaa66cc</color>
+    <color name="bt_purple_dark">#ff8855aa</color>
+    <color name="bt_red">#ffff4444</color>
+    <color name="bt_red_dark">#ffcd3a3a</color>
+
+    <dimen name="bt_corner_radius_2">2dp</dimen>
+    <dimen name="bt_corner_radius_4">4dp</dimen>
+    <dimen name="bt_width_100">100dp</dimen>
+    <dimen name="bt_width_120">120dp</dimen>
+    <dimen name="bt_width_200">200dp</dimen>
+    <dimen name="bt_height_56">56dp</dimen>
+    <dimen name="bt_height_8">8dp</dimen>
+    <dimen name="bt_height_4">4dp</dimen>
+
+    <integer name="bt_animation">500</integer>
+    <string name="bt_button">Talk</string>
+</resources>
