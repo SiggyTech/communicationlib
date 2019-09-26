@@ -51,12 +51,13 @@ public class PTTButton extends Button implements View.OnTouchListener {
     private StrokeGradientDrawable mDrawablePressed;
     private Context context;
     private static final int REQUEST = 112;
+
     private int sampleRate = 8000 ; // 44100 for music
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
-    AudioRecord recorder;
+    public AudioRecord recorder;
 
     public PTTButton(Context context) {
         super(context);
@@ -117,7 +118,6 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     Log.d("VS","Buffer created of size " + minBufSize);
                     DatagramPacket packet;
 
-                    //final InetAddress destination = InetAddress.getByName("192.168.1.148");
                     final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
                     Log.d("VS", "Address retrieved");
 
@@ -242,17 +242,6 @@ public class PTTButton extends Button implements View.OnTouchListener {
         });
     }
     private void initView() {
-
-        if (Build.VERSION.SDK_INT >= 23) {
-            String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,android.Manifest.permission.WRITE_EXTERNAL_STORAGE};
-            if (!hasPermissions(context, PERMISSIONS)) {
-                ActivityCompat.requestPermissions((Activity) context, PERMISSIONS, REQUEST );
-            } else {
-                //do here
-            }
-        } else {
-            //do here
-        }
 
         this.setOnTouchListener(new View.OnTouchListener()
         {
