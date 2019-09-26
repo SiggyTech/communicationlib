@@ -1,26 +1,44 @@
 package com.siggytech.utils.notificatorlib;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioRecord;
+import android.media.AudioTrack;
+import android.media.MediaRecorder;
 import android.os.Build;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.StateSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import static com.siggytech.utils.notificatorlib.PTTButton.Params.hasPermissions;
+
 /**
  * Created by fsoto on 9/26/19.
  */
 
-public class PTTButton extends Button {
+public class PTTButton extends Button implements View.OnTouchListener {
     private Padding mPadding;
     private int mHeight;
     private int mWidth;
@@ -31,16 +49,28 @@ public class PTTButton extends Button {
     protected boolean mAnimationInProgress;
     private StrokeGradientDrawable mDrawableNormal;
     private StrokeGradientDrawable mDrawablePressed;
+    private Context context;
+    private static final int REQUEST = 112;
+    private int sampleRate = 8000 ; // 44100 for music
+    private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
+    private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+    int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+    private boolean status = true;
+    AudioRecord recorder;
+
     public PTTButton(Context context) {
         super(context);
+        context = context;
         initView();
     }
     public PTTButton(Context context, AttributeSet attrs) {
         super(context, attrs);
+        context = context;
         initView();
     }
     public PTTButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        context = context;
         initView();
     }
     @Override
@@ -51,6 +81,81 @@ public class PTTButton extends Button {
             mWidth = getWidth();
         }
     }
+
+    @Override
+    public boolean onTouch(View arg0, MotionEvent arg1) {
+
+        switch (arg1.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                System.out.println("Button pressed");
+                status = true;
+                startStreaming();
+                break;
+            case MotionEvent.ACTION_UP:
+                System.out.println("Button released");
+                status = false;
+                recorder.release();
+                break;
+        }
+       return true;
+    }
+
+    public void startStreaming() {
+
+        Thread streamThread = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                try {
+
+                    DatagramSocket socket = new DatagramSocket();
+                    Log.d("VS", "Socket Created");
+
+                    minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                    byte[] buffer = new byte[minBufSize];
+
+                    Log.d("VS","Buffer created of size " + minBufSize);
+                    DatagramPacket packet;
+
+                    //final InetAddress destination = InetAddress.getByName("192.168.1.148");
+                    final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
+                    Log.d("VS", "Address retrieved");
+
+                    recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
+                    Log.d("VS", "Recorder initialized");
+
+                    recorder.startRecording();
+
+
+                    while(status == true) {
+
+
+                        //reading data from MIC into buffer
+                        minBufSize = recorder.read(buffer, 0, buffer.length);
+
+                        //putting buffer in the packet
+                        packet = new DatagramPacket (buffer,buffer.length,destination,Conf.SERVER_PORT);
+
+                        socket.send(packet);
+                        System.out.println("MinBufferSize: " +minBufSize);
+
+
+                    }
+
+
+
+                } catch(UnknownHostException e) {
+                    Log.e("VS", "UnknownHostException");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e("VS", "IOException");
+                }
+            }
+
+        });
+        streamThread.start();
+    }
+
     public StrokeGradientDrawable getDrawableNormal() {
         return mDrawableNormal;
     }
@@ -137,6 +242,18 @@ public class PTTButton extends Button {
         });
     }
     private void initView() {
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,android.Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            if (!hasPermissions(context, PERMISSIONS)) {
+                ActivityCompat.requestPermissions((Activity) context, PERMISSIONS, REQUEST );
+            } else {
+                //do here
+            }
+        } else {
+            //do here
+        }
+
         mPadding = new Padding();
         mPadding.left = getPaddingLeft();
         mPadding.right = getPaddingRight();
@@ -175,7 +292,7 @@ public class PTTButton extends Button {
         }
     }
     public void setIcon(@DrawableRes final int icon) {
-// post is necessary, to make sure getWidth() doesn't return 0
+    // post is necessary, to make sure getWidth() doesn't return 0
         post(new Runnable() {
             @Override
             public void run() {
@@ -255,6 +372,16 @@ public class PTTButton extends Button {
         public Params animationListener(CustomButtonAnimation.Listener animationListener) {
             this.animationListener = animationListener;
             return this;
+        }
+        public static boolean hasPermissions(Context context, String... permissions) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+                for (String permission : permissions) {
+                    if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
     }
 }
