@@ -32,8 +32,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static com.siggytech.utils.notificatorlib.PTTButton.Params.hasPermissions;
-
 /**
  * Created by fsoto on 9/26/19.
  */
@@ -52,7 +50,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
     private Context context;
     private static final int REQUEST = 112;
 
-    private int sampleRate = 8000 ; // 44100 for music
+    private int sampleRate = 16000 ; // 44100 for music
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
