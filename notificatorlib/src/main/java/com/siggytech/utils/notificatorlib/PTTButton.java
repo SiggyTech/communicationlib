@@ -264,14 +264,14 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     {
                         Log.d("log", "onTouch: push");
                         status = true;
-                        startStreaming();
+                        //startStreaming();
                     }
 
                     case MotionEvent.ACTION_UP:
                     {
                         Log.d("log", "onTouch: release");
                         status = false;
-                        recorder.release();
+                        //recorder.release();
                     }
                 }
 
