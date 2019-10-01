@@ -24,7 +24,7 @@ public class NetworkConnection {
 
     private DaoSession mDaoSession;
 
-    public String register(Long id, String name, String API_KEY, int groupId, String ip, int port){
+    public  String register(Long id, String name, String API_KEY, int groupId, String ip, int port){
         try {
             String url_select = Conf.UR_CONTENT + "destination/register/" + id + "/" + name + "/" + ip + "/" + port + "/" + groupId + "/" + API_KEY;
             ArrayList<NameValuePair> param = new ArrayList<NameValuePair>();

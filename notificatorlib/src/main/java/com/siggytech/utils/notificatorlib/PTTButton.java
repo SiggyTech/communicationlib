@@ -66,7 +66,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
-    private int sampleRate = 16000 ; // 44100 for music
+    private int sampleRate = 44100 ;
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
@@ -89,7 +89,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
         this.API_KEY = API_KEY;
         initView();
     }
-    public PTTButton(Context context, AttributeSet attrs) {
+    /*public PTTButton(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
         initView();
@@ -98,7 +98,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
         super(context, attrs, defStyleAttr);
         this.context = context;
         initView();
-    }
+    }*/
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -295,6 +295,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     READ_PHONE_STATE );
         }
 
+        networkConnection = new NetworkConnection();
         TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         networkConnection.register(Long.parseLong(tm.getDeviceId()), tm.getDeviceId(),API_KEY, 1, getIP(), Conf.LOCAL_PORT);
         networkConnection.getDestList(tm.getDeviceId(), context, 1, API_KEY);
