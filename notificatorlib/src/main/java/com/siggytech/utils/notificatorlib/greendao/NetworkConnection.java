@@ -26,7 +26,7 @@ public class NetworkConnection {
 
     public  String register(Long id, String name, String API_KEY, int groupId, String ip, int port){
         try {
-            String url_select = Conf.SERVER_IP + "destination/register/" + id + "/" + name + "/" + ip + "/" + port + "/" + groupId + "/" + API_KEY;
+            String url_select = Conf.SERVER_IP + "/destination/register/" + id + "/" + name + "/" + ip + "/" + port + "/" + groupId + "/" + API_KEY;
             ArrayList<NameValuePair> param = new ArrayList<NameValuePair>();
 
             HttpClient httpClient = new DefaultHttpClient();
