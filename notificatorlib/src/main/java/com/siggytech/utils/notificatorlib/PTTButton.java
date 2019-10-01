@@ -16,6 +16,7 @@ import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
+import android.os.StrictMode;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -288,6 +289,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
         });
     }
     private void initView() {
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         if ( ContextCompat.checkSelfPermission( activity, android.Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {
 
