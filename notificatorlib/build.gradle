@@ -1,4 +1,7 @@
+
 apply plugin: 'com.android.library'
+apply plugin: 'org.greenrobot.greendao'
+
 
 android {
     compileSdkVersion 26
@@ -12,7 +15,7 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     buildTypes {
@@ -26,15 +29,17 @@ android {
             }
         }
     }
+    useLibrary 'org.apache.http.legacy'
 
 }
 
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-
+    compile 'org.greenrobot:greendao:3.2.2'
 }

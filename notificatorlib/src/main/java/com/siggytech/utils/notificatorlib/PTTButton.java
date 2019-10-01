@@ -2,21 +2,26 @@ package com.siggytech.utils.notificatorlib;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.CountDownTimer;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.telephony.TelephonyManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.StateSet;
@@ -26,15 +31,22 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 
+import com.siggytech.utils.notificatorlib.greendao.DaoMaster;
+import com.siggytech.utils.notificatorlib.greendao.DaoSession;
+import com.siggytech.utils.notificatorlib.greendao.Destination;
+import com.siggytech.utils.notificatorlib.greendao.DestinationDao;
+import com.siggytech.utils.notificatorlib.greendao.NetworkConnection;
+import org.greenrobot.greendao.query.QueryBuilder;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-
-/**
- * Created by fsoto on 9/26/19.
- */
+import java.util.Enumeration;
+import java.util.List;
 
 public class PTTButton extends Button implements View.OnTouchListener {
     private Padding mPadding;
@@ -49,27 +61,42 @@ public class PTTButton extends Button implements View.OnTouchListener {
     private StrokeGradientDrawable mDrawablePressed;
     private Context context;
     private static final int REQUEST = 112;
+    Activity activity;
+    AudioTrack at;
 
+    public static final int MESSAGE_READ = 1;
+    public static final int MESSAGE_WRITE = 2;
     private int sampleRate = 16000 ; // 44100 for music
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
     public AudioRecord recorder;
+    public NetworkConnection networkConnection;
+    private static final int READ_PHONE_STATE = 0;
+    private DaoSession mDaoSession;
+    private int idGroup;
+    List<Destination> destinations;
+    private UDPSocket udpSocket;
+    CountDownTimer countDownTimer;
+    private String API_KEY;
 
-    public PTTButton(Context context) {
+    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
         super(context);
-        context = context;
+        this.context = context;
+        this.activity = activity;
+        this.idGroup = idGroup;
+        this.API_KEY = API_KEY;
         initView();
     }
     public PTTButton(Context context, AttributeSet attrs) {
         super(context, attrs);
-        context = context;
+        this.context = context;
         initView();
     }
     public PTTButton(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        context = context;
+        this.context = context;
         initView();
     }
     @Override
@@ -127,7 +154,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
                     while(status == true) {
 
-
+                        /*
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
@@ -136,7 +163,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
                         socket.send(packet);
                         System.out.println("MinBufferSize: " +minBufSize);
+                        */
 
+                        sendMultiple(buffer);
 
                     }
 
@@ -152,6 +181,25 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
         });
         streamThread.start();
+    }
+
+    private void sendMultiple(byte[] buffer){
+        try
+        {
+            for(int i=0; i<destinations.size(); i++){
+                DatagramPacket packet;
+                DatagramSocket socket = new DatagramSocket();
+                final InetAddress destination = InetAddress.getByName(destinations.get(i).getIp());
+                packet = new DatagramPacket (buffer,buffer.length,destination,destinations.get(i).getPort());
+                socket.send(packet);
+            }
+
+        } catch(UnknownHostException e) {
+            Log.e("VS", "UnknownHostException");
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("VS", "IOException");
+        }
     }
 
     public StrokeGradientDrawable getDrawableNormal() {
@@ -241,6 +289,37 @@ public class PTTButton extends Button implements View.OnTouchListener {
     }
     private void initView() {
 
+        if ( ContextCompat.checkSelfPermission( activity, android.Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {
+
+            ActivityCompat.requestPermissions(activity, new String[] {  android.Manifest.permission.READ_PHONE_STATE  },
+                    READ_PHONE_STATE );
+        }
+
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        networkConnection.register(Long.parseLong(tm.getDeviceId()), tm.getDeviceId(),API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+        networkConnection.getDestList(tm.getDeviceId(), context, 1, API_KEY);
+
+        final String di = tm.getDeviceId();
+        countDownTimer = new CountDownTimer(Long.MAX_VALUE, 10000) {
+
+            // This is called after every 10 sec interval.
+            public void onTick(long millisUntilFinished) {
+                networkConnection.register(Long.parseLong(di), di,API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+
+                networkConnection.getDestList(di, context, 1, API_KEY);
+            }
+
+            public void onFinish() {
+                start();
+            }
+        }.start();
+
+        stopService();
+        setDestinationList();
+
+        udpSocket = new UDPSocket(mHandler,Conf.LOCAL_PORT);
+        udpSocket.startRecv();
+
         this.setOnTouchListener(new View.OnTouchListener()
         {
             public boolean onTouch(View v, MotionEvent event)
@@ -251,7 +330,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     {
                         Log.d("log", "onTouch: push");
                         status = true;
+
                         startStreaming();
+
                         break;
                     }
 
@@ -260,11 +341,10 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         Log.d("log", "onTouch: release");
                         status = false;
                         recorder.release();
+                        udpSocket.startRecv();
                         break;
                     }
                 }
-
-
 
                 return false;
             }
@@ -288,6 +368,74 @@ public class PTTButton extends Button implements View.OnTouchListener {
         background.addState(new int[]{android.R.attr.state_pressed}, mDrawablePressed.getGradientDrawable());
         background.addState(StateSet.WILD_CARD, mDrawableNormal.getGradientDrawable());
         setBackgroundCompat(background);
+    }
+    private String getIP(){
+        String ipAddress = null;
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface intf = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress()) {
+                        ipAddress = inetAddress.getHostAddress().toString();
+                    }
+                }
+            }
+        } catch (SocketException ex) {}
+        return ipAddress;
+    }
+    private final Handler mHandler= new Handler(){
+        @Override
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case MESSAGE_WRITE:
+                    byte[]writeBuf =(byte[])msg.obj;
+                    String writeMessage=new String(writeBuf);
+                    //mConversationArrayAdapter.add("yo： " + writeMessage);
+                    //udpSocketActivity.startRecv();
+                    break;
+                case MESSAGE_READ:
+                    byte[]readBuf =(byte[])msg.obj;
+
+                    String readMessage=new String(readBuf,0,msg.arg1);
+                    try {
+                        PlayShortAudioFileViaAudioTrack(readBuf);
+                        //playMp3(readBuf);
+                    }
+                    catch(Exception ex){}
+
+
+                    //mConversationArrayAdapter.add("Servidor"+": " +readMessage);
+
+                    break;
+            }
+        }
+    };
+    private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException
+    {
+        if (at!=null) {
+            // Write the byte array to the track
+            at.write(byteData, 0, byteData.length);
+            at.play();
+            //Log.i("TCAudio", "cant: " + count + " largo: " + byteData.length);
+        }
+        else
+            Log.d("TCAudio", "audio track is not initialised ");
+    }
+    private void stopService()
+    {
+        Intent intent = new Intent(context, MessengerService.class);
+        context.stopService(intent);
+
+
+    }
+    private void setDestinationList(){
+        mDaoSession = new DaoMaster(
+                new DaoMaster.DevOpenHelper(activity, "ptt_content.db").getWritableDb()).newSession();
+
+        QueryBuilder<Destination> queryBuilder = mDaoSession.getDestinationDao().queryBuilder();
+        queryBuilder.where(DestinationDao.Properties.Idgroup.eq(idGroup));
+        destinations = queryBuilder.list();
     }
     private StrokeGradientDrawable createDrawable(int color, int cornerRadius, int strokeWidth) {
         StrokeGradientDrawable drawable = new StrokeGradientDrawable(new GradientDrawable());
@@ -389,15 +537,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
             this.animationListener = animationListener;
             return this;
         }
-        public static boolean hasPermissions(Context context, String... permissions) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
-                for (String permission : permissions) {
-                    if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
+
+
     }
 }
