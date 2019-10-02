@@ -49,6 +49,8 @@ import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.List;
 
+import static android.content.Context.TELEPHONY_SERVICE;
+
 public class PTTButton extends Button implements View.OnTouchListener {
     private Padding mPadding;
     private int mHeight;
@@ -300,11 +302,10 @@ public class PTTButton extends Button implements View.OnTouchListener {
         }
 
         networkConnection = new NetworkConnection();
-        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        networkConnection.register(Long.parseLong(tm.getDeviceId()), tm.getDeviceId(),API_KEY, 1, getIP(), Conf.LOCAL_PORT);
-        networkConnection.getDestList(tm.getDeviceId(), context, 1, API_KEY);
+        networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(),API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+        networkConnection.getDestList(getIMEINumber(), context, 1, API_KEY);
 
-        final String di = tm.getDeviceId();
+        final String di = getIMEINumber();
         countDownTimer = new CountDownTimer(Long.MAX_VALUE, 10000) {
 
             // This is called after every 10 sec interval.
@@ -373,6 +374,19 @@ public class PTTButton extends Button implements View.OnTouchListener {
         background.addState(new int[]{android.R.attr.state_pressed}, mDrawablePressed.getGradientDrawable());
         background.addState(StateSet.WILD_CARD, mDrawableNormal.getGradientDrawable());
         setBackgroundCompat(background);
+    }
+    @SuppressWarnings("deprecation")
+    private String getIMEINumber() {
+        String IMEINumber = "";
+        if (ActivityCompat.checkSelfPermission(context, android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            TelephonyManager telephonyMgr = (TelephonyManager) context.getSystemService(TELEPHONY_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                IMEINumber = telephonyMgr.getImei();
+            } else {
+                IMEINumber = telephonyMgr.getDeviceId();
+            }
+        }
+        return IMEINumber;
     }
     private String getIP(){
         String ipAddress = null;
