@@ -152,10 +152,10 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     byte[] buffer = new byte[minBufSize];
 
                     Log.d("VS","Buffer created of size " + minBufSize);
-                    DatagramPacket packet;
+                    //DatagramPacket packet;
 
-                    final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
-                    Log.d("VS", "Address retrieved");
+                    //final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
+                    //Log.d("VS", "Address retrieved");
 
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
                     Log.d("VS", "Recorder initialized");
