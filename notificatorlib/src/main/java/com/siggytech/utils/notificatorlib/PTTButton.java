@@ -23,6 +23,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
+import android.text.format.Formatter;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.StateSet;
@@ -46,6 +47,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -389,19 +391,22 @@ public class PTTButton extends Button implements View.OnTouchListener {
         return IMEINumber;
     }
     private String getIP(){
-        String ipAddress = null;
         try {
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
                 NetworkInterface intf = en.nextElement();
                 for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
                     InetAddress inetAddress = enumIpAddr.nextElement();
                     if (!inetAddress.isLoopbackAddress()) {
-                        ipAddress = inetAddress.getHostAddress().toString();
+                        String ip = Formatter.formatIpAddress(inetAddress.hashCode());
+                        Log.i("GETIP", "***** IP="+ ip);
+                        return ip;
                     }
                 }
             }
-        } catch (SocketException ex) {}
-        return ipAddress;
+        } catch (SocketException ex) {
+            Log.e("GETIP", ex.toString());
+        }
+        return null;
     }
     private final Handler mHandler= new Handler(){
         @Override
