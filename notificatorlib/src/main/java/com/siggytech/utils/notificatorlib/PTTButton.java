@@ -152,7 +152,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     byte[] buffer = new byte[minBufSize];
 
                     Log.d("VS","Buffer created of size " + minBufSize);
-                    //DatagramPacket packet;
+                    DatagramPacket packet;
 
                     //final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
                     //Log.d("VS", "Address retrieved");
@@ -166,8 +166,20 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     while(status == true) {
 
 
+
+
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
+
+                        System.out.println("destinations.size(): " +destinations.size());
+
+                        for(int i=0; i<destinations.size(); i++){
+                            final InetAddress destination = InetAddress.getByName(destinations.get(i).getIp());
+                            packet = new DatagramPacket (buffer,buffer.length,destination,destinations.get(i).getPort());
+                            socket.send(packet);
+                        }
+
+                        System.out.println("MinBufferSize: " +minBufSize);
 
                         /*
                         //putting buffer in the packet
@@ -177,7 +189,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         System.out.println("MinBufferSize: " +minBufSize);
                         */
 
-                        sendMultiple(buffer);
+                        //sendMultiple(buffer);
 
                     }
 
