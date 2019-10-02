@@ -13,6 +13,8 @@ import org.apache.http.util.EntityUtils;
 import android.content.Context;
 import android.util.Log;
 import com.siggytech.utils.notificatorlib.Conf;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
@@ -36,6 +38,8 @@ public class NetworkConnection {
             HttpEntity httpEntity = httpResponse.getEntity();
 
             // Read content & Log
+
+
             final JSONObject jObject = new JSONObject(EntityUtils.toString(httpEntity));
             JSONObject n = jObject.getJSONObject("Result");
             Log.e("register: ", n.get("result").toString());
@@ -68,14 +72,14 @@ public class NetworkConnection {
             HttpEntity httpEntity = httpResponse.getEntity();
 
             // Read content & Log
-            final JSONObject jObject = new JSONObject(EntityUtils.toString(httpEntity));
+            JSONArray jsonArray = new JSONArray(EntityUtils.toString(httpEntity));
 
             //delete all by de testing process
             mDaoSession.getDestinationDao().deleteAll();
 
-            for(int j = 0; j < jObject.getJSONArray("Destinations").length(); j++)
+            for(int j = 0; j < jsonArray.length(); j++)
             {
-                JSONObject n =  jObject.getJSONArray("Destinations").getJSONObject(j);
+                JSONObject n = jsonArray.getJSONObject(j);
 
                 mDaoSession.getDestinationDao().insert(new Destination(Long.parseLong(n.get("id").toString()),
                         n.get("name").toString(),
