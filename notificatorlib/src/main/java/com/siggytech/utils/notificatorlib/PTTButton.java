@@ -183,8 +183,8 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
 
 
-                } catch(UnknownHostException e) {
-                    Log.e("VS", "UnknownHostException");
+                //} catch(UnknownHostException e) {
+                //    Log.e("VS", "UnknownHostException");
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.e("VS", "IOException");
