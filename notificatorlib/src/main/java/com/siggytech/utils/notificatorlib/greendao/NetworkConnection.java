@@ -89,8 +89,6 @@ public class NetworkConnection {
                     )
                 );
 
-                Log.d("EEE", "Level " + n.get("idLevel").toString());
-
             }
         } catch (UnsupportedEncodingException e1) {
             Log.e("UnsupportedEncodingEx", e1.toString());
