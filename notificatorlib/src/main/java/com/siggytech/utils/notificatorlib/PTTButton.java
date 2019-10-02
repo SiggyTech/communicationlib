@@ -1,5 +1,6 @@
 package com.siggytech.utils.notificatorlib;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +13,9 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -23,6 +27,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.text.format.Formatter;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -43,6 +48,7 @@ import org.greenrobot.greendao.query.QueryBuilder;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -292,6 +298,36 @@ public class PTTButton extends Button implements View.OnTouchListener {
             }
         });
     }
+    private void checkPermissions(){
+        if (Build.VERSION.SDK_INT >= 23) {
+            String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    android.Manifest.permission.READ_PHONE_STATE,
+                    Manifest.permission.ACCESS_NETWORK_STATE,
+                    Manifest.permission.ACCESS_WIFI_STATE,
+                    Manifest.permission.INTERNET
+
+
+            };
+            if (!hasPermissions(context, PERMISSIONS)) {
+                ActivityCompat.requestPermissions(activity, PERMISSIONS, 112 );
+            } else {
+                //do here
+            }
+        } else {
+            //do here
+        }
+    }
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     private void initView() {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -390,7 +426,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
         }
         return IMEINumber;
     }
-    private String getIP(){
+    private String getIP2(){
         try {
             for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
                 NetworkInterface intf = en.nextElement();
@@ -405,6 +441,63 @@ public class PTTButton extends Button implements View.OnTouchListener {
             }
         } catch (SocketException ex) {
             Log.e("GETIP", ex.toString());
+        }
+        return null;
+    }
+    @NonNull
+    private String getIP() {
+
+                String actualConnectedToNetwork = null;
+                ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (connManager != null) {
+                        {
+                            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                            if (mWifi.isConnected()) {
+                                actualConnectedToNetwork = getWifiIp();
+                            }
+                        }
+
+                }
+                if (TextUtils.isEmpty(actualConnectedToNetwork)) {
+                    actualConnectedToNetwork = getNetworkInterfaceIpAddress();
+                }
+                if (TextUtils.isEmpty(actualConnectedToNetwork)) {
+                    actualConnectedToNetwork = "127.0.0.1";
+                }
+                return actualConnectedToNetwork;
+
+    }
+
+    @Nullable
+    private String getWifiIp() {
+        final WifiManager mWifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (mWifiManager != null && mWifiManager.isWifiEnabled()) {
+            int ip = mWifiManager.getConnectionInfo().getIpAddress();
+            return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "."
+                    + ((ip >> 24) & 0xFF);
+        }
+        return null;
+    }
+
+
+    @Nullable
+    public String getNetworkInterfaceIpAddress() {
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
+                NetworkInterface networkInterface = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = networkInterface.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
+                        String host = inetAddress.getHostAddress();
+                        if (!TextUtils.isEmpty(host)) {
+                            return host;
+                        }
+                    }
+                }
+
+            }
+        } catch (Exception ex) {
+            Log.e("IP Address", "getLocalIpAddress", ex);
         }
         return null;
     }
