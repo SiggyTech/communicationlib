@@ -165,10 +165,11 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
                     while(status == true) {
 
-                        /*
+
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
+                        /*
                         //putting buffer in the packet
                         packet = new DatagramPacket (buffer,buffer.length,destination,Conf.SERVER_PORT);
 
@@ -386,6 +387,8 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         status = false;
                         recorder.release();
                         udpSocket.startRecv();
+                        //setDestinationList();
+
                         break;
                     }
                 }
