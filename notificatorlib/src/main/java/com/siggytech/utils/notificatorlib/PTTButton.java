@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
@@ -376,6 +377,13 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
         udpSocket = new UDPSocket(mHandler,Conf.LOCAL_PORT);
         udpSocket.startRecv();
+
+        int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT);
+
+        at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, intSize, AudioTrack.MODE_STREAM);
+
 
         this.setOnTouchListener(new View.OnTouchListener()
         {
