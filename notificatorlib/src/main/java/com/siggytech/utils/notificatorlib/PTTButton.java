@@ -93,12 +93,20 @@ public class PTTButton extends Button implements View.OnTouchListener {
     CountDownTimer countDownTimer;
     private String API_KEY;
 
-    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
+    private String SERVER_IP;
+    private int SERVER_PORT;
+    private boolean toServer;
+
+    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, boolean toServer, String IP, int PORT) {
         super(context);
         this.context = context;
         this.activity = activity;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
+        this.toServer = toServer;
+        this.SERVER_IP = IP;
+        this.SERVER_PORT = PORT;
+
         initView();
     }
     /*public PTTButton(Context context, AttributeSet attrs) {
@@ -160,26 +168,33 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
                     Log.d("VS", "Recorder initialized");
+                    InetAddress destination = null;
+
+                    if(toServer)
+                        destination = InetAddress.getByName(SERVER_IP);
+
 
                     recorder.startRecording();
 
 
                     while(status == true) {
 
-
-
-
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
-                        System.out.println("destinations.size(): " +destinations.size());
-
-                        for(int i=0; i<destinations.size(); i++){
-                            final InetAddress destination = InetAddress.getByName(destinations.get(i).getIp());
-                            packet = new DatagramPacket (buffer,buffer.length,destination,destinations.get(i).getPort());
+                        if(toServer){
+                            packet = new DatagramPacket(buffer, buffer.length, destination, SERVER_PORT);
                             socket.send(packet);
                         }
+                        else {
+                            System.out.println("destinations.size(): " + destinations.size());
 
+                            for (int i = 0; i < destinations.size(); i++) {
+                                final InetAddress destination2 = InetAddress.getByName(destinations.get(i).getIp());
+                                packet = new DatagramPacket(buffer, buffer.length, destination2, destinations.get(i).getPort());
+                                socket.send(packet);
+                            }
+                        }
                         System.out.println("MinBufferSize: " +minBufSize);
 
                         /*
@@ -208,24 +223,6 @@ public class PTTButton extends Button implements View.OnTouchListener {
         streamThread.start();
     }
 
-    private void sendMultiple(byte[] buffer){
-        try
-        {
-            for(int i=0; i<destinations.size(); i++){
-                DatagramPacket packet;
-                DatagramSocket socket = new DatagramSocket();
-                final InetAddress destination = InetAddress.getByName(destinations.get(i).getIp());
-                packet = new DatagramPacket (buffer,buffer.length,destination,destinations.get(i).getPort());
-                socket.send(packet);
-            }
-
-        } catch(UnknownHostException e) {
-            Log.e("VS", "UnknownHostException");
-        } catch (IOException e) {
-            e.printStackTrace();
-            Log.e("VS", "IOException");
-        }
-    }
 
     public StrokeGradientDrawable getDrawableNormal() {
         return mDrawableNormal;
@@ -353,27 +350,31 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     READ_PHONE_STATE );
         }
 
-        networkConnection = new NetworkConnection();
-        networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(),API_KEY, 1, getIP(), Conf.LOCAL_PORT);
-        networkConnection.getDestList(getIMEINumber(), context, 1, API_KEY);
 
-        final String di = getIMEINumber();
-        countDownTimer = new CountDownTimer(Long.MAX_VALUE, 10000) {
+        if(!toServer) {
+            networkConnection = new NetworkConnection();
+            networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+            networkConnection.getDestList(getIMEINumber(), context, 1, API_KEY);
 
-            // This is called after every 10 sec interval.
-            public void onTick(long millisUntilFinished) {
-                networkConnection.register(Long.parseLong(di), di,API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+            final String di = getIMEINumber();
+            countDownTimer = new CountDownTimer(Long.MAX_VALUE, 10000) {
 
-                networkConnection.getDestList(di, context, 1, API_KEY);
-            }
+                // This is called after every 10 sec interval.
+                public void onTick(long millisUntilFinished) {
+                    networkConnection.register(Long.parseLong(di), di,API_KEY, 1, getIP(), Conf.LOCAL_PORT);
 
-            public void onFinish() {
-                start();
-            }
-        }.start();
+                    networkConnection.getDestList(di, context, 1, API_KEY);
+                }
 
+                public void onFinish() {
+                    start();
+                }
+            }.start();
+
+            setDestinationList();
+        }
         stopService();
-        setDestinationList();
+
 
         udpSocket = new UDPSocket(mHandler,Conf.LOCAL_PORT);
         udpSocket.startRecv();
@@ -449,24 +450,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
         }
         return IMEINumber;
     }
-    private String getIP2(){
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                NetworkInterface intf = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress()) {
-                        String ip = Formatter.formatIpAddress(inetAddress.hashCode());
-                        Log.i("GETIP", "***** IP="+ ip);
-                        return ip;
-                    }
-                }
-            }
-        } catch (SocketException ex) {
-            Log.e("GETIP", ex.toString());
-        }
-        return null;
-    }
+
     @NonNull
     private String getIP() {
 
