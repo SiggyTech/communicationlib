@@ -350,10 +350,11 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     READ_PHONE_STATE );
         }
 
+        networkConnection = new NetworkConnection();
+        networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
+
 
         if(!toServer) {
-            networkConnection = new NetworkConnection();
-            networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
             networkConnection.getDestList(getIMEINumber(), context, 1, API_KEY);
 
             final String di = getIMEINumber();
