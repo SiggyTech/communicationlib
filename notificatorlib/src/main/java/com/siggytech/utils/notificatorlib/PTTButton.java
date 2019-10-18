@@ -359,7 +359,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
             public void handleMessage(Message msg) {
                 String message = msg.getData().getString("msg");
                 try {
-                    byte[]readBuf = message.getBytes("UTF-8");
+                    byte[]readBuf = message.getBytes();
                     PlayShortAudioFileViaAudioTrack(readBuf);
                 }
                 catch(Exception ex){
