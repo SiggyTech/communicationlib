@@ -181,7 +181,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
-                        publishMessage(new String(buffer));
+                        publishMessage(buffer);
 
                         /*if(toServer){
                             packet = new DatagramPacket(buffer, buffer.length, destination, SERVER_PORT);
@@ -615,8 +615,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
     public void setIconLeft(@DrawableRes int icon) {
         setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
     }
-    private BlockingDeque<String> queue = new LinkedBlockingDeque<String>();
-    void publishMessage(String message) {
+    //private BlockingDeque<String> queue = new LinkedBlockingDeque<String>();
+    private BlockingDeque<byte[]> queue = new LinkedBlockingDeque<byte[]>();
+    void publishMessage(byte[] message) {
         //Adds a message to internal blocking queue
         try {
             Log.d("","[q] " + message);
@@ -694,9 +695,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         ch.confirmSelect();
 
                         while (true) {
-                            String message = queue.takeFirst();
+                            byte[] message = queue.takeFirst();
                             try{
-                                ch.basicPublish("amq.fanout", "chat", null, message.getBytes());
+                                ch.basicPublish("amq.fanout", "chat", null, message);
                                 Log.d("", "[s] " + message);
                                 //ch.waitForConfirmsOrDie();
                             } catch (Exception e){
