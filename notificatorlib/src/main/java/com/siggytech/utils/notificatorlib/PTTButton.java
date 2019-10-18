@@ -18,6 +18,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Message;
@@ -39,6 +40,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.QueueingConsumer;
 import com.siggytech.utils.notificatorlib.greendao.DaoMaster;
 import com.siggytech.utils.notificatorlib.greendao.DaoSession;
 import com.siggytech.utils.notificatorlib.greendao.Destination;
@@ -53,10 +59,15 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
@@ -92,33 +103,20 @@ public class PTTButton extends Button implements View.OnTouchListener {
     private UDPSocket udpSocket;
     CountDownTimer countDownTimer;
     private String API_KEY;
+    private Thread subscribeThread;
+    private Thread publishThread;
 
-    private String SERVER_IP;
-    private int SERVER_PORT;
-    private boolean toServer;
-
-    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, boolean toServer, String IP, int PORT) {
+    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
         super(context);
         this.context = context;
         this.activity = activity;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
-        this.toServer = toServer;
-        this.SERVER_IP = IP;
-        this.SERVER_PORT = PORT;
+
 
         initView();
     }
-    /*public PTTButton(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        this.context = context;
-        initView();
-    }
-    public PTTButton(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        this.context = context;
-        initView();
-    }*/
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -170,9 +168,6 @@ public class PTTButton extends Button implements View.OnTouchListener {
                     Log.d("VS", "Recorder initialized");
                     InetAddress destination = null;
 
-                    if(toServer)
-                        destination = InetAddress.getByName(SERVER_IP);
-
 
                     recorder.startRecording();
 
@@ -182,7 +177,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
-                        if(toServer){
+                        publishMessage(new String(buffer));
+
+                        /*if(toServer){
                             packet = new DatagramPacket(buffer, buffer.length, destination, SERVER_PORT);
                             socket.send(packet);
                         }
@@ -194,7 +191,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                                 packet = new DatagramPacket(buffer, buffer.length, destination2, destinations.get(i).getPort());
                                 socket.send(packet);
                             }
-                        }
+                        }*/
                         System.out.println("MinBufferSize: " +minBufSize);
 
                         /*
@@ -349,8 +346,9 @@ public class PTTButton extends Button implements View.OnTouchListener {
             ActivityCompat.requestPermissions(activity, new String[] {  android.Manifest.permission.READ_PHONE_STATE  },
                     READ_PHONE_STATE );
         }
+        publishToAMQP();
 
-        networkConnection = new NetworkConnection();
+        /*networkConnection = new NetworkConnection();
         networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
 
 
@@ -373,7 +371,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
             }.start();
 
             setDestinationList();
-        }
+        }*/
         stopService();
 
 
@@ -595,6 +593,112 @@ public class PTTButton extends Button implements View.OnTouchListener {
     public void setIconLeft(@DrawableRes int icon) {
         setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
     }
+    private BlockingDeque<String> queue = new LinkedBlockingDeque<String>();
+    void publishMessage(String message) {
+        //Adds a message to internal blocking queue
+        try {
+            Log.d("","[q] " + message);
+            queue.putLast(message);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    ConnectionFactory factory = new ConnectionFactory();
+    private void setupConnectionFactory() {
+        String uri = "amqp://zmmoqqmr:dGn4rLP7qmoNZA65W_7nWouJKR7h_ixy@prawn.rmq.cloudamqp.com/zmmoqqmr";
+        try {
+            factory.setAutomaticRecoveryEnabled(false);
+            factory.setUri(uri);
+        } catch (KeyManagementException | NoSuchAlgorithmException | URISyntaxException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    void subscribe(final Handler handler)
+    {
+        subscribeThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true) {
+                    try {
+                        Connection connection = factory.newConnection();
+                        Channel channel = connection.createChannel();
+                        channel.basicQos(1);
+                        AMQP.Queue.DeclareOk q = channel.queueDeclare();
+                        channel.queueBind(q.getQueue(), "amq.fanout", "chat");
+                        QueueingConsumer consumer = new QueueingConsumer(channel);
+                        channel.basicConsume(q.getQueue(), true, consumer);
+
+                        // Process deliveries
+                        while (true) {
+                            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+
+                            String message = new String(delivery.getBody());
+                            Log.d("","[r] " + message);
+
+                            Message msg = handler.obtainMessage();
+                            Bundle bundle = new Bundle();
+
+                            bundle.putString("msg", message);
+                            msg.setData(bundle);
+                            handler.sendMessage(msg);
+                        }
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e1) {
+                        Log.d("", "Connection broken: " + e1.getClass().getName());
+                        try {
+                            Thread.sleep(4000); //sleep and then try again
+                        } catch (InterruptedException e) {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        subscribeThread.start();
+    }
+
+    public void publishToAMQP()
+    {
+        publishThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while(true) {
+                    try {
+                        Connection connection = factory.newConnection();
+                        Channel ch = connection.createChannel();
+                        ch.confirmSelect();
+
+                        while (true) {
+                            String message = queue.takeFirst();
+                            try{
+                                ch.basicPublish("amq.fanout", "chat", null, message.getBytes());
+                                Log.d("", "[s] " + message);
+                                ch.waitForConfirmsOrDie();
+                            } catch (Exception e){
+                                Log.d("","[f] " + message);
+                                queue.putFirst(message);
+                                throw e;
+                            }
+                        }
+                    } catch (InterruptedException e) {
+                        break;
+                    } catch (Exception e) {
+                        Log.d("", "Connection broken: " + e.getClass().getName());
+                        try {
+                            Thread.sleep(5000); //sleep and then try again
+                        } catch (InterruptedException e1) {
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+        publishThread.start();
+    }
+
     private class Padding {
         public int left;
         public int right;
