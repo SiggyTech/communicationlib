@@ -136,13 +136,13 @@ public class PTTButton extends Button implements View.OnTouchListener {
             case MotionEvent.ACTION_DOWN:
                 System.out.println("Button pressed");
                 status = true;
-                subscribeThread.stop();
+                //subscribeThread.stop();
                 break;
             case MotionEvent.ACTION_UP:
                 System.out.println("Button released");
                 status = false;
                 recorder.release();
-                subscribeThread.resume();
+                //subscribeThread.resume();
                 break;
         }
        return true;
@@ -698,7 +698,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                             try{
                                 ch.basicPublish("amq.fanout", "chat", null, message.getBytes());
                                 Log.d("", "[s] " + message);
-                                ch.waitForConfirmsOrDie();
+                                //ch.waitForConfirmsOrDie();
                             } catch (Exception e){
                                 Log.d("","[f] " + message);
                                 queue.putFirst(message);
