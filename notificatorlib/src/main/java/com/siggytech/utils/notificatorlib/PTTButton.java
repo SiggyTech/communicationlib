@@ -346,6 +346,8 @@ public class PTTButton extends Button implements View.OnTouchListener {
             ActivityCompat.requestPermissions(activity, new String[] {  android.Manifest.permission.READ_PHONE_STATE  },
                     READ_PHONE_STATE );
         }
+
+        setupConnectionFactory();
         publishToAMQP();
 
         /*networkConnection = new NetworkConnection();
