@@ -38,6 +38,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 
 import com.rabbitmq.client.AMQP;
@@ -63,7 +64,9 @@ import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
@@ -133,12 +136,13 @@ public class PTTButton extends Button implements View.OnTouchListener {
             case MotionEvent.ACTION_DOWN:
                 System.out.println("Button pressed");
                 status = true;
-                startStreaming();
+                subscribeThread.stop();
                 break;
             case MotionEvent.ACTION_UP:
                 System.out.println("Button released");
                 status = false;
                 recorder.release();
+                subscribeThread.resume();
                 break;
         }
        return true;
@@ -349,6 +353,22 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
         setupConnectionFactory();
         publishToAMQP();
+
+        final Handler incomingMessageHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                String message = msg.getData().getString("msg");
+                try {
+                    byte[]readBuf = message.getBytes("UTF-8");
+                    PlayShortAudioFileViaAudioTrack(readBuf);
+                }
+                catch(Exception ex){
+                    System.out.print(ex.getMessage());
+                }
+
+            }
+        };
+        subscribe(incomingMessageHandler);
 
         /*networkConnection = new NetworkConnection();
         networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
