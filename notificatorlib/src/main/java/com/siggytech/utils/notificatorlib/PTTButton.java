@@ -28,6 +28,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.text.format.Formatter;
@@ -74,7 +75,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
-public class PTTButton extends Button implements View.OnTouchListener {
+public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private Padding mPadding;
     private int mHeight;
     private int mWidth;
