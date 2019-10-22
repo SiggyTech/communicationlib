@@ -109,6 +109,8 @@ public class PTTButton extends Button implements View.OnTouchListener {
     private Thread subscribeThread;
     private Thread publishThread;
 
+    boolean toServer;
+
     public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
         super(context);
         this.context = context;
@@ -117,7 +119,23 @@ public class PTTButton extends Button implements View.OnTouchListener {
         this.API_KEY = API_KEY;
 
 
+
         initView();
+    }
+    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, boolean toserver, String ip, int port) {
+        super(context);
+        this.context = context;
+        this.activity = activity;
+        this.idGroup = idGroup;
+        this.API_KEY = API_KEY;
+
+        this.toServer = toserver;
+        Conf.SERVER_IP = ip;
+        Conf.SERVER_PORT = port;
+
+
+
+                initView();
     }
 
     @Override
@@ -170,7 +188,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
 
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
                     Log.d("VS", "Recorder initialized");
-                    InetAddress destination = null;
+                    InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
 
 
                     recorder.startRecording();
@@ -181,10 +199,10 @@ public class PTTButton extends Button implements View.OnTouchListener {
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
-                        publishMessage(buffer);
+                        //publishMessage(buffer);
 
-                        /*if(toServer){
-                            packet = new DatagramPacket(buffer, buffer.length, destination, SERVER_PORT);
+                        if(toServer){
+                            packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                             socket.send(packet);
                         }
                         else {
@@ -195,7 +213,7 @@ public class PTTButton extends Button implements View.OnTouchListener {
                                 packet = new DatagramPacket(buffer, buffer.length, destination2, destinations.get(i).getPort());
                                 socket.send(packet);
                             }
-                        }*/
+                        }
                         System.out.println("MinBufferSize: " +minBufSize);
 
                         /*
