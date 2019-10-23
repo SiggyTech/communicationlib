@@ -390,6 +390,14 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
                 Log.e(TAG, "MESSAGE: " + bytes.hex());
+                try
+                {
+                    PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
+                }
+                catch(Exception ex){
+                    System.out.print(ex.getMessage());
+                }
+
             }
 
             @Override
