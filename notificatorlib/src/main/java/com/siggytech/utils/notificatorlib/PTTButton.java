@@ -115,6 +115,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String API_KEY;
     private Thread subscribeThread;
     private Thread publishThread;
+    private String TAG = "PTTButton";
+
 
     private OkHttpClient client;
 
@@ -366,16 +368,53 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         return true;
     }
 
-    private void start() {
-            Request request = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":8080").build();
-        EchoWebSocketListener listener = new EchoWebSocketListener();
-        WebSocket ws = client.newWebSocket(request, listener);
-        client.dispatcher().executorService().shutdown();
+    private void webSocketConnection(){
+        client = new OkHttpClient();
+        Request requestWS = new Request.Builder().url("ws:" + Conf.SERVER_IP + ":8080").build();
+
+        WebSocketListener webSocketListener = new WebSocketListener() {
+            @Override
+            public void onOpen(WebSocket webSocket, Response response) {
+                Log.e(TAG, "onOpen");
+            }
+
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                Log.e(TAG, "MESSAGE: " + text);
+            }
+
+            @Override
+            public void onMessage(WebSocket webSocket, ByteString bytes) {
+                Log.e(TAG, "MESSAGE: " + bytes.hex());
+            }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                webSocket.close(1000, null);
+                webSocket.cancel();
+                Log.e(TAG, "CLOSE: " + code + " " + reason);
+            }
+
+            @Override
+            public void onClosed(WebSocket webSocket, int code, String reason) {
+                //TODO: stuff
+            }
+
+            @Override
+            public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+                //TODO: stuff
+            }
+        };
+
+        client.newWebSocket(requestWS, webSocketListener);
+
     }
+
     private void initView() {
 
         client = new OkHttpClient();
-        start();
+        webSocketConnection();
+
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -755,34 +794,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }
         });
         publishThread.start();
-    }
-
-    private final class EchoWebSocketListener extends WebSocketListener {
-        private static final int NORMAL_CLOSURE_STATUS = 1000;
-        @Override
-        public void onOpen(WebSocket webSocket, Response response) {
-            webSocket.send("Hello, it's SSaurel !");
-            webSocket.send("What's up ?");
-            webSocket.send(ByteString.decodeHex("deadbeef"));
-            webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
-        }
-        @Override
-        public void onMessage(WebSocket webSocket, String text) {
-            System.out.printf("Receiving : " + text);
-        }
-        @Override
-        public void onMessage(WebSocket webSocket, ByteString bytes) {
-            System.out.printf("Receiving bytes : " + bytes.hex());
-        }
-        @Override
-        public void onClosing(WebSocket webSocket, int code, String reason) {
-            webSocket.close(NORMAL_CLOSURE_STATUS, null);
-            System.out.printf("Closing : " + code + " / " + reason);
-        }
-        @Override
-        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-            System.out.printf("Error : " + t.getMessage());
-        }
     }
     private class Padding {
         public int left;
