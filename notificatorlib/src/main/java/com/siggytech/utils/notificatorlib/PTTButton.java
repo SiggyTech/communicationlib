@@ -72,6 +72,12 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
+import okio.ByteString;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
@@ -110,6 +116,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private Thread subscribeThread;
     private Thread publishThread;
 
+    private OkHttpClient client;
+
     boolean toServer;
 
     public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
@@ -134,9 +142,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         Conf.SERVER_IP = ip;
         Conf.SERVER_PORT = port;
 
-
-
-                initView();
+        initView();
     }
 
     @Override
@@ -359,7 +365,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
         return true;
     }
+
+    private void start() {
+            Request request = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":8080").build();
+        EchoWebSocketListener listener = new EchoWebSocketListener();
+        WebSocket ws = client.newWebSocket(request, listener);
+        client.dispatcher().executorService().shutdown();
+    }
     private void initView() {
+
+        client = new OkHttpClient();
+        start();
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -741,6 +757,33 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         publishThread.start();
     }
 
+    private final class EchoWebSocketListener extends WebSocketListener {
+        private static final int NORMAL_CLOSURE_STATUS = 1000;
+        @Override
+        public void onOpen(WebSocket webSocket, Response response) {
+            webSocket.send("Hello, it's SSaurel !");
+            webSocket.send("What's up ?");
+            webSocket.send(ByteString.decodeHex("deadbeef"));
+            webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, String text) {
+            System.out.printf("Receiving : " + text);
+        }
+        @Override
+        public void onMessage(WebSocket webSocket, ByteString bytes) {
+            System.out.printf("Receiving bytes : " + bytes.hex());
+        }
+        @Override
+        public void onClosing(WebSocket webSocket, int code, String reason) {
+            webSocket.close(NORMAL_CLOSURE_STATUS, null);
+            System.out.printf("Closing : " + code + " / " + reason);
+        }
+        @Override
+        public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+            System.out.printf("Error : " + t.getMessage());
+        }
+    }
     private class Padding {
         public int left;
         public int right;
