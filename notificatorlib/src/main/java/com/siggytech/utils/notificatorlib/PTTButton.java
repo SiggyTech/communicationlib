@@ -369,12 +369,16 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     private void webSocketConnection(){
-        client = new OkHttpClient();
-        Request requestWS = new Request.Builder().url("ws:" + Conf.SERVER_IP + ":8080").build();
+        OkHttpClient clientCoinPrice = new OkHttpClient();
+        Request requestCoinPrice = new Request.Builder().url("ws://192.168.1.87:8080").build();
 
-        WebSocketListener webSocketListener = new WebSocketListener() {
+        WebSocketListener webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
+                /*webSocket.send("{\n" +
+                        "    \"type\": \"subscribe\",\n" +
+                        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
+                        "}");*/
                 Log.e(TAG, "onOpen");
             }
 
@@ -406,7 +410,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }
         };
 
-        client.newWebSocket(requestWS, webSocketListener);
+        clientCoinPrice.newWebSocket(requestCoinPrice, webSocketListenerCoinPrice);
+        clientCoinPrice.dispatcher().executorService().shutdown();
 
     }
 
