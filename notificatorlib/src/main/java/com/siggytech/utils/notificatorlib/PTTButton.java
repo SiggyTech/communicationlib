@@ -99,7 +99,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int idGroup;
     List<Destination> destinations;
     private UDPSocket udpSocket;
-    CountDownTimer countDownTimer;
     private String API_KEY;
 
     private String TAG = "PTTButton";
@@ -349,7 +348,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private void webSocketConnection(){
         OkHttpClient clientCoinPrice = new OkHttpClient();
-        Request requestCoinPrice = new Request.Builder().url("ws://192.168.1.87:8080").build();
+        Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":8080").build();
 
         WebSocketListener webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
