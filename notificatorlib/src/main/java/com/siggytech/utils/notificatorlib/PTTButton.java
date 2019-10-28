@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -315,6 +317,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
     }
     public void blockTouch() {
+
+        this.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
         setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -323,6 +327,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         });
     }
     public void unblockTouch() {
+        this.getBackground().setColorFilter(null);
         setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
