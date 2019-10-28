@@ -97,9 +97,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public NetworkConnection networkConnection;
     private static final int READ_PHONE_STATE = 0;
     private int idGroup;
+    WebSocketListener webSocketListenerCoinPrice;
+    OkHttpClient clientCoinPrice = new OkHttpClient();
 
     private UDPSocket udpSocket;
     private String API_KEY;
+    private boolean flagListen = true;
 
     private String TAG = "PTTButton";
 
@@ -140,6 +143,15 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             unblockTouch();
         }
     };
+    CountDownTimer timer2 = new CountDownTimer(3000, 1000) {
+        public void onTick(long millisUntilFinished) {
+            //here you can have your logic to set text to edittext
+        }
+        public void onFinish() {
+            flagListen = true;
+        }
+    };
+
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -171,6 +183,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     public void startStreaming() {
 
+
+
+
+
+
+
         Thread streamThread = new Thread(new Runnable() {
 
             @Override
@@ -199,6 +217,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     while(status == true) {
 
+                        flagListen = false;
+
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
 
@@ -213,6 +233,16 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         }
                         System.out.println("MinBufferSize: " +minBufSize);
 
+
+                        timer2 = new CountDownTimer(3000, 1000) {
+                            public void onTick(long millisUntilFinished) {
+                                //here you can have your logic to set text to edittext
+                            }
+
+                            public void onFinish() {
+                                flagListen = true;
+                            }
+                        };
 
                     }
 
@@ -320,22 +350,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         });
     }
 
-    public static boolean hasPermissions(Context context, String... permissions) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
-            for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
     private void webSocketConnection(){
-        OkHttpClient clientCoinPrice = new OkHttpClient();
+
         Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":8080").build();
 
-        WebSocketListener webSocketListenerCoinPrice = new WebSocketListener() {
+        webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 /*webSocket.send("{\n" +
@@ -352,13 +371,25 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
+
+                if(!flagListen)
+                    return;
+
+
                 Log.e(TAG, "MESSAGE: " + bytes.hex());
                 try
                 {
                     blockTouch();
 
                     timer.cancel();
-                    timer.start();
+                    timer = new CountDownTimer(500, 100) {
+                        public void onTick(long millisUntilFinished) {
+                            //here you can have your logic to set text to edittext
+                        }
+                        public void onFinish() {
+                            unblockTouch();
+                        }
+                    };
 
                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 }
