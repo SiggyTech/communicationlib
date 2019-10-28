@@ -219,7 +219,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     while(status == true) {
 
-                        flagListen = false;
+                        //flagListen = false;
 
                         //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
@@ -235,7 +235,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         }
                         System.out.println("MinBufferSize: " +minBufSize);
 
-                        Looper.prepare();
+                        /*Looper.prepare();
 
                         mHandlerTimer = new Handler() {
                             public void handleMessage(Message msg) {
@@ -251,7 +251,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                             }
                         };
 
-                        Looper.loop();
+                        Looper.loop();*/
 
                     }
 
@@ -381,8 +381,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
 
-                if(!flagListen)
-                    return;
+                //if(!flagListen)
+                //    return;
 
 
                 Log.e(TAG, "MESSAGE: " + bytes.hex());
