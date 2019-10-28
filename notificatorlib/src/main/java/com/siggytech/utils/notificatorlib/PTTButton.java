@@ -23,6 +23,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.StrictMode;
 import android.support.annotation.DrawableRes;
@@ -85,6 +86,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private static final int REQUEST = 112;
     Activity activity;
     AudioTrack at;
+    public Handler mHandlerTimer;
 
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
@@ -233,16 +235,23 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         }
                         System.out.println("MinBufferSize: " +minBufSize);
 
+                        Looper.prepare();
 
-                        timer2 = new CountDownTimer(3000, 1000) {
-                            public void onTick(long millisUntilFinished) {
-                                //here you can have your logic to set text to edittext
-                            }
+                        mHandlerTimer = new Handler() {
+                            public void handleMessage(Message msg) {
+                                timer2 = new CountDownTimer(3000, 1000) {
+                                    public void onTick(long millisUntilFinished) {
+                                        //here you can have your logic to set text to edittext
+                                    }
 
-                            public void onFinish() {
-                                flagListen = true;
+                                    public void onFinish() {
+                                        flagListen = true;
+                                    }
+                                };
                             }
                         };
+
+                        Looper.loop();
 
                     }
 
