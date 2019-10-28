@@ -39,9 +39,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.siggytech.utils.notificatorlib.greendao.Destination;
+
 import com.siggytech.utils.notificatorlib.greendao.NetworkConnection;
-import org.greenrobot.greendao.query.QueryBuilder;
+
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -97,7 +97,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public NetworkConnection networkConnection;
     private static final int READ_PHONE_STATE = 0;
     private int idGroup;
-    List<Destination> destinations;
+
     private UDPSocket udpSocket;
     private String API_KEY;
 
@@ -209,25 +209,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                             socket.send(packet);
                         }
                         else {
-                            System.out.println("destinations.size(): " + destinations.size());
-
-                            for (int i = 0; i < destinations.size(); i++) {
-                                final InetAddress destination2 = InetAddress.getByName(destinations.get(i).getIp());
-                                packet = new DatagramPacket(buffer, buffer.length, destination2, destinations.get(i).getPort());
-                                socket.send(packet);
-                            }
+                            System.out.println("to server false ");
                         }
                         System.out.println("MinBufferSize: " +minBufSize);
 
-                        /*
-                        //putting buffer in the packet
-                        packet = new DatagramPacket (buffer,buffer.length,destination,Conf.SERVER_PORT);
-
-                        socket.send(packet);
-                        System.out.println("MinBufferSize: " +minBufSize);
-                        */
-
-                        //sendMultiple(buffer);
 
                     }
 
