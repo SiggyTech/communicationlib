@@ -31,26 +31,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
-import android.text.format.Formatter;
-import android.util.AttributeSet;
 import android.util.Log;
 import android.util.StateSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
-
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import com.rabbitmq.client.QueueingConsumer;
-import com.siggytech.utils.notificatorlib.greendao.DaoMaster;
-import com.siggytech.utils.notificatorlib.greendao.DaoSession;
 import com.siggytech.utils.notificatorlib.greendao.Destination;
-import com.siggytech.utils.notificatorlib.greendao.DestinationDao;
 import com.siggytech.utils.notificatorlib.greendao.NetworkConnection;
 import org.greenrobot.greendao.query.QueryBuilder;
 
@@ -107,14 +94,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public AudioRecord recorder;
     public NetworkConnection networkConnection;
     private static final int READ_PHONE_STATE = 0;
-    private DaoSession mDaoSession;
     private int idGroup;
     List<Destination> destinations;
     private UDPSocket udpSocket;
     CountDownTimer countDownTimer;
     private String API_KEY;
-    private Thread subscribeThread;
-    private Thread publishThread;
+
     private String TAG = "PTTButton";
 
 
@@ -146,6 +131,14 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         initView();
     }
+    CountDownTimer timer = new CountDownTimer(500, 100) {
+        public void onTick(long millisUntilFinished) {
+            //here you can have your logic to set text to edittext
+        }
+        public void onFinish() {
+            unblockTouch();
+        }
+    };
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -337,26 +330,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }
         });
     }
-    private void checkPermissions(){
-        if (Build.VERSION.SDK_INT >= 23) {
-            String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    android.Manifest.permission.READ_PHONE_STATE,
-                    Manifest.permission.ACCESS_NETWORK_STATE,
-                    Manifest.permission.ACCESS_WIFI_STATE,
-                    Manifest.permission.INTERNET
 
-
-            };
-            if (!hasPermissions(context, PERMISSIONS)) {
-                ActivityCompat.requestPermissions(activity, PERMISSIONS, 112 );
-            } else {
-                //do here
-            }
-        } else {
-            //do here
-        }
-    }
     public static boolean hasPermissions(Context context, String... permissions) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
             for (String permission : permissions) {
@@ -392,12 +366,16 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 Log.e(TAG, "MESSAGE: " + bytes.hex());
                 try
                 {
+                    blockTouch();
+
+                    timer.cancel();
+                    timer.start();
+
                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 }
                 catch(Exception ex){
                     System.out.print(ex.getMessage());
                 }
-
             }
 
             @Override
@@ -437,25 +415,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             ActivityCompat.requestPermissions(activity, new String[] {  android.Manifest.permission.READ_PHONE_STATE  },
                     READ_PHONE_STATE );
         }
-
-        setupConnectionFactory();
-        publishToAMQP();
-
-        final Handler incomingMessageHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                String message = msg.getData().getString("msg");
-                try {
-                    byte[]readBuf = message.getBytes();
-                    PlayShortAudioFileViaAudioTrack(readBuf);
-                }
-                catch(Exception ex){
-                    System.out.print(ex.getMessage());
-                }
-
-            }
-        };
-        subscribe(incomingMessageHandler);
 
         /*networkConnection = new NetworkConnection();
         networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
@@ -594,7 +553,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         return null;
     }
 
-
     @Nullable
     public String getNetworkInterfaceIpAddress() {
         try {
@@ -623,8 +581,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 case MESSAGE_WRITE:
                     byte[]writeBuf =(byte[])msg.obj;
                     String writeMessage=new String(writeBuf);
-                    //mConversationArrayAdapter.add("yo： " + writeMessage);
-                    //udpSocketActivity.startRecv();
                     break;
                 case MESSAGE_READ:
                     byte[]readBuf =(byte[])msg.obj;
@@ -646,10 +602,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException
     {
         if (at!=null) {
-            // Write the byte array to the track
+
             at.write(byteData, 0, byteData.length);
             at.play();
-            //Log.i("TCAudio", "cant: " + count + " largo: " + byteData.length);
+
+
         }
         else
             Log.d("TCAudio", "audio track is not initialised ");
@@ -661,14 +618,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
 
     }
-    private void setDestinationList(){
-        mDaoSession = new DaoMaster(
-                new DaoMaster.DevOpenHelper(activity, "ptt_content.db").getWritableDb()).newSession();
 
-        QueryBuilder<Destination> queryBuilder = mDaoSession.getDestinationDao().queryBuilder();
-        queryBuilder.where(DestinationDao.Properties.Idgroup.eq(idGroup));
-        destinations = queryBuilder.list();
-    }
     private StrokeGradientDrawable createDrawable(int color, int cornerRadius, int strokeWidth) {
         StrokeGradientDrawable drawable = new StrokeGradientDrawable(new GradientDrawable());
         //drawable.getGradientDrawable().setShape(GradientDrawable.RECTANGLE);
@@ -703,111 +653,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
     }
     //private BlockingDeque<String> queue = new LinkedBlockingDeque<String>();
-    private BlockingDeque<byte[]> queue = new LinkedBlockingDeque<byte[]>();
-    void publishMessage(byte[] message) {
-        //Adds a message to internal blocking queue
-        try {
-            Log.d("","[q] " + message);
-            queue.putLast(message);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 
-    ConnectionFactory factory = new ConnectionFactory();
-    private void setupConnectionFactory() {
-        String uri = "amqp://zmmoqqmr:dGn4rLP7qmoNZA65W_7nWouJKR7h_ixy@prawn.rmq.cloudamqp.com/zmmoqqmr";
-        try {
-            factory.setAutomaticRecoveryEnabled(false);
-            factory.setUri(uri);
-        } catch (KeyManagementException | NoSuchAlgorithmException | URISyntaxException e1) {
-            e1.printStackTrace();
-        }
-    }
 
-    void subscribe(final Handler handler)
-    {
-        subscribeThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(true) {
-                    try {
-                        Connection connection = factory.newConnection();
-                        Channel channel = connection.createChannel();
-                        channel.basicQos(1);
-                        AMQP.Queue.DeclareOk q = channel.queueDeclare();
-                        channel.queueBind(q.getQueue(), "amq.fanout", "chat");
-                        QueueingConsumer consumer = new QueueingConsumer(channel);
-                        channel.basicConsume(q.getQueue(), true, consumer);
-
-                        // Process deliveries
-                        while (true) {
-                            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-
-                            String message = new String(delivery.getBody());
-                            Log.d("","[r] " + message);
-
-                            Message msg = handler.obtainMessage();
-                            Bundle bundle = new Bundle();
-
-                            bundle.putString("msg", message);
-                            msg.setData(bundle);
-                            handler.sendMessage(msg);
-                        }
-                    } catch (InterruptedException e) {
-                        break;
-                    } catch (Exception e1) {
-                        Log.d("", "Connection broken: " + e1.getClass().getName());
-                        try {
-                            Thread.sleep(4000); //sleep and then try again
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
-                }
-            }
-        });
-        subscribeThread.start();
-    }
-
-    public void publishToAMQP()
-    {
-        publishThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(true) {
-                    try {
-                        Connection connection = factory.newConnection();
-                        Channel ch = connection.createChannel();
-                        ch.confirmSelect();
-
-                        while (true) {
-                            byte[] message = queue.takeFirst();
-                            try{
-                                ch.basicPublish("amq.fanout", "chat", null, message);
-                                Log.d("", "[s] " + message);
-                                //ch.waitForConfirmsOrDie();
-                            } catch (Exception e){
-                                Log.d("","[f] " + message);
-                                queue.putFirst(message);
-                                throw e;
-                            }
-                        }
-                    } catch (InterruptedException e) {
-                        break;
-                    } catch (Exception e) {
-                        Log.d("", "Connection broken: " + e.getClass().getName());
-                        try {
-                            Thread.sleep(5000); //sleep and then try again
-                        } catch (InterruptedException e1) {
-                            break;
-                        }
-                    }
-                }
-            }
-        });
-        publishThread.start();
-    }
     private class Padding {
         public int left;
         public int right;
