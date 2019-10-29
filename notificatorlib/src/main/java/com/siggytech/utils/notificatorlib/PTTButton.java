@@ -59,11 +59,12 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.LinkedBlockingDeque;
+
+import okhttp3.Call;
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -109,8 +110,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private String TAG = "PTTButton";
 
-
-    private OkHttpClient client;
 
     boolean toServer;
 
@@ -191,6 +190,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
 
 
+        // Create a new Call object with post method.
+
 
         Thread streamThread = new Thread(new Runnable() {
 
@@ -230,7 +231,31 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         if(toServer){
                             packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                             //socket.send(packet); //TODO revisando si funciona mejor la comunicacion con websocket
-                            webSocketX.send(ByteString.of(buffer));
+
+
+                            // Create okhttp3 form body builder.
+                            FormBody.Builder formBodyBuilder = new FormBody.Builder();
+
+                            // Add form parameters
+                            formBodyBuilder.add("data", new String(buffer));
+
+                            // Build form body.
+                            FormBody formBody = formBodyBuilder.build();
+
+                            // Create a http request object.
+                            Request.Builder builder = new Request.Builder();
+                            builder = builder.url("ws://" + Conf.SERVER_IP + ":8080");
+                            builder = builder.post(formBody);
+                            Request request = builder.build();
+                            Call call = clientCoinPrice.newCall(request);
+                            try {
+                                Response response = call.execute();
+                                Log.e(TAG, response.toString());
+                            }
+                            catch(Exception ex){
+                                ex.printStackTrace();
+                            }
+                            //webSocketX.send(ByteString.of(buffer));
                         }
                         else {
                             System.out.println("to server false ");
@@ -435,7 +460,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private void initView() {
 
-        client = new OkHttpClient();
         webSocketConnection();
 
 
