@@ -101,6 +101,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int idGroup;
     WebSocketListener webSocketListenerCoinPrice;
     OkHttpClient clientCoinPrice = new OkHttpClient();
+    WebSocket webSocketX;
 
     private UDPSocket udpSocket;
     private String API_KEY;
@@ -228,7 +229,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                         if(toServer){
                             packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
-                            socket.send(packet);
+                            //socket.send(packet); //TODO revisando si funciona mejor la comunicacion con websocket
+                            webSocketX.send(ByteString.of(buffer));
                         }
                         else {
                             System.out.println("to server false ");
@@ -366,6 +368,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
+                webSocketX = webSocket;
                 /*webSocket.send("{\n" +
                         "    \"type\": \"subscribe\",\n" +
                         "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
