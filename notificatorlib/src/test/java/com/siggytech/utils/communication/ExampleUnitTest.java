@@ -1,4 +1,4 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 import org.junit.Test;
 

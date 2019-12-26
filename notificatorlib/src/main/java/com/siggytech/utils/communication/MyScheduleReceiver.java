@@ -1,4 +1,4 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -28,10 +28,6 @@ public class MyScheduleReceiver  extends BroadcastReceiver {
 
         AlarmManager service = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(context, MyBroadcastReceiver.class);
-        Bundle extras = intent.getExtras();
-        i.putExtra("packageName", extras.get("packageName").toString());
-        i.putExtra("messageText", extras.get("messageText").toString());
-        i.putExtra("messageTittle", extras.get("messageTittle").toString());
 
 
         PendingIntent pending = PendingIntent.getBroadcast(context, 0, i,

@@ -1,4 +1,4 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 import android.os.Handler;
 import android.util.Log;

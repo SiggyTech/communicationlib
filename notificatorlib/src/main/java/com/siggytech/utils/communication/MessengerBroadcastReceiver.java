@@ -1,14 +1,13 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 
-/**
- * Created by fsoto on 9/13/19.
- */
+
 
 public class MessengerBroadcastReceiver extends BroadcastReceiver {
 
@@ -17,7 +16,7 @@ public class MessengerBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        Log.i(MessengerService.class.getSimpleName(), "Service Stops! Oooooooooooooppppssssss!!!!");
+        Log.i(MessengerService.class.getSimpleName(), "Service onReceive! Oooooooooooooppppssssss!!!!");
 
 
         Bundle extras = intent.getExtras();
@@ -31,10 +30,12 @@ public class MessengerBroadcastReceiver extends BroadcastReceiver {
 
         }
 
-        Log.d("BroadcastReceiver ", "packageName: " + packageName);
+        Log.e("BroadcastReceiver ", "packageName: " + packageName);
 
-        Intent serviceIntent = new Intent(context, MessengerService.class);
-        serviceIntent.putExtra("packageName", packageName);
-        context.startService(serviceIntent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(new Intent(context, MessengerService.class));
+        } else {
+            context.startService(new Intent(context, MessengerService.class));
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 /**
  * Created by fsoto on 9/26/19.

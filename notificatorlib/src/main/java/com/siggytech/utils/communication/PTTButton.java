@@ -1,6 +1,5 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -20,11 +19,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.os.StrictMode;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
@@ -41,30 +36,16 @@ import android.view.View;
 import android.view.ViewGroup;
 
 
-import com.siggytech.utils.notificatorlib.greendao.NetworkConnection;
-
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 
-import okhttp3.Call;
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -87,7 +68,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private static final int REQUEST = 112;
     Activity activity;
     AudioTrack at;
-    public Handler mHandlerTimer;
 
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
@@ -97,19 +77,19 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
     public AudioRecord recorder;
-    public NetworkConnection networkConnection;
     private static final int READ_PHONE_STATE = 0;
     private int idGroup;
-    WebSocketListener webSocketListenerCoinPrice;
-    OkHttpClient clientCoinPrice = new OkHttpClient();
-    WebSocket webSocketX;
+
 
     private UDPSocket udpSocket;
     private String API_KEY;
     private boolean flagListen = true;
 
     private String TAG = "PTTButton";
+    private String buttonName;
 
+    private OkHttpClient client;
+    private String name = "";
 
     boolean toServer;
 
@@ -124,35 +104,28 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         initView();
     }
-    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, boolean toserver, String ip, int port) {
+    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, String nameClient) {
         super(context);
         this.context = context;
         this.activity = activity;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
-
-        this.toServer = toserver;
-        Conf.SERVER_IP = ip;
-        Conf.SERVER_PORT = port;
+        this.name = nameClient;
 
         initView();
+
+
     }
-    CountDownTimer timer = new CountDownTimer(500, 100) {
-        public void onTick(long millisUntilFinished) {
-            //here you can have your logic to set text to edittext
-        }
-        public void onFinish() {
-            unblockTouch();
-        }
-    };
-    CountDownTimer timer2 = new CountDownTimer(3000, 1000) {
+    CountDownTimer timer;
+    boolean canTalk = true;
+    /*CountDownTimer timer2 = new CountDownTimer(3000, 1000) {
         public void onTick(long millisUntilFinished) {
             //here you can have your logic to set text to edittext
         }
         public void onFinish() {
             flagListen = true;
         }
-    };
+    };*/
 
 
     @Override
@@ -183,17 +156,18 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
        return true;
     }
 
+    public class MyRunnable implements Runnable {
+        public String message;
+        public MyRunnable(String parameter) {
+            this.message = parameter;
+        }
+        public void run() {
+        }
+    }
     public void startStreaming() {
+        String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ this.idGroup +" }";
 
-
-
-
-
-
-        // Create a new Call object with post method.
-
-
-        Thread streamThread = new Thread(new Runnable() {
+        Thread streamThread = new Thread(new MyRunnable(message) {
 
             @Override
             public void run() {
@@ -202,90 +176,36 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     DatagramSocket socket = new DatagramSocket();
                     Log.d("VS", "Socket Created");
 
+                    Log.d("VS", "Socket Created");
+
+                    DatagramPacket packet;
+
+                    InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
+
+                    packet = new DatagramPacket(this.message.getBytes(), this.message.getBytes().length, destination, Conf.SERVER_PORT);
+                    socket.send(packet);
+
+
+
                     minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
 
                     Log.d("VS","Buffer created of size " + minBufSize);
-                    DatagramPacket packet;
 
-                    //final InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
-                    //Log.d("VS", "Address retrieved");
 
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
                     Log.d("VS", "Recorder initialized");
-                    InetAddress destination = InetAddress.getByName(Conf.SERVER_IP);
-
 
                     recorder.startRecording();
 
-
                     while(status == true) {
 
-                        //flagListen = false;
-
-                        //reading data from MIC into buffer
                         minBufSize = recorder.read(buffer, 0, buffer.length);
-
-                        //publishMessage(buffer);
-
-                        if(toServer){
-                            packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
-                            //socket.send(packet); //TODO revisando si funciona mejor la comunicacion con websocket
-
-
-                            // Create okhttp3 form body builder.
-                            FormBody.Builder formBodyBuilder = new FormBody.Builder();
-
-                            // Add form parameters
-                            formBodyBuilder.add("data", new String(buffer));
-
-                            // Build form body.
-                            FormBody formBody = formBodyBuilder.build();
-
-                            // Create a http request object.
-                            Request.Builder builder = new Request.Builder();
-                            builder = builder.url("ws://" + Conf.SERVER_IP + ":8080");
-                            builder = builder.post(formBody);
-                            Request request = builder.build();
-                            Call call = clientCoinPrice.newCall(request);
-                            try {
-                                Response response = call.execute();
-                                Log.e(TAG, response.toString());
-                            }
-                            catch(Exception ex){
-                                ex.printStackTrace();
-                            }
-                            //webSocketX.send(ByteString.of(buffer));
-                        }
-                        else {
-                            System.out.println("to server false ");
-                        }
+                        packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
+                        socket.send(packet);
                         System.out.println("MinBufferSize: " +minBufSize);
 
-                        /*Looper.prepare();
-
-                        mHandlerTimer = new Handler() {
-                            public void handleMessage(Message msg) {
-                                timer2 = new CountDownTimer(3000, 1000) {
-                                    public void onTick(long millisUntilFinished) {
-                                        //here you can have your logic to set text to edittext
-                                    }
-
-                                    public void onFinish() {
-                                        flagListen = true;
-                                    }
-                                };
-                            }
-                        };
-
-                        Looper.loop();*/
-
                     }
-
-
-
-                //} catch(UnknownHostException e) {
-                //    Log.e("VS", "UnknownHostException");
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.e("VS", "IOException");
@@ -378,9 +298,45 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
     public void unblockTouch() {
         this.getBackground().setColorFilter(null);
-        setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
+        this.setOnTouchListener(new View.OnTouchListener()
+        {
+            public boolean onTouch(View v, MotionEvent event)
+            {
+                switch (event.getAction())
+                {
+                    case MotionEvent.ACTION_DOWN:
+                    {
+                        Log.d("log", "onTouch: push");
+                        status = true;
+
+                        startStreaming();
+                        canTalk = false;
+                        buttonName = getText().toString();
+                        setText("Sending...");
+                        break;
+                    }
+
+                    case MotionEvent.ACTION_UP:
+                    {
+                        Log.d("log", "onTouch: release");
+                        status = false;
+                        recorder.release();
+                        blockTouch();
+                        timer = new CountDownTimer(3000, 100) {
+                            public void onTick(long millisUntilFinished) {
+                                //here you can have your logic to set text to edittext
+                            }
+                            public void onFinish() {
+                                canTalk = true;
+                                setText(buttonName);
+                                unblockTouch();
+                            }
+                        }.start();
+
+                        break;
+                    }
+                }
+
                 return false;
             }
         });
@@ -388,12 +344,19 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private void webSocketConnection(){
 
-        Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":8080").build();
+        WebSocketListener webSocketListenerCoinPrice;
+        OkHttpClient clientCoinPrice = new OkHttpClient();
+
+        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
+        Log.e(TAG, url);
+
+        Request requestCoinPrice = new Request.Builder().url(url).build();
+
+        //OLD: Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT).build();
 
         webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                webSocketX = webSocket;
                 /*webSocket.send("{\n" +
                         "    \"type\": \"subscribe\",\n" +
                         "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
@@ -403,32 +366,18 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
-                Log.e(TAG, "MESSAGE: " + text);
+                Log.e(TAG, "MESSAGE String: " + text);
             }
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
 
-                //if(!flagListen)
-                //    return;
 
-
-                Log.e(TAG, "MESSAGE: " + bytes.hex());
+                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 try
                 {
-                    blockTouch();
 
-                    timer.cancel();
-                    timer = new CountDownTimer(500, 100) {
-                        public void onTick(long millisUntilFinished) {
-                            //here you can have your logic to set text to edittext
-                        }
-                        public void onFinish() {
-                            unblockTouch();
-                        }
-                    };
-
-                    PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
+                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 }
                 catch(Exception ex){
                     System.out.print(ex.getMessage());
@@ -455,16 +404,22 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         clientCoinPrice.newWebSocket(requestCoinPrice, webSocketListenerCoinPrice);
         clientCoinPrice.dispatcher().executorService().shutdown();
-
     }
 
     private void initView() {
 
-        webSocketConnection();
-
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        client = new OkHttpClient();
+        try {
+            webSocketConnection();
+        }
+        catch(Exception ex){
+            Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
+        }
+
+
 
         if ( ContextCompat.checkSelfPermission( activity, android.Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {
 
@@ -472,35 +427,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     READ_PHONE_STATE );
         }
 
-        /*networkConnection = new NetworkConnection();
-        networkConnection.register(Long.parseLong(getIMEINumber()), getIMEINumber(), API_KEY, 1, getIP(), Conf.LOCAL_PORT);
-
-
-        if(!toServer) {
-            networkConnection.getDestList(getIMEINumber(), context, 1, API_KEY);
-
-            final String di = getIMEINumber();
-            countDownTimer = new CountDownTimer(Long.MAX_VALUE, 10000) {
-
-                // This is called after every 10 sec interval.
-                public void onTick(long millisUntilFinished) {
-                    networkConnection.register(Long.parseLong(di), di,API_KEY, 1, getIP(), Conf.LOCAL_PORT);
-
-                    networkConnection.getDestList(di, context, 1, API_KEY);
-                }
-
-                public void onFinish() {
-                    start();
-                }
-            }.start();
-
-            setDestinationList();
-        }*/
-        stopService();
-
-
-        udpSocket = new UDPSocket(mHandler,Conf.LOCAL_PORT);
-        udpSocket.startRecv();
+        //stopService();
 
         int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
@@ -521,7 +448,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         status = true;
 
                         startStreaming();
-
+                        canTalk = false;
+                        buttonName = getText().toString();
+                        setText("Sending...");
                         break;
                     }
 
@@ -530,8 +459,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         Log.d("log", "onTouch: release");
                         status = false;
                         recorder.release();
-                        udpSocket.startRecv();
-                        //setDestinationList();
+                        blockTouch();
+                        timer = new CountDownTimer(3000, 100) {
+                        public void onTick(long millisUntilFinished) {
+                            //here you can have your logic to set text to edittext
+                        }
+                            public void onFinish() {
+                                canTalk = true;
+                                setText(buttonName);
+                                unblockTouch();
+                            }
+                        }.start();
 
                         break;
                     }
@@ -574,87 +512,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         return IMEINumber;
     }
 
-    @NonNull
-    private String getIP() {
 
-                String actualConnectedToNetwork = null;
-                ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                if (connManager != null) {
-                        {
-                            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
-                            if (mWifi.isConnected()) {
-                                actualConnectedToNetwork = getWifiIp();
-                            }
-                        }
-
-                }
-                if (TextUtils.isEmpty(actualConnectedToNetwork)) {
-                    actualConnectedToNetwork = getNetworkInterfaceIpAddress();
-                }
-                if (TextUtils.isEmpty(actualConnectedToNetwork)) {
-                    actualConnectedToNetwork = "127.0.0.1";
-                }
-                return actualConnectedToNetwork;
-
-    }
-
-    @Nullable
-    private String getWifiIp() {
-        final WifiManager mWifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (mWifiManager != null && mWifiManager.isWifiEnabled()) {
-            int ip = mWifiManager.getConnectionInfo().getIpAddress();
-            return (ip & 0xFF) + "." + ((ip >> 8) & 0xFF) + "." + ((ip >> 16) & 0xFF) + "."
-                    + ((ip >> 24) & 0xFF);
-        }
-        return null;
-    }
-
-    @Nullable
-    public String getNetworkInterfaceIpAddress() {
-        try {
-            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                NetworkInterface networkInterface = en.nextElement();
-                for (Enumeration<InetAddress> enumIpAddr = networkInterface.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                    InetAddress inetAddress = enumIpAddr.nextElement();
-                    if (!inetAddress.isLoopbackAddress() && inetAddress instanceof Inet4Address) {
-                        String host = inetAddress.getHostAddress();
-                        if (!TextUtils.isEmpty(host)) {
-                            return host;
-                        }
-                    }
-                }
-
-            }
-        } catch (Exception ex) {
-            Log.e("IP Address", "getLocalIpAddress", ex);
-        }
-        return null;
-    }
-    private final Handler mHandler= new Handler(){
-        @Override
-        public void handleMessage(Message msg){
-            switch (msg.what){
-                case MESSAGE_WRITE:
-                    byte[]writeBuf =(byte[])msg.obj;
-                    String writeMessage=new String(writeBuf);
-                    break;
-                case MESSAGE_READ:
-                    byte[]readBuf =(byte[])msg.obj;
-
-                    String readMessage=new String(readBuf,0,msg.arg1);
-                    try {
-                        PlayShortAudioFileViaAudioTrack(readBuf);
-                        //playMp3(readBuf);
-                    }
-                    catch(Exception ex){}
-
-
-                    //mConversationArrayAdapter.add("Servidor"+": " +readMessage);
-
-                    break;
-            }
-        }
-    };
     private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException
     {
         if (at!=null) {
@@ -666,13 +524,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
         else
             Log.d("TCAudio", "audio track is not initialised ");
-    }
-    private void stopService()
-    {
-        Intent intent = new Intent(context, MessengerService.class);
-        context.stopService(intent);
-
-
     }
 
     private StrokeGradientDrawable createDrawable(int color, int cornerRadius, int strokeWidth) {
@@ -708,7 +559,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public void setIconLeft(@DrawableRes int icon) {
         setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
     }
-    //private BlockingDeque<String> queue = new LinkedBlockingDeque<String>();
 
 
     private class Padding {

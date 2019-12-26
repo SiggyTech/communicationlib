@@ -1,4 +1,4 @@
-package com.siggytech.utils.notificatorlib;
+package com.siggytech.utils.communication;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

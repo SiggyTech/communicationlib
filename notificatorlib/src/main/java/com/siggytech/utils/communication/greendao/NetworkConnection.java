@@ -1,24 +1,20 @@
-package com.siggytech.utils.notificatorlib.greendao;
+package com.siggytech.utils.communication.greendao;
 
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import android.content.Context;
-import android.util.Log;
-import com.siggytech.utils.notificatorlib.Conf;
 
-import org.json.JSONArray;
-import org.json.JSONException;
+import android.util.Log;
+import com.siggytech.utils.communication.Conf;
+
 import org.json.JSONObject;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+
 import java.util.ArrayList;
 
 
