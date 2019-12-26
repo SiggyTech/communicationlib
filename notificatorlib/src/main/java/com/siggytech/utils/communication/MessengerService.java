@@ -142,7 +142,7 @@ public class MessengerService extends Service {
         clientCoinPrice = new OkHttpClient();
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_MSG_PORT + "?imei=" + imei + "&groupId=" + idgroup + "&API_KEY="+ api_key +"&clientName=" + clientname;
-        Log.e(TAG, url);
+       // Log.e(TAG, url);
 
         Request requestCoinPrice = new Request.Builder().url(url).build();
 
@@ -151,14 +151,14 @@ public class MessengerService extends Service {
             public void onOpen(WebSocket webSocket, Response response) {
                 responseObj = response;
                 //webSocket.send("{ \"packageName\": \"packageName\", \"messageText\": \"messageText\", \"messageTittle\": \"messageTittle\", \"from\": \"BLUEBIRD1\" }");
-                Log.e(TAG, "onOpen");
+               // Log.e(TAG, "onOpen");
             }
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
 
                 try {
-                    Log.e(TAG, "MESSAGE String: " + text);
+                   // Log.e(TAG, "MESSAGE String: " + text);
                     JSONObject obj = new JSONObject(text);
 
                     addNotification(obj.getString("messageTittle"), obj.getString("messageText"), obj.getString("packageName"), obj.getInt("resIcon"), obj.getString("notificationMessage"));
@@ -170,14 +170,14 @@ public class MessengerService extends Service {
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+               // Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
             }
 
             @Override
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
-                Log.e(TAG, "CLOSE: " + code + " " + reason);
+               // Log.e(TAG, "CLOSE: " + code + " " + reason);
             }
 
             @Override

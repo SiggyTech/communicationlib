@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
 
@@ -20,14 +21,16 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
-    String name = "HUAWEI1";
-    //String name = "BLACKVIEW1";
+    //String name = "HUAWEI1";
+    String name = "BLACKVIEW1";
     //String name = "BLUEBIRD1";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
 
         onNewIntent(getIntent());
 
@@ -38,29 +41,53 @@ public class MainActivity extends AppCompatActivity {
                     android.Manifest.permission.READ_PHONE_STATE,
                     Manifest.permission.ACCESS_NETWORK_STATE,
                     Manifest.permission.ACCESS_WIFI_STATE,
-                    Manifest.permission.INTERNET
+                    Manifest.permission.INTERNET,
+                    Manifest.permission.RECORD_AUDIO
 
 
             };
             if (!hasPermissions(this, PERMISSIONS)) {
                 ActivityCompat.requestPermissions(this, PERMISSIONS, 112 );
             } else {
-                //do here
+                System.out.println(getApplicationContext().getPackageName());
+                System.out.println(getResources().getIdentifier("siggy_logo",
+                        "drawable", getPackageName()));
+
+                addPTTButton();
+
+                subscribeForNotifications();
             }
-        } else {
-            //do here
+        }
+        else{
+            System.out.println(getApplicationContext().getPackageName());
+            System.out.println(getResources().getIdentifier("siggy_logo",
+                    "drawable", getPackageName()));
+
+            addPTTButton();
+
+            subscribeForNotifications();
         }
 
 
-        System.out.println(getApplicationContext().getPackageName());
-        System.out.println(getResources().getIdentifier("siggy_logo",
-                "drawable", getPackageName()));
 
 
-        addPTTButton();
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
 
-        subscribeForNotifications();
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
+            System.out.println(getApplicationContext().getPackageName());
+            System.out.println(getResources().getIdentifier("siggy_logo",
+                    "drawable", getPackageName()));
+
+            addPTTButton();
+
+            subscribeForNotifications();
+        } else {
+                    // exit app
+        }
     }
     private void subscribeForNotifications(){
         NotificationAgent na = new NotificationAgent();
@@ -70,9 +97,6 @@ public class MainActivity extends AppCompatActivity {
         linearLayout = findViewById(R.id.linear1);
         pttButton = new PTTButton(this, this, 1, API_KEY, name);
 
-
-        //pttButton = new PTTButton(this, this, 1, "QQQQ-WWWW-EEEE-RRRR", true, "192.168.1.87", 7778);
-        //pttButton = new PTTButton(this, this, 1, "QQQQ-WWWW-EEEE-RRRR");
         pttButton.setWidth(200);
         pttButton.setHeight(200);
         pttButton.setText("Hablarz3!");

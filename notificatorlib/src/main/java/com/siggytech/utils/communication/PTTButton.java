@@ -348,7 +348,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         OkHttpClient clientCoinPrice = new OkHttpClient();
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
-        Log.e(TAG, url);
+        //Log.e(TAG, url);
 
         Request requestCoinPrice = new Request.Builder().url(url).build();
 
@@ -361,19 +361,19 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         "    \"type\": \"subscribe\",\n" +
                         "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
                         "}");*/
-                Log.e(TAG, "onOpen");
+                //Log.e(TAG, "onOpen");
             }
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
-                Log.e(TAG, "MESSAGE String: " + text);
+                //Log.e(TAG, "MESSAGE String: " + text);
             }
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
 
 
-                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+                //Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 try
                 {
 
@@ -388,7 +388,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
-                Log.e(TAG, "CLOSE: " + code + " " + reason);
+               // Log.e(TAG, "CLOSE: " + code + " " + reason);
             }
 
             @Override
