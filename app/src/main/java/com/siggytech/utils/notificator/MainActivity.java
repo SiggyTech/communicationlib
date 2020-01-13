@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.siggytech.utils.communication.ChatListView;
 import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
@@ -21,16 +22,19 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
-    //String name = "HUAWEI1";
-    String name = "BLACKVIEW1";
+    String name = "HUAWEI1";
+    //String name = "BLACKVIEW1";
     //String name = "BLUEBIRD1";
+    ChatListView chatListView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
+        //Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
+        Conf.SERVER_IP = "192.168.1.148";
 
         onNewIntent(getIntent());
 
@@ -53,9 +57,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                addPTTButton();
+                //addPTTButton();
 
-                subscribeForNotifications();
+                //subscribeForNotifications();
+
+                addChatListView();
             }
         }
         else{
@@ -63,9 +69,11 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            addPTTButton();
+            //addPTTButton();
 
-            subscribeForNotifications();
+            //subscribeForNotifications();
+
+
         }
 
 
@@ -94,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         na.register(this, 1, API_KEY, name);
     }
     private void addPTTButton(){
-        linearLayout = findViewById(R.id.linear1);
+
         pttButton = new PTTButton(this, this, 1, API_KEY, name);
 
         pttButton.setWidth(200);
@@ -127,5 +135,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return true;
+    }
+    public void addChatListView()
+    {
+        chatListView = new ChatListView(this, 1, API_KEY, name);
+        linearLayout.addView(chatListView);
+
     }
 }

@@ -100,8 +100,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
 
-
-
         initView();
     }
     public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, String nameClient) {
