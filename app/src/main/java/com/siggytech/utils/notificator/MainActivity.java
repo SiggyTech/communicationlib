@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.siggytech.utils.communication.ChatControl;
 import com.siggytech.utils.communication.ChatListView;
 import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.NotificationAgent;
@@ -25,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
     String name = "HUAWEI1";
     //String name = "BLACKVIEW1";
     //String name = "BLUEBIRD1";
-    ChatListView chatListView;
+    ChatControl ch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,8 +139,7 @@ public class MainActivity extends AppCompatActivity {
     }
     public void addChatListView()
     {
-        chatListView = new ChatListView(this, 1, API_KEY, name);
-        linearLayout.addView(chatListView);
-
+        ch = new ChatControl(this, 1, API_KEY, name, "Juanin");
+        linearLayout.addView(ch);
     }
 }

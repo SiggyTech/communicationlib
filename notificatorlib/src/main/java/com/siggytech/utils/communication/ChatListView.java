@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -11,11 +12,15 @@ import android.widget.ListView;
 
 import org.json.JSONObject;
 
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -32,6 +37,7 @@ public class ChatListView extends ListView {
     Context context;
     private int idGroup;
     private String API_KEY;
+    private String imei;
     private String name;
     private boolean newMessage = false;
     private String messageText;
@@ -47,10 +53,46 @@ public class ChatListView extends ListView {
                 SetAdapter();
                 newMessage = false;
             }
-            timerHandler.postDelayed(timerRunnable,1000);
+
+            //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+            //StrictMode.setThreadPolicy(policy);
+
+            //String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
+
+            //Socket socket = Socket.Builder.with(url).build().connect();
+            //socket.onEvent(Socket.EVENT_OPEN, socketOpenListener);
+            //socket.onEvent(Socket.EVENT_RECONNECT_ATTEMPT, .....);
+            //socket.onEvent(Socket.EVENT_CLOSED, .....);
+            //socket.onEventResponse("Some event", socketPairListener);
+            //socket.send( "Some Event", "{\n" +
+            //        "    \"type\": \"subscribe\",\n" +
+            //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
+            //        "}");
+            //socket.sendOnOpen("Some event", "{\n" +
+            //        "    \"type\": \"subscribe\",\n" +
+            //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
+            //        "}");
+
+            timerHandler.postDelayed(timerRunnable,100);
         }
     };
 
+    public void sendMessage(String from, String text){
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+        StrictMode.setThreadPolicy(policy);
+
+        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
+
+        Socket socket = Socket.Builder.with(url).build().connect();
+        socket.sendOnOpen("Message", "{\n" +
+                "    \"from\": \"" + from +  "\",\n" +
+                "    \"text\": \"" + text +  "\" \n" +
+                "}");
+        lsChat.add(new ChatModel(1L, text, from)); //TODO agregar fecha a la caja de texto y from
+        SetAdapter();
+    }
     public ChatListView (Context context, int idGroup, String API_KEY, String nameClient){
         super(context);
         this.context = context;
@@ -58,11 +100,13 @@ public class ChatListView extends ListView {
         this.API_KEY = API_KEY;
         this.name = nameClient;
 
-        customAdapterBubble = new CustomAdapterBubble(lsChat, context);
+        imei = getIMEINumber();
+
         timerHandler.postDelayed(timerRunnable,0);
 
         try {
             webSocketConnection();
+
         }
         catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
@@ -104,8 +148,6 @@ public class ChatListView extends ListView {
                     messageText = jObject.getString("messageText");
                     dateTime = jObject.getString("dateTime");
                     newMessage = true;
-
-
                 }
                 catch(Exception ex){
                     Log.e(TAG, ex.getMessage());
@@ -116,7 +158,6 @@ public class ChatListView extends ListView {
             public void onMessage(WebSocket webSocket, ByteString bytes) {
                 try
                 {
-
                     Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 }
                 catch(Exception ex){
