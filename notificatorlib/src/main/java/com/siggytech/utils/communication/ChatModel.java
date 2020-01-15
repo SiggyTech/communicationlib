@@ -7,15 +7,26 @@ public class ChatModel {
     private String textMessage;
 
     private String from;
+    private String dateTime;
 
 
-    public ChatModel(Long id, String textMessage, String from) {
+    public ChatModel(Long id, String textMessage, String from, String dateTime) {
         this.id = id;
         this.textMessage = textMessage;
         this.from = from;
+        this.dateTime = dateTime;
     }
-    public String getMessage() {
+    public Long getIdMessage() {
+        return this.id;
+    }
+    public String getTextMessage() {
         return this.textMessage;
+    }
+    public String getFromMessage() {
+        return this.from;
+    }
+    public String getDateTimeMessage() {
+        return this.dateTime;
     }
 
 

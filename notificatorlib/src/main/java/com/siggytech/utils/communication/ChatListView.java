@@ -49,9 +49,13 @@ public class ChatListView extends ListView {
         public void run() {
 
             if(newMessage) {
-                lsChat.add(new ChatModel(1L, messageText, from)); //TODO agregar fecha a la caja de texto
-                SetAdapter();
-                newMessage = false;
+                try{
+                    newMessage = false;
+                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime)); //TODO agregar fecha a la caja de texto
+                    SetAdapter();
+                }
+                catch (Exception e){e.printStackTrace();}
+
             }
 
             //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -78,7 +82,8 @@ public class ChatListView extends ListView {
         }
     };
 
-    public void sendMessage(String from, String text){
+    public void sendMessage(String from, String text, String dateTime){
+        try{
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
         StrictMode.setThreadPolicy(policy);
@@ -88,10 +93,14 @@ public class ChatListView extends ListView {
         Socket socket = Socket.Builder.with(url).build().connect();
         socket.sendOnOpen("Message", "{\n" +
                 "    \"from\": \"" + from +  "\",\n" +
-                "    \"text\": \"" + text +  "\" \n" +
+                "    \"text\": \"" + text +  "\", \n" +
+                "    \"dateTime\": \"" + dateTime +  "\" \n" +
                 "}");
-        lsChat.add(new ChatModel(1L, text, from)); //TODO agregar fecha a la caja de texto y from
+
+        lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
         SetAdapter();
+        }
+        catch(Exception e){e.printStackTrace();}
     }
     public ChatListView (Context context, int idGroup, String API_KEY, String nameClient){
         super(context);
@@ -144,9 +153,9 @@ public class ChatListView extends ListView {
                 Log.e(TAG, "MESSAGE String: " + text); //here comes the message
                 try {
                     JSONObject jObject = new JSONObject(text);
-                    from = jObject.getString("from");
-                    messageText = jObject.getString("messageText");
-                    dateTime = jObject.getString("dateTime");
+                    from = new JSONObject(jObject.getString("data")).getString("from");
+                    messageText = new JSONObject(jObject.getString("data")).getString("text");
+                    dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
                     newMessage = true;
                 }
                 catch(Exception ex){

@@ -20,6 +20,9 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -125,8 +128,27 @@ public class ChatControl extends RelativeLayout {
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                abc.sendMessage(userName, mOutEditText.getText().toString());
-                mOutEditText.setText("");
+                try {
+                    String m = AESUtils.encrypt(mOutEditText.getText().toString());
+                    SimpleDateFormat sdf;
+                    switch(Conf.DATE_FORMAT) {
+                        case 0:
+                            sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            break;
+                        case 1:
+                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                            break;
+                        default:
+                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                            break;
+                    }
+
+                    Date now = new Date();
+                    String strDate = sdf.format(now);
+                    abc.sendMessage(userName, m, strDate);
+                    mOutEditText.setText("");
+                }
+                catch(Exception e){e.printStackTrace();}
             }
         });
 

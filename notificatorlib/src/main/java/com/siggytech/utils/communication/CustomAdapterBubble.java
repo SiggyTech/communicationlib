@@ -50,20 +50,24 @@ public class CustomAdapterBubble extends BaseAdapter {
 
         if (convertView == null) {
 
-            vi = inflater.inflate(R.layout.talk_cell_layout, null);
+            vi = inflater.inflate(R.layout.chat_cell_out, null);
 
             holder = new ViewHolder();
 
-            holder.text_cell = vi.findViewById(R.id.text_cell);
-            holder.image = vi.findViewById(R.id.cell_icon);
+            holder.chat_out_from = vi.findViewById(R.id.chat_out_name);
+            holder.chat_out_text = vi.findViewById(R.id.chat_out_text);
+            holder.chat_text_datetime = vi.findViewById(R.id.chat_text_datetime);
+            //holder.image = vi.findViewById(R.id.cell_icon);
 
             vi.setTag(holder);
         }
         else
             holder = (ViewHolder)vi.getTag();
 
-        holder.text_cell.setText(lstChat.get(position).getMessage());
-        holder.image.setImageResource(R.drawable.ic_launcher_round);
+        holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
+        holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
+        holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
+        //holder.image.setImageResource(R.drawable.ic_launcher_round);
 
 
         return vi;
@@ -74,8 +78,9 @@ public class CustomAdapterBubble extends BaseAdapter {
     }
     class ViewHolder {
 
-        TextView text_cell;
-        ImageView image;
+        TextView chat_out_from;
+        TextView chat_out_text;
+        TextView chat_text_datetime;
 
     }
 

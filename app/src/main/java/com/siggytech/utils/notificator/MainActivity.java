@@ -139,7 +139,9 @@ public class MainActivity extends AppCompatActivity {
     }
     public void addChatListView()
     {
-        ch = new ChatControl(this, 1, API_KEY, name, "Juanin");
+        Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
+        Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
+        ch = new ChatControl(this, 1, API_KEY, name, "Felipe");//user name to show to others
         linearLayout.addView(ch);
     }
 }
