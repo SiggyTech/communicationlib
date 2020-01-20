@@ -104,13 +104,13 @@ public class ChatControl extends RelativeLayout {
         rl.addView(abc);
         this.addView(rl);
         rl.setLayoutParams(abc_LayoutParams);
-        rl.setId(generateViewId());
+        rl.setId(Utils.generateViewId());
 
         mOutEditText = new EditText(context);
-        mOutEditText.setId(generateViewId());
+        mOutEditText.setId(Utils.generateViewId());
         mSendButton = new Button(context);
-        mSendButton.setId(generateViewId());
-        mSendButton.setText("Enviar");
+        mSendButton.setId(Utils.generateViewId());
+        mSendButton.setText(Conf.SEND_BUTTON_TEXT);
 
         RelativeLayout.LayoutParams mOutEditTextParams = new LayoutParams(300,LayoutParams.WRAP_CONTENT);
         mOutEditTextParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
