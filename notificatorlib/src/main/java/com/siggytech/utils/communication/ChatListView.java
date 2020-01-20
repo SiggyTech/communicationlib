@@ -14,7 +14,9 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import okhttp3.FormBody;
@@ -141,10 +143,10 @@ public class ChatListView extends ListView {
         webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                webSocket.send("{\n" +
-                        "    \"type\": \"subscribe\",\n" +
-                        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
-                        "}");
+                //webSocket.send("{\n" +
+                //        "    \"type\": \"subscribe\",\n" +
+                //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
+                //        "}");
                 Log.e(TAG, "onOpen");
             }
 
@@ -155,7 +157,25 @@ public class ChatListView extends ListView {
                     JSONObject jObject = new JSONObject(text);
                     from = new JSONObject(jObject.getString("data")).getString("from");
                     messageText = new JSONObject(jObject.getString("data")).getString("text");
-                    dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
+                    //dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
+                    SimpleDateFormat sdf;
+                    switch(Conf.DATE_FORMAT) {
+                        case 0:
+                            sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            break;
+                        case 1:
+                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                            break;
+                        default:
+                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                            break;
+                    }
+
+                    Date now = new Date();
+                    String strDate = sdf.format(now);
+
+
+                    dateTime = strDate;
                     newMessage = true;
                 }
                 catch(Exception ex){

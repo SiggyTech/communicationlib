@@ -12,7 +12,7 @@
         android:layout_gravity="center_vertical|left"
         android:layout_marginLeft="14dp"
         android:layout_weight="1"
-        android:text="Texto en Ingles"
+        android:text=""
         android:textStyle="bold"/>
     <TextView
         android:id="@+id/chat_out_text"
@@ -21,15 +21,15 @@
         android:layout_gravity="center_vertical|left"
         android:layout_marginLeft="16dp"
         android:layout_weight="1"
-        android:text="Texto en Ingles" />
+        android:text="" />
     <TextView
         android:id="@+id/chat_text_datetime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical|right"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="8dp"
         android:layout_weight="1"
-        android:text="Texto en Ingles"
+        android:text=""
         android:textStyle="italic"/>
 
 </LinearLayout>
