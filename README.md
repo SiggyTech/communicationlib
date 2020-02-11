@@ -1,5 +1,5 @@
 # CommunicationLib
-1. Add the Maven reference into your gradle file.
+## 1. Add the Maven reference into your gradle file.
                                    
                                     allprojects 
                                     {
@@ -11,7 +11,7 @@
                                     }
                                 
                             
-2. Add the gradle reference to last version api.
+## 2. Add the gradle reference to last version api.
                                    
                                     dependencies 
                                     {
@@ -19,7 +19,7 @@
                                     }
                                 
                             
-3. Improve the next code for Push To Talk service:
+## 3. Improve the next code for Push To Talk service.
 
     public class MainActivity extends Activity {
     PTTButton pttButton;
@@ -44,14 +44,13 @@
         pttButton.setText("Let´s talk!");
 
         linearLayout.addView(pttButton);
-
-
     }
 }
-                                    
+                                
                                 
                             
 Improve the next code for Private Chat service:
+                               
                                 public class MainActivity extends Activity {
 
     ChatControl ch;
@@ -76,6 +75,6 @@ Improve the next code for Private Chat service:
         linearLayout.addView(ch);
     }
 }
-                                    
+                                
                                 
                             
