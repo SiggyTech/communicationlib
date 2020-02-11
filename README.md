@@ -20,8 +20,8 @@
                                 
                             
 3. Improve the next code for Push To Talk service:
-                                public class MainActivity extends Activity {
 
+    public class MainActivity extends Activity {
     PTTButton pttButton;
     LinearLayout linearLayout;
     String API_KEY = "YOURAPIKEY";
