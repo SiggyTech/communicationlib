@@ -19,7 +19,7 @@
                                     }
                                 
                             
-## 3. Improve the next code for Push To Talk service.
+## Improve the next code for Push To Talk service.
 
     public class MainActivity extends Activity {
     PTTButton pttButton;
@@ -49,7 +49,7 @@
                                 
                                 
                             
-Improve the next code for Private Chat service:
+## Improve the next code for Private Chat service:
                                
                                 public class MainActivity extends Activity {
 
@@ -73,8 +73,7 @@ Improve the next code for Private Chat service:
         Conf.LOCAL_USER = "Me"; //user name to show in my device. Default: Me
         ch = new ChatControl(this, groupId, API_KEY, name, username);//user name to show to others
         linearLayout.addView(ch);
-    }
-}
+    }}
                                 
                                 
                             
