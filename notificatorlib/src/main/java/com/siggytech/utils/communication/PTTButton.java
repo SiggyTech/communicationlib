@@ -112,7 +112,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         initView();
 
-
+ 
     }
     CountDownTimer timer;
     boolean canTalk = true;
