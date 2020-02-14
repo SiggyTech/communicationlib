@@ -2,7 +2,6 @@ package com.siggytech.utils.communication;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -15,9 +14,6 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.StrictMode;
@@ -28,21 +24,16 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.StateSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.util.Enumeration;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -112,7 +103,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         initView();
 
- 
+
     }
     CountDownTimer timer;
     boolean canTalk = true;
@@ -151,7 +142,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 //subscribeThread.resume();
                 break;
         }
-       return true;
+        return true;
     }
 
     public class MyRunnable implements Runnable {
@@ -196,13 +187,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     recorder.startRecording();
 
-                    while(status == true) {
-
+                    while(status) {
                         minBufSize = recorder.read(buffer, 0, buffer.length);
                         packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                         socket.send(packet);
                         System.out.println("MinBufferSize: " +minBufSize);
-
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -375,7 +364,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 try
                 {
 
-                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
+                    PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 }
                 catch(Exception ex){
                     System.out.print(ex.getMessage());
@@ -386,7 +375,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
-               // Log.e(TAG, "CLOSE: " + code + " " + reason);
+                // Log.e(TAG, "CLOSE: " + code + " " + reason);
             }
 
             @Override
@@ -459,9 +448,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         recorder.release();
                         blockTouch();
                         timer = new CountDownTimer(3000, 100) {
-                        public void onTick(long millisUntilFinished) {
-                            //here you can have your logic to set text to edittext
-                        }
+                            public void onTick(long millisUntilFinished) {
+                                //here you can have your logic to set text to edittext
+                            }
                             public void onFinish() {
                                 canTalk = true;
                                 setText(buttonName);
@@ -511,14 +500,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
 
-    private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException
-    {
+    private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException {
         if (at!=null) {
-
             at.write(byteData, 0, byteData.length);
             at.play();
-
-
         }
         else
             Log.d("TCAudio", "audio track is not initialised ");
@@ -543,7 +528,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
     }
     public void setIcon(@DrawableRes final int icon) {
-    // post is necessary, to make sure getWidth() doesn't return 0
+        // post is necessary, to make sure getWidth() doesn't return 0
         post(new Runnable() {
             @Override
             public void run() {
