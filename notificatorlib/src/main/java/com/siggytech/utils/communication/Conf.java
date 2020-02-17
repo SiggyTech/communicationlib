@@ -1,5 +1,7 @@
 package com.siggytech.utils.communication;
 
+import android.graphics.Color;
+
 public class Conf {
 
     public static String SERVER_IP = "";//cloud
@@ -11,5 +13,8 @@ public class Conf {
     public static int DATE_FORMAT = 0; //1: "yyyy-MM-dd HH:mm:ss" 2:"dd-MM-yyyy HH:mm:ss"
     public static String LOCAL_USER = "Me";
     public static String SEND_BUTTON_TEXT = "Send";
+    public static int CHAT_COLOR_FROM = Color.BLACK;
+    public static int CHAT_COLOR_TEXT = Color.BLACK;
+    public static int CHAT_COLOR_DATE = Color.BLACK;
 
 }

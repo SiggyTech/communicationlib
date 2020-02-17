@@ -67,6 +67,10 @@ public class CustomAdapterBubble extends BaseAdapter {
         holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
         holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
         holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
+
+        holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
+        holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
+        holder.chat_text_datetime.setTextColor(Conf.CHAT_COLOR_DATE);
         //holder.image.setImageResource(R.drawable.ic_launcher_round);
 
 
