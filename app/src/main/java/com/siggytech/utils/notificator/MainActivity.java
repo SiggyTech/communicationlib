@@ -58,11 +58,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                //addPTTButton();
+                addPTTButton();
 
                 //subscribeForNotifications();
 
-                addChatListView();
+                //addChatListView();
             }
         }
         else{
@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         pttButton.setHeight(200);
         pttButton.setText("Hablar!");
 
-        linearLayout.addView(pttButton);
+        //linearLayout.addView(pttButton);
 
 
     }

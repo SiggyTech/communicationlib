@@ -1,6 +1,5 @@
 package com.siggytech.utils.communication;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -57,7 +56,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private StrokeGradientDrawable mDrawablePressed;
     private Context context;
     private static final int REQUEST = 112;
-    Activity activity;
+
     AudioTrack at;
 
     public static final int MESSAGE_READ = 1;
@@ -82,21 +81,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private OkHttpClient client;
     private String name = "";
 
-    boolean toServer;
 
-    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY) {
+    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient) {
         super(context);
         this.context = context;
-        this.activity = activity;
-        this.idGroup = idGroup;
-        this.API_KEY = API_KEY;
-
-        initView();
-    }
-    public PTTButton(Context context, Activity activity, int idGroup, String API_KEY, String nameClient) {
-        super(context);
-        this.context = context;
-        this.activity = activity;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
         this.name = nameClient;
@@ -405,16 +393,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
-
-
-
-        if ( ContextCompat.checkSelfPermission( activity, android.Manifest.permission.READ_PHONE_STATE ) != PackageManager.PERMISSION_GRANTED ) {
-
-            ActivityCompat.requestPermissions(activity, new String[] {  android.Manifest.permission.READ_PHONE_STATE  },
-                    READ_PHONE_STATE );
-        }
-
-        //stopService();
 
         int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);
