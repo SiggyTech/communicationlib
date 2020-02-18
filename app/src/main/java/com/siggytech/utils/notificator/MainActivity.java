@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void addPTTButton(){
 
-        pttButton = new PTTButton(this, this, 1, API_KEY, name);
+        pttButton = new PTTButton(this, 1, API_KEY, name);
 
         pttButton.setWidth(200);
         pttButton.setHeight(200);

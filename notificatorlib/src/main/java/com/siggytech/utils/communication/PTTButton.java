@@ -122,7 +122,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 System.out.println("Button pressed");
                 status = true;
                 //subscribeThread.stop();
-                break;
+                return true;
             case MotionEvent.ACTION_UP:
                 System.out.println("Button released");
                 status = false;
@@ -288,7 +288,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         canTalk = false;
                         buttonName = getText().toString();
                         setText("Sending...");
-                        break;
+                        return true;
                     }
 
                     case MotionEvent.ACTION_UP:
@@ -416,7 +416,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         canTalk = false;
                         buttonName = getText().toString();
                         setText("Sending...");
-                        break;
+                        return true;
                     }
 
                     case MotionEvent.ACTION_UP:
