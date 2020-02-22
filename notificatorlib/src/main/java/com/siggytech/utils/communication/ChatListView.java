@@ -205,8 +205,6 @@ public class ChatListView extends ListView {
                 }
 
             }.start();
-
-        socket.close();
         }
         catch(Exception e){
             e.printStackTrace();
