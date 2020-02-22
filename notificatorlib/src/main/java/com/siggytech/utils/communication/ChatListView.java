@@ -1,28 +1,35 @@
 package com.siggytech.utils.communication;
 
+import android.annotation.SuppressLint;
+import android.app.ActivityManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.StrictMode;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
@@ -45,6 +52,82 @@ public class ChatListView extends ListView {
     private String messageText;
     private String from;
     private String dateTime;
+    private String messageTittle, notificationText, packageName, notificationMessage;
+    int resIcon;
+
+    public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
+
+        PackageManager pmg = context.getPackageManager();
+        String name = "";
+        Intent LaunchIntent = null;
+
+        try {
+            if (pmg != null) {
+                ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
+                name = (String) pmg.getApplicationLabel(app);
+                LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
+            }
+            Log.d("intent.getExtras", "Found!: " + name);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        Intent intent = LaunchIntent; // new Intent();
+        intent.putExtra("notificationMessage", notificationMessage);
+        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+
+        Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher_round)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(pIntent)
+                .setSound(uri)
+                .setSmallIcon(resIcon)
+                .setAutoCancel(true)
+                ;
+
+        // Add as notification
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            String channelId = "Your_channel_id";
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Channel human readable title",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            manager.createNotificationChannel(channel);
+            builder.setChannelId(channelId);
+
+        }
+
+        manager.notify(0, builder.build());
+
+        PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+        boolean isScreenOn = pm.isScreenOn();
+        Log.e("screen on.........", ""+isScreenOn);
+        if(isScreenOn==false)
+        {
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,"MyLock");
+            wl.acquire(10000);
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
+
+            wl_cpu.acquire(10000);
+        }
+    }
+
+    public boolean isRunning(Context ctx) {
+        ActivityManager activityManager = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> tasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
+
+        for (ActivityManager.RunningTaskInfo task : tasks) {
+            if (ctx.getPackageName().equalsIgnoreCase(task.baseActivity.getPackageName()))
+                return true;
+        }
+
+        return false;
+    }
 
     Runnable timerRunnable = new Runnable() {
         @Override
@@ -52,6 +135,12 @@ public class ChatListView extends ListView {
 
             if(newMessage) {
                 try{
+
+                    //if(!isRunning(context)){
+                    //    addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
+                    //}
+
+
                     newMessage = false;
                     lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime)); //TODO agregar fecha a la caja de texto
                     SetAdapter();
@@ -86,7 +175,11 @@ public class ChatListView extends ListView {
 
     public void sendMessage(String from, String text, String dateTime){
         try{
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+
+
+
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
         StrictMode.setThreadPolicy(policy);
 
@@ -101,10 +194,13 @@ public class ChatListView extends ListView {
 
         lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
         SetAdapter();
+        socket.close();
         }
-        catch(Exception e){e.printStackTrace();}
+        catch(Exception e){
+            e.printStackTrace();
+        }
     }
-    public ChatListView (Context context, int idGroup, String API_KEY, String nameClient){
+    public ChatListView (Context context, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
         super(context);
         this.context = context;
         this.idGroup = idGroup;
@@ -113,11 +209,15 @@ public class ChatListView extends ListView {
 
         imei = getIMEINumber();
 
+        this.messageTittle = messageTittle;
+        this.notificationText = messageText;
+        this.packageName = packageName;
+        this.resIcon = resIcon;
+
         timerHandler.postDelayed(timerRunnable,0);
 
         try {
             webSocketConnection();
-
         }
         catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
@@ -154,6 +254,7 @@ public class ChatListView extends ListView {
             public void onMessage(WebSocket webSocket, String text) {
                 Log.e(TAG, "MESSAGE String: " + text); //here comes the message
                 try {
+                    notificationMessage = text; //message for activity passed through notification
                     JSONObject jObject = new JSONObject(text);
                     from = new JSONObject(jObject.getString("data")).getString("from");
                     messageText = new JSONObject(jObject.getString("data")).getString("text");

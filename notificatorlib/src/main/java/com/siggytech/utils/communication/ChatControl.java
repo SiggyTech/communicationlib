@@ -1,11 +1,21 @@
 package com.siggytech.utils.communication;
 
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,10 +48,16 @@ public class ChatControl extends RelativeLayout {
     public String userName;
     public int idGroup;
     private Context context;
-    ChatListView abc;
+    private ChatListView abc;
+    private String messageTittle;
+    private String messageText;
+    private String packageName;
+    private int resIcon;
+    private String notificationMessage;
 
 
-    public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName){
+    public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
+                       String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage){
         super(context);
         this.context = context;
         this.idGroup = idGroup;
@@ -49,6 +65,12 @@ public class ChatControl extends RelativeLayout {
         this.name = nameClient;
         this.imei = getIMEINumber();
         this.userName = userName;
+        this.messageTittle = messageTittle;
+        this.messageText = messageText;
+        this.packageName = packageName;
+        this.resIcon = resIcon;
+        this.notificationMessage = notificationMessage;
+
         initLayout(context);
     }
 
@@ -76,7 +98,15 @@ public class ChatControl extends RelativeLayout {
         this.setLayoutParams(root_LayoutParams);
 
         RelativeLayout rl = new RelativeLayout(context);
-        abc = new ChatListView(context, idGroup, api_key, name);
+
+        abc = new ChatListView(context, idGroup,
+                api_key,
+                name,
+                messageTittle,
+        messageText,
+        packageName,
+        resIcon);
+
         abc.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         abc.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         RelativeLayout.LayoutParams abc_LayoutParams =
@@ -178,5 +208,7 @@ public class ChatControl extends RelativeLayout {
     public LinearLayout getmSendButton() {
         return mSendButton;
     }
+
+
 }
 

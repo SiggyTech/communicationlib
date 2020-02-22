@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -22,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     PTTButton pttButton;
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
-    String API_KEY = "";
+    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     //String name = "";
     String name = "";
     //String name = "";
@@ -34,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
+        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
         //Conf.SERVER_IP = "192.168.1.148";
 
         onNewIntent(getIntent());
@@ -58,11 +59,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                addPTTButton();
+                //addPTTButton();
 
                 //subscribeForNotifications();
 
-                //addChatListView();
+                addChatListView();
             }
         }
         else{
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
             //addPTTButton();
 
             //subscribeForNotifications();
+            addChatListView();
 
 
         }
@@ -114,6 +116,19 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+    @SuppressWarnings("deprecation")
+    private String getIMEINumber() {
+        String IMEINumber = "";
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+            TelephonyManager telephonyMgr = (TelephonyManager) this.getSystemService(TELEPHONY_SERVICE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                IMEINumber = telephonyMgr.getImei();
+            } else {
+                IMEINumber = telephonyMgr.getDeviceId();
+            }
+        }
+        return IMEINumber;
+    }
     @Override
     public void onNewIntent(Intent intent){
         Bundle extras = intent.getExtras();
@@ -141,7 +156,10 @@ public class MainActivity extends AppCompatActivity {
     {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
-        ch = new ChatControl(this, 1, API_KEY, name, "Felipe");//user name to show to others
+        ch = new ChatControl(this, 6870, API_KEY, getIMEINumber(), "Felipe",
+                "Titulo del mensaje", "Texto del Mensaje",
+                getApplicationContext().getPackageName(),getResources().getIdentifier("siggy_logo",
+                "drawable", getPackageName()), "Mensaje a la actividad" );//user name to show to others
         linearLayout.addView(ch);
     }
 }

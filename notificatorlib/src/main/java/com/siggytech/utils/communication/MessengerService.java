@@ -249,8 +249,6 @@ public class MessengerService extends Service {
         String name = "";
         Intent LaunchIntent = null;
 
-
-
         try {
             if (pmg != null) {
                 ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
