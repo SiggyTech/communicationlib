@@ -55,6 +55,7 @@ public class ChatListView extends ListView {
     private String dateTime;
     private String messageTittle, notificationText, packageName, notificationMessage;
     int resIcon;
+    private Socket socket;
 
     public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
 
@@ -150,26 +151,6 @@ public class ChatListView extends ListView {
 
             }
 
-            //StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-
-            //StrictMode.setThreadPolicy(policy);
-
-            //String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
-
-            //Socket socket = Socket.Builder.with(url).build().connect();
-            //socket.onEvent(Socket.EVENT_OPEN, socketOpenListener);
-            //socket.onEvent(Socket.EVENT_RECONNECT_ATTEMPT, .....);
-            //socket.onEvent(Socket.EVENT_CLOSED, .....);
-            //socket.onEventResponse("Some event", socketPairListener);
-            //socket.send( "Some Event", "{\n" +
-            //        "    \"type\": \"subscribe\",\n" +
-            //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
-            //        "}");
-            //socket.sendOnOpen("Some event", "{\n" +
-            //        "    \"type\": \"subscribe\",\n" +
-            //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
-            //        "}");
-
             timerHandler.postDelayed(timerRunnable,100);
         }
     };
@@ -178,14 +159,7 @@ public class ChatListView extends ListView {
 
         try{
 
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-
-            StrictMode.setThreadPolicy(policy);
-
-            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
-
-            final Socket socket = Socket.Builder.with(url).build().connect();
-            socket.sendOnOpen("Message", "{\n" +
+            socket.send("Message", "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + text +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
@@ -215,6 +189,14 @@ public class ChatListView extends ListView {
         timerHandler.postDelayed(timerRunnable,0);
 
         try {
+            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+            StrictMode.setThreadPolicy(policy);
+
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
+
+            socket = Socket.Builder.with(url).build().connect();
+
             webSocketConnection();
         }
         catch(Exception ex){

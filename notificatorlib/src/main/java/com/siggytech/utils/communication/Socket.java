@@ -183,6 +183,9 @@ public class Socket {
         } catch (JSONException e) {
             Log.e(TAG,"Try to send data with wrong JSON format, data: "+data);
         }
+        catch (Exception ex){
+            Log.e(TAG, "Error on Socket.send: " + ex.getMessage());
+        }
         return false;
     }
 
