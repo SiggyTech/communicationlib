@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.StrictMode;
@@ -109,7 +110,7 @@ public class ChatListView extends ListView {
         Log.e("screen on.........", ""+isScreenOn);
         if(isScreenOn==false)
         {
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,"MyLock");
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,TAG);
             wl.acquire(10000);
             @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
 
@@ -177,15 +178,13 @@ public class ChatListView extends ListView {
         try{
 
 
-
-
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
         StrictMode.setThreadPolicy(policy);
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
 
-        Socket socket = Socket.Builder.with(url).build().connect();
+        final Socket socket = Socket.Builder.with(url).build().connect();
         socket.sendOnOpen("Message", "{\n" +
                 "    \"from\": \"" + from +  "\",\n" +
                 "    \"text\": \"" + text +  "\", \n" +
@@ -194,6 +193,19 @@ public class ChatListView extends ListView {
 
         lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
         SetAdapter();
+            new CountDownTimer(1000, 1) {
+
+                public void onTick(long millisUntilFinished) {
+
+                    //here you can have your logic to set text to edittext
+                }
+
+                public void onFinish() {
+                    socket.close();
+                }
+
+            }.start();
+
         socket.close();
         }
         catch(Exception e){
