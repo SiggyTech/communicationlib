@@ -175,36 +175,24 @@ public class ChatListView extends ListView {
     };
 
     public void sendMessage(String from, String text, String dateTime){
-        try{
 
+        try{
 
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
 
-        StrictMode.setThreadPolicy(policy);
+            StrictMode.setThreadPolicy(policy);
 
-        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
 
-        final Socket socket = Socket.Builder.with(url).build().connect();
-        socket.sendOnOpen("Message", "{\n" +
-                "    \"from\": \"" + from +  "\",\n" +
-                "    \"text\": \"" + text +  "\", \n" +
-                "    \"dateTime\": \"" + dateTime +  "\" \n" +
-                "}");
+            final Socket socket = Socket.Builder.with(url).build().connect();
+            socket.sendOnOpen("Message", "{\n" +
+                    "    \"from\": \"" + from +  "\",\n" +
+                    "    \"text\": \"" + text +  "\", \n" +
+                    "    \"dateTime\": \"" + dateTime +  "\" \n" +
+                    "}");
 
-        lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
-        SetAdapter();
-            new CountDownTimer(1000, 1) {
-
-                public void onTick(long millisUntilFinished) {
-
-                    //here you can have your logic to set text to edittext
-                }
-
-                public void onFinish() {
-                    socket.close();
-                }
-
-            }.start();
+            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
+            SetAdapter();
         }
         catch(Exception e){
             e.printStackTrace();
