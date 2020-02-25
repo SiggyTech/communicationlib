@@ -97,8 +97,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         else{
             sampleRate = 8000; //44100, 22050, 11025, 8000
             channelConfig = AudioFormat.CHANNEL_IN_MONO;
-            audioFormat = AudioFormat.ENCODING_PCM_8BIT;
-            minBufSize =  320; //AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+            audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+            minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
         }
 
         initView();
@@ -175,7 +175,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
 
 
-                    //minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                    minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
 
                     Log.d("VS","Buffer created of size " + minBufSize);

@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity {
     PTTButton pttButton;
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
-    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
+    String API_KEY = "";
     //String name = "";
     String name = "";
     //String name = "";
@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
         //Conf.SERVER_IP = "192.168.1.148";
 
         onNewIntent(getIntent());
@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void addPTTButton(){
 
-        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.LOW);
+        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
 
         pttButton.setWidth(200);
         pttButton.setHeight(200);
