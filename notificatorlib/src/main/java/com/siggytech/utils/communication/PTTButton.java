@@ -70,7 +70,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private static final int READ_PHONE_STATE = 0;
     private int idGroup;
 
-
     private UDPSocket udpSocket;
     private String API_KEY;
     private boolean flagListen = true;
@@ -82,15 +81,27 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String name = "";
 
 
-    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient) {
+    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, int quality) {
         super(context);
         this.context = context;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
         this.name = nameClient;
 
-        initView();
+        if(quality == AudioQuality.HIGH){
+            sampleRate = 44100 ;
+            channelConfig = AudioFormat.CHANNEL_IN_MONO;
+            audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+            minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+        }
+        else{
+            sampleRate = 8000; //44100, 22050, 11025, 8000
+            channelConfig = AudioFormat.CHANNEL_IN_MONO;
+            audioFormat = AudioFormat.ENCODING_PCM_8BIT;
+            minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+        }
 
+        initView();
 
     }
     CountDownTimer timer;
@@ -348,7 +359,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             public void onMessage(WebSocket webSocket, ByteString bytes) {
 
 
-                //Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 try
                 {
 
@@ -395,11 +406,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
 
         int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
+                audioFormat);
 
         at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, intSize, AudioTrack.MODE_STREAM);
-
+                audioFormat, intSize, AudioTrack.MODE_STREAM);
 
         this.setOnTouchListener(new View.OnTouchListener()
         {
@@ -592,4 +602,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
 
     }
+    public final class AudioQuality {
+        public static final int HIGH = 1;
+        public static final int LOW = 2;
+
+    }
 }
+

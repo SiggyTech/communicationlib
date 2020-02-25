@@ -159,7 +159,7 @@ public class ChatListView extends ListView {
 
         try{
 
-            socket.send("Message", "{\n" +
+            socket.sendOnOpen("Message", "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + text +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
