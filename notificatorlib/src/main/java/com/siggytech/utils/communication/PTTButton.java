@@ -84,17 +84,26 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         this.API_KEY = API_KEY;
         this.name = nameClient;
 
-        if(quality == AudioQuality.HIGH){
-            sampleRate = 44100 ;
-            channelConfig = AudioFormat.CHANNEL_IN_MONO;
-            audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-            minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-        }
-        else{
-            sampleRate = 8000; //44100, 22050, 11025, 8000
-            channelConfig = AudioFormat.CHANNEL_IN_MONO;
-            audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-            minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+        switch (quality){
+            case AudioQuality.HIGH:
+                sampleRate = 44100 ;
+                channelConfig = AudioFormat.CHANNEL_IN_MONO;
+                audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+                minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                break;
+            case AudioQuality.MEDIUM:
+                sampleRate = 8000; //44100, 22050, 11025, 8000
+                channelConfig = AudioFormat.CHANNEL_IN_MONO;
+                audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+                minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                break;
+            case AudioQuality.LOW:
+                sampleRate = 8000; //44100, 22050, 11025, 8000
+                channelConfig = AudioFormat.CHANNEL_IN_MONO;
+                audioFormat = AudioFormat.ENCODING_PCM_8BIT;
+                minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
+                break;
+
         }
 
         initView();
@@ -610,7 +619,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
     public final class AudioQuality {
         public static final int HIGH = 1;
-        public static final int LOW = 2;
+        public static final int MEDIUM = 2;
+        public static final int LOW = 3;
 
     }
 }
