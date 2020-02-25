@@ -104,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void addPTTButton(){
 
-        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.LOW);
+        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
 
         pttButton.setWidth(200);
         pttButton.setHeight(200);
