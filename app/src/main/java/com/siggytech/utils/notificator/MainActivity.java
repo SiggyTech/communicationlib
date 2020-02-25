@@ -5,15 +5,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.siggytech.utils.communication.ChatControl;
-import com.siggytech.utils.communication.ChatListView;
 import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
@@ -76,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
             //subscribeForNotifications();
             addChatListView();
 
-
+            //YAS
         }
 
 
