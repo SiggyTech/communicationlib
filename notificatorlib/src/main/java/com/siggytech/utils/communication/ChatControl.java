@@ -1,21 +1,11 @@
 package com.siggytech.utils.communication;
 
 
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.media.RingtoneManager;
-import android.net.Uri;
 import android.os.Build;
-import android.os.PowerManager;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -162,26 +152,27 @@ public class ChatControl extends RelativeLayout {
             @Override
             public void onClick(View view) {
                 try {
-                    String m = AESUtils.encrypt(mOutEditText.getText().toString());
-                    SimpleDateFormat sdf;
-                    switch(Conf.DATE_FORMAT) {
-                        case 0:
-                            sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-                            break;
-                        case 1:
-                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
-                            break;
-                        default:
-                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
-                            break;
-                    }
+                    if(!"".equals(mOutEditText.getText().toString().trim())) {
+                        String m = AESUtils.encrypt(mOutEditText.getText().toString());
+                        SimpleDateFormat sdf;
+                        switch (Conf.DATE_FORMAT) {
+                            case 0:
+                                sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+                                break;
+                            case 1:
+                                sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
+                                break;
+                            default:
+                                sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
+                                break;
+                        }
 
-                    Date now = new Date();
-                    String strDate = sdf.format(now);
-                    abc.sendMessage(userName, m, strDate);
-                    mOutEditText.setText("");
-                }
-                catch(Exception e){e.printStackTrace();}
+                        Date now = new Date();
+                        String strDate = sdf.format(now);
+                        abc.sendMessage(userName, m, strDate);
+                        mOutEditText.setText("");
+                    }
+                } catch(Exception e){e.printStackTrace();}
             }
         });
     }
