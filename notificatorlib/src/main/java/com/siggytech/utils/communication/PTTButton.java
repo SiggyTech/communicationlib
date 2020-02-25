@@ -1,5 +1,6 @@
 package com.siggytech.utils.communication;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -20,7 +21,6 @@ import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -44,6 +44,10 @@ import okio.ByteString;
 import static android.content.Context.TELEPHONY_SERVICE;
 
 public class PTTButton extends AppCompatButton implements View.OnTouchListener {
+    private String TAG = "PTTButton";
+    private static final int READ_PHONE_STATE = 0;
+    private static final int REQUEST = 112;
+
     private Padding mPadding;
     private int mHeight;
     private int mWidth;
@@ -54,8 +58,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     protected boolean mAnimationInProgress;
     private StrokeGradientDrawable mDrawableNormal;
     private StrokeGradientDrawable mDrawablePressed;
-    private Context context;
-    private static final int REQUEST = 112;
+    private String buttonName;
+    private String sendingText = "Sending...";
 
     AudioTrack at;
 
@@ -67,19 +71,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     private boolean status = true;
     public AudioRecord recorder;
-    private static final int READ_PHONE_STATE = 0;
-    private int idGroup;
 
-    private UDPSocket udpSocket;
     private String API_KEY;
-    private boolean flagListen = true;
-
-    private String TAG = "PTTButton";
-    private String buttonName;
-
-    private OkHttpClient client;
     private String name = "";
-
+    private int idGroup;
+    private Context context;
 
     public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, int quality) {
         super(context);
@@ -104,6 +100,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         initView();
 
     }
+
     CountDownTimer timer;
     boolean canTalk = true;
     /*CountDownTimer timer2 = new CountDownTimer(3000, 1000) {
@@ -127,7 +124,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View arg0, MotionEvent arg1) {
-
         switch (arg1.getAction()){
             case MotionEvent.ACTION_DOWN:
                 System.out.println("Button pressed");
@@ -152,6 +148,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         public void run() {
         }
     }
+
     public void startStreaming() {
         String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ this.idGroup +" }";
 
@@ -173,13 +170,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     packet = new DatagramPacket(this.message.getBytes(), this.message.getBytes().length, destination, Conf.SERVER_PORT);
                     socket.send(packet);
 
-
-
                     minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
 
                     Log.d("VS","Buffer created of size " + minBufSize);
-
 
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
                     Log.d("VS", "Recorder initialized");
@@ -195,6 +189,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.e("VS", "IOException");
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
             }
 
@@ -202,10 +198,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         streamThread.start();
     }
 
-
     public StrokeGradientDrawable getDrawableNormal() {
         return mDrawableNormal;
     }
+
     public void animation(@NonNull Params params) {
         if (!mAnimationInProgress) {
             mDrawablePressed.setColor(params.colorPressed);
@@ -223,6 +219,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             mStrokeColor = params.strokeColor;
         }
     }
+
     private void aniBtWithAnimation(@NonNull final Params params) {
         mAnimationInProgress = true;
         setText(null);
@@ -245,6 +242,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         CustomButtonAnimation animation = new CustomButtonAnimation(animationParams);
         animation.start();
     }
+
     private void aniBtWithoutAnimation(@NonNull Params params) {
         mDrawableNormal.setColor(params.color);
         mDrawableNormal.setCornerRadius(params.cornerRadius);
@@ -258,6 +256,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
         finalizeAnimation(params);
     }
+
     private void finalizeAnimation(@NonNull Params params) {
         mAnimationInProgress = false;
         if (params.icon != 0 && params.text != null) {
@@ -272,8 +271,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             params.animationListener.onAnimationEnd();
         }
     }
-    public void blockTouch() {
 
+    public void blockTouch() {
         this.getBackground().setColorFilter(Color.GRAY, PorterDuff.Mode.MULTIPLY);
         setOnTouchListener(new OnTouchListener() {
             @Override
@@ -282,6 +281,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }
         });
     }
+
+    @SuppressLint("ClickableViewAccessibility")
     public void unblockTouch() {
         this.getBackground().setColorFilter(null);
         this.setOnTouchListener(new View.OnTouchListener()
@@ -298,7 +299,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         startStreaming();
                         canTalk = false;
                         buttonName = getText().toString();
-                        setText("Sending...");
+                        setText(sendingText);
                         return true;
                     }
 
@@ -392,16 +393,15 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         clientCoinPrice.dispatcher().executorService().shutdown();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void initView() {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        client = new OkHttpClient();
         try {
             webSocketConnection();
-        }
-        catch(Exception ex){
+        } catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
 
@@ -415,22 +415,19 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         {
             public boolean onTouch(View v, MotionEvent event)
             {
-                switch (event.getAction())
-                {
-                    case MotionEvent.ACTION_DOWN:
-                    {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN: {
                         Log.d("log", "onTouch: push");
                         status = true;
 
                         startStreaming();
                         canTalk = false;
                         buttonName = getText().toString();
-                        setText("Sending...");
+                        setText(sendingText);
                         return true;
                     }
 
-                    case MotionEvent.ACTION_UP:
-                    {
+                    case MotionEvent.ACTION_UP: {
                         Log.d("log", "onTouch: release");
                         status = false;
                         recorder.release();
@@ -449,7 +446,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         break;
                     }
                 }
-
                 return false;
             }
         });
@@ -461,8 +457,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         mPadding.bottom = getPaddingBottom();
         Resources resources = getResources();
         int cornerRadius = (int) resources.getDimension(R.dimen.bt_corner_radius_2);
-        int blue = resources.getColor(R.color.bt_purple);
-        int blueDark = resources.getColor(R.color.bt_purple_dark);
+        int blue = resources.getColor(R.color.green);
+        int blueDark = resources.getColor(R.color.green_dark);
         StateListDrawable background = new StateListDrawable();
         mDrawableNormal = createDrawable(blue, cornerRadius, 0);
         mDrawablePressed = createDrawable(blueDark, cornerRadius, 0);
@@ -473,6 +469,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         background.addState(StateSet.WILD_CARD, mDrawableNormal.getGradientDrawable());
         setBackgroundCompat(background);
     }
+
     @SuppressWarnings("deprecation")
     private String getIMEINumber() {
         String IMEINumber = "";
@@ -493,13 +490,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             at.write(byteData, 0, byteData.length);
             at.play();
         }
-        else
-            Log.d("TCAudio", "audio track is not initialised ");
+        else Log.d("TCAudio", "audio track is not initialised ");
     }
 
     private StrokeGradientDrawable createDrawable(int color, int cornerRadius, int strokeWidth) {
         StrokeGradientDrawable drawable = new StrokeGradientDrawable(new GradientDrawable());
-        //drawable.getGradientDrawable().setShape(GradientDrawable.RECTANGLE);
         drawable.getGradientDrawable().setShape(GradientDrawable.OVAL);
         drawable.setColor(color);
         drawable.setCornerRadius(cornerRadius);
@@ -507,14 +502,16 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         drawable.setStrokeWidth(strokeWidth);
         return drawable;
     }
+
     @SuppressWarnings("deprecation")
-    private void setBackgroundCompat(@Nullable Drawable drawable) {
+    public void setBackgroundCompat(@Nullable Drawable drawable) {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
             setBackgroundDrawable(drawable);
         } else {
             setBackground(drawable);
         }
     }
+
     public void setIcon(@DrawableRes final int icon) {
         // post is necessary, to make sure getWidth() doesn't return 0
         post(new Runnable() {
@@ -527,10 +524,18 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }
         });
     }
+
     public void setIconLeft(@DrawableRes int icon) {
         setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
     }
 
+    /**
+     * Method that change the text of the button when is sending data
+     * @param sendingText sending text
+     */
+    public void setSendingText(String sendingText) {
+        this.sendingText = sendingText;
+    }
 
     private class Padding {
         public int left;
@@ -538,6 +543,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         public int top;
         public int bottom;
     }
+
     public static class Params {
         private int cornerRadius;
         private int width;
