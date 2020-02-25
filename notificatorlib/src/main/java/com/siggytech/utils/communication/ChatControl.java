@@ -93,9 +93,9 @@ public class ChatControl extends RelativeLayout {
                 api_key,
                 name,
                 messageTittle,
-        messageText,
-        packageName,
-        resIcon);
+                messageText,
+                packageName,
+                resIcon);
 
         abc.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         abc.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
