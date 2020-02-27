@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
+import android.view.KeyEvent;
 import android.widget.LinearLayout;
 
 import com.siggytech.utils.communication.ChatControl;
@@ -19,6 +20,8 @@ import com.siggytech.utils.communication.PTTButton;
 public class MainActivity extends AppCompatActivity {
 
     PTTButton pttButton;
+    Boolean keyDown = false;
+
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
     String API_KEY = "";
@@ -26,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     String name = "";
     //String name = "";
     ChatControl ch;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,11 +62,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                //addPTTButton();
+                addPTTButton();
 
                 //subscribeForNotifications();
 
-                addChatListView();
+                //addChatListView();
             }
         }
         else{
@@ -69,10 +74,10 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            //addPTTButton();
+            addPTTButton();
 
             //subscribeForNotifications();
-            addChatListView();
+            //addChatListView();
 
             //YAS
         }
@@ -81,6 +86,29 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyDown == false  && keyCode == 25 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
+            pttButton.startTalking();
+
+        keyDown = true;
+
+        return true;
+
+    }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode == 25 && event.getAction() == KeyEvent.ACTION_UP ) {
+            keyDown = false;
+            pttButton.stopTalking();
+        }
+
+        return true;
+
+    }
+
+
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String[] permissions, int[] grantResults) {
