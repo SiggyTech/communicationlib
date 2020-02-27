@@ -1,10 +1,17 @@
 package com.siggytech.utils.communication;
 
 
+import android.accounts.AccountManager;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.view.Gravity;
 import android.view.View;
@@ -30,6 +37,8 @@ public class ChatControl extends RelativeLayout {
     private EditText mOutEditText;
     private EditText mServerAddress;
     private LinearLayout mSendButton;
+    private LinearLayout mAddFile;
+
     private ArrayAdapter<String> mConversationArrayAdapter;
 
     public String imei;
@@ -37,14 +46,13 @@ public class ChatControl extends RelativeLayout {
     public String api_key;
     public String userName;
     public int idGroup;
-    private Context context;
+    private final Context context;
     private ChatListView abc;
     private String messageTittle;
     private String messageText;
     private String packageName;
     private int resIcon;
     private String notificationMessage;
-
 
     public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
                        String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage){
@@ -60,6 +68,7 @@ public class ChatControl extends RelativeLayout {
         this.packageName = packageName;
         this.resIcon = resIcon;
         this.notificationMessage = notificationMessage;
+
 
         initLayout(context);
     }
@@ -122,6 +131,12 @@ public class ChatControl extends RelativeLayout {
         mSendButton.setBackgroundResource(R.drawable.circle_green);
         mSendButton.setGravity(Gravity.CENTER);
 
+        mAddFile = new LinearLayout(context);
+        mAddFile.setLayoutParams(new LayoutParams(120,120));
+        mAddFile.setId(Utils.generateViewId());
+        mAddFile.setBackgroundResource(R.drawable.circle_green);
+        mAddFile.setGravity(Gravity.CENTER);
+
         ImageView iv = new ImageView(context);
         iv.setImageDrawable(getResources().getDrawable(R.drawable.ic_send_24dp));
         mSendButton.addView(iv);
@@ -142,6 +157,8 @@ public class ChatControl extends RelativeLayout {
 
         lnH1.addView(mOutEditText);
         lnH2.addView(mSendButton);
+        lnH2.addView(mAddFile);
+
         lnSend.addView(lnH1);
         lnSend.addView(lnH2);
         lnContent.addView(lnSend);
@@ -175,7 +192,19 @@ public class ChatControl extends RelativeLayout {
                 } catch(Exception e){e.printStackTrace();}
             }
         });
+        mAddFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
     }
+
 
     private LinearLayout getLnContentSum(float weight){
         LinearLayout lnContent2 = new LinearLayout(context);

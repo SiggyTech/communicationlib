@@ -57,11 +57,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                addPTTButton();
+                //addPTTButton();
 
                 //subscribeForNotifications();
 
-                //addChatListView();
+                addChatListView();
             }
         }
         else{
@@ -69,10 +69,10 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            addPTTButton();
+            //addPTTButton();
 
             //subscribeForNotifications();
-            //addChatListView();
+            addChatListView();
 
             //YAS
         }
