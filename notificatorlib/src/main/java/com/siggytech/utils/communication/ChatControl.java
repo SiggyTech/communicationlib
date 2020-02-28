@@ -24,7 +24,9 @@ import java.util.Locale;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
-
+/**
+ * @author SIGGI Tech
+ */
 public class ChatControl extends RelativeLayout {
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;

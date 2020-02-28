@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -40,7 +41,6 @@ public class UtilActivity extends AppCompatActivity {
         setContentView(R.layout.activity_util);
 
         if(getWindow()!=null) {
-
             getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             // Make us non-modal, so that others can receive touch events.
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL, WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
@@ -132,7 +132,12 @@ public class UtilActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        callCamaraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", photoFile));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            callCamaraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", photoFile));
+        }else{
+            callCamaraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+        }
 
         startActivityForResult(callCamaraApplicationIntent, ACTIVITY_START_CAMARA_APP);
     }
