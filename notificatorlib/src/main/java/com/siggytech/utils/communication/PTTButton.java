@@ -1,15 +1,12 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.StateListDrawable;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -25,7 +22,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.util.StateSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -108,13 +104,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         }
 
-
-
-
-
-
         initView();
-
     }
 
     CountDownTimer timer;
@@ -146,6 +136,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         return super.onKeyDown(keyCode, event);
     }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if(event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -173,8 +164,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         canTalk = false;
         buttonName = getText().toString();
         setText(sendingText);
-
     }
+
     public void stopTalking(){
         Log.d("log", "stopStreming");
         status = false;
@@ -399,13 +390,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         });
     }
 
-    private void webSocketConnection(){
 
+    private void webSocketConnection(){
         WebSocketListener webSocketListenerCoinPrice;
         OkHttpClient clientCoinPrice = new OkHttpClient();
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
-        //Log.e(TAG, url);
 
         Request requestCoinPrice = new Request.Builder().url(url).build();
 
@@ -428,15 +418,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-
-
                 Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
-                try
-                {
-
+                try {
                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
-                }
-                catch(Exception ex){
+                } catch(Exception ex){
                     System.out.print(ex.getMessage());
                 }
             }
@@ -445,7 +430,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
-                // Log.e(TAG, "CLOSE: " + code + " " + reason);
             }
 
             @Override
@@ -525,19 +509,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         mPadding.right = getPaddingRight();
         mPadding.top = getPaddingTop();
         mPadding.bottom = getPaddingBottom();
-        Resources resources = getResources();
-        int cornerRadius = (int) resources.getDimension(R.dimen.bt_corner_radius_2);
-        int blue = resources.getColor(R.color.green);
-        int blueDark = resources.getColor(R.color.green_dark);
-        StateListDrawable background = new StateListDrawable();
-        mDrawableNormal = createDrawable(blue, cornerRadius, 0);
-        mDrawablePressed = createDrawable(blueDark, cornerRadius, 0);
-        mColor = blue;
-        mStrokeColor = blue;
-        mCornerRadius = cornerRadius;
-        background.addState(new int[]{android.R.attr.state_pressed}, mDrawablePressed.getGradientDrawable());
-        background.addState(StateSet.WILD_CARD, mDrawableNormal.getGradientDrawable());
-        setBackgroundCompat(background);
+
+        setTextColor(getResources().getColor(R.color.bt_white));
+        setBackgroundCompat(getResources().getDrawable(R.drawable.circle_blue_selector));
+
     }
 
     @SuppressWarnings("deprecation")

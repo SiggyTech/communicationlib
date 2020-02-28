@@ -6,8 +6,10 @@
     <color name="bt_red">#ffff4444</color>
     <color name="bt_red_dark">#ffcd3a3a</color>
     <color name="light_grey">#E7E6E6</color>
-    <color name="green">#126439</color>
-    <color name="green_dark">#0C4426</color>
+    <color name="bt_blue">#1A4468</color>
+    <color name="bt_blue_dark">#082B49</color>
+    <color name="bt_black">#000000</color>
+    <color name="color_transparent">#00000000</color>
 
     <dimen name="bt_corner_radius_2">2dp</dimen>
     <dimen name="bt_corner_radius_4">4dp</dimen>

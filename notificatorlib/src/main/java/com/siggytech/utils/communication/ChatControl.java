@@ -1,21 +1,16 @@
 package com.siggytech.utils.communication;
 
 
-import android.accounts.AccountManager;
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.app.Dialog;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -128,18 +123,21 @@ public class ChatControl extends RelativeLayout {
         mSendButton = new LinearLayout(context);
         mSendButton.setLayoutParams(new LayoutParams(120,120));
         mSendButton.setId(Utils.generateViewId());
-        mSendButton.setBackgroundResource(R.drawable.circle_green);
+        mSendButton.setBackgroundResource(R.drawable.circle_blue_selector);
         mSendButton.setGravity(Gravity.CENTER);
-
-        mAddFile = new LinearLayout(context);
-        mAddFile.setLayoutParams(new LayoutParams(120,120));
-        mAddFile.setId(Utils.generateViewId());
-        mAddFile.setBackgroundResource(R.drawable.circle_green);
-        mAddFile.setGravity(Gravity.CENTER);
 
         ImageView iv = new ImageView(context);
         iv.setImageDrawable(getResources().getDrawable(R.drawable.ic_send_24dp));
         mSendButton.addView(iv);
+
+        mAddFile = new LinearLayout(context);
+        mAddFile.setLayoutParams(new LayoutParams(120,120));
+        mAddFile.setId(Utils.generateViewId());
+        mAddFile.setGravity(Gravity.CENTER);
+
+        ImageView iv0 = new ImageView(context);
+        iv0.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_24dp));
+        mAddFile.addView(iv0);
 
         RelativeLayout.LayoutParams mContentParams = new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT);
         mContentParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
@@ -149,16 +147,19 @@ public class ChatControl extends RelativeLayout {
         lnContent.setBackgroundColor(getResources().getColor(R.color.light_grey));
         lnContent.setPadding(10,10,10,10);
 
-        LinearLayout lnSend = getLnContentSum(5);
+        LinearLayout lnSend = getLnContentSum(6);
+        LinearLayout lnH0 = getLnWeight(1);
+        lnH0.setVerticalGravity(Gravity.CENTER);
         LinearLayout lnH1 = getLnWeight(4);
         lnH1.setVerticalGravity(Gravity.CENTER);
         LinearLayout lnH2 = getLnWeight(1);
         lnH2.setGravity(Gravity.CENTER|Gravity.BOTTOM);
 
+        lnH0.addView(mAddFile);
         lnH1.addView(mOutEditText);
         lnH2.addView(mSendButton);
-        lnH2.addView(mAddFile);
 
+        lnSend.addView(lnH0);
         lnSend.addView(lnH1);
         lnSend.addView(lnH2);
         lnContent.addView(lnSend);
@@ -192,17 +193,45 @@ public class ChatControl extends RelativeLayout {
                 } catch(Exception e){e.printStackTrace();}
             }
         });
+
         mAddFile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-
-                }
-                catch(Exception e){
+                    showAddDialog();
+                } catch(Exception e){
                     e.printStackTrace();
                 }
             }
         });
+    }
+
+    public void showAddDialog() {
+        final Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_add);
+
+        if(dialog.getWindow()!=null)
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+
+        LinearLayout lnCamera = dialog.findViewById(R.id.lnCamera);
+        LinearLayout lnPhotoVideo = dialog.findViewById(R.id.lnPhotoVideo);
+        LinearLayout lnCancel = dialog.findViewById(R.id.lnCancel);
+
+
+
+
+
+        lnCancel.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+
+        dialog.setCancelable(true);
+        dialog.show();
     }
 
 

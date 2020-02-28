@@ -2,15 +2,15 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android" >
     <item android:state_pressed="true" >
         <shape android:shape="oval"  >
-            <stroke android:width="2dip" android:color="#162B03" />
-            <solid  android:color="#1F3A04"/>
+            <stroke android:width="2dip" android:color="#072642" />
+            <solid  android:color="#0B365A"/>
         </shape>
 
     </item>
     <item android:state_focused="true">
         <shape android:shape="oval"  >
-            <stroke android:width="2dip" android:color="#162B03" />
-            <solid  android:color="#1F3A04"/>
+            <stroke android:width="2dip" android:color="#072642" />
+            <solid  android:color="#0B365A"/>
         </shape>
     </item>
     <item>
@@ -18,11 +18,11 @@
             <gradient
                 android:angle="90"
                 android:centerX="90%"
-                android:centerColor="#0A410C"
-                android:startColor="#28681A"
-                android:endColor="#094E0C"
+                android:centerColor="#0E4474"
+                android:startColor="#286197"
+                android:endColor="#0E4474"
                 android:type="linear" />
-            <stroke android:width="2dip" android:color="#162B03" />
+            <stroke android:width="2dip" android:color="#072642" />
         </shape>
     </item>
 </selector>
