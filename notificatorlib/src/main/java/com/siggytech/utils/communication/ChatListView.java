@@ -49,6 +49,7 @@ public class ChatListView extends ListView {
     private String imei;
     private String name;
     private boolean newMessage = false;
+    private String newMessageType;
     private String messageText;
     private String from;
     private String dateTime;
@@ -142,7 +143,7 @@ public class ChatListView extends ListView {
 
 
                     newMessage = false;
-                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime)); //TODO agregar fecha a la caja de texto
+                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime, newMessageType)); //TODO agregar fecha a la caja de texto
                     SetAdapter();
                 }
                 catch (Exception e){e.printStackTrace();}
@@ -153,7 +154,7 @@ public class ChatListView extends ListView {
         }
     };
 
-    public void sendMessage(String from, String text, String dateTime){
+    public void sendMessage(String from, String text, String dateTime, String type){
 
         try{
 
@@ -163,7 +164,7 @@ public class ChatListView extends ListView {
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
                     "}");
 
-            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime)); //TODO agregar fecha a la caja de texto y from
+            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime, type)); //TODO agregar fecha a la caja de texto y from
             SetAdapter();
         }
         catch(Exception e){
@@ -234,28 +235,50 @@ public class ChatListView extends ListView {
                 try {
                     notificationMessage = text; //message for activity passed through notification
                     JSONObject jObject = new JSONObject(text);
-                    from = new JSONObject(jObject.getString("data")).getString("from");
-                    messageText = new JSONObject(jObject.getString("data")).getString("text");
-                    //dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
-                    SimpleDateFormat sdf;
-                    switch(Conf.DATE_FORMAT) {
-                        case 0:
-                            sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                    switch (jObject.getString("event"))
+                    {
+                        case "Message":
+
+                            from = new JSONObject(jObject.getString("data")).getString("from");
+                            messageText = new JSONObject(jObject.getString("data")).getString("text");
+                            //dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
+                            SimpleDateFormat sdf;
+                            switch(Conf.DATE_FORMAT) {
+                                case 0:
+                                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                    break;
+                                case 1:
+                                    sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                                    break;
+                                default:
+                                    sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                                    break;
+                            }
+
+                            Date now = new Date();
+                            String strDate = sdf.format(now);
+
+
+                            dateTime = strDate;
+
                             break;
-                        case 1:
-                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+                        case "photo":
                             break;
-                        default:
-                            sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+                        case "audio":
                             break;
+                        case "video":
+                            break;
+
                     }
-
-                    Date now = new Date();
-                    String strDate = sdf.format(now);
-
-
-                    dateTime = strDate;
                     newMessage = true;
+                    newMessageType = jObject.getString("event");
+
+
+
+
+
                 }
                 catch(Exception ex){
                     Log.e(TAG, ex.getMessage());
@@ -266,7 +289,7 @@ public class ChatListView extends ListView {
             public void onMessage(WebSocket webSocket, ByteString bytes) {
                 try
                 {
-                    Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+                    Log.e(TAG, "MESSAGE bytes: " + bytes.hex()); //
                 }
                 catch(Exception ex){
                     System.out.print(ex.getMessage());

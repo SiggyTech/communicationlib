@@ -8,14 +8,18 @@ public class ChatModel {
 
     private String from;
     private String dateTime;
+    private String messageType;
 
 
-    public ChatModel(Long id, String textMessage, String from, String dateTime) {
+    public ChatModel(Long id, String textMessage, String from, String dateTime, String type) {
         this.id = id;
         this.textMessage = textMessage;
         this.from = from;
         this.dateTime = dateTime;
+        this.messageType = type;
+
     }
+
     public Long getIdMessage() {
         return this.id;
     }

@@ -138,6 +138,7 @@ public class ChatControl extends RelativeLayout {
         mAddFile.setLayoutParams(new LayoutParams(120,120));
         mAddFile.setId(Utils.generateViewId());
         mAddFile.setGravity(Gravity.CENTER);
+        mAddFile.setVisibility(View.GONE);
 
         ImageView iv0 = new ImageView(context);
         iv0.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_24dp));
@@ -191,7 +192,7 @@ public class ChatControl extends RelativeLayout {
 
                         Date now = new Date();
                         String strDate = sdf.format(now);
-                        abc.sendMessage(userName, m, strDate);
+                        abc.sendMessage(userName, m, strDate, "text");
                         mOutEditText.setText("");
                     }
                 } catch(Exception e){e.printStackTrace();}

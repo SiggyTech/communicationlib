@@ -24,7 +24,6 @@ public class CustomAdapterBubble extends BaseAdapter {
         this.lstChat = lstChat;
         this.context = context;
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
     }
 
     @Override

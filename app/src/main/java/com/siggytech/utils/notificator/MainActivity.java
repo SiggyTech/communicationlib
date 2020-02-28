@@ -62,11 +62,11 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
 
-                addPTTButton();
+                //addPTTButton();
 
                 //subscribeForNotifications();
 
-                //addChatListView();
+                addChatListView();
             }
         }
         else{
@@ -74,10 +74,10 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            addPTTButton();
+            //addPTTButton();
 
             //subscribeForNotifications();
-            //addChatListView();
+            addChatListView();
 
             //YAS
         }
@@ -185,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
         ch = new ChatControl(this, 6870, API_KEY, getIMEINumber(), "Felipe",
                 "Titulo del mensaje", "Texto del Mensaje",
                 getApplicationContext().getPackageName(),getResources().getIdentifier("siggy_logo",
-                "drawable", getPackageName()), "Mensaje a la actividad" );//user name to show to others
+                "drawable", getPackageName()), "Mensaje a la actividad" , this);//user name to show to others
         linearLayout.addView(ch);
     }
 }
