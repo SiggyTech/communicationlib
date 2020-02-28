@@ -1,8 +1,9 @@
 package com.siggytech.utils.communication;
 
 
-import android.app.Dialog;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.support.v4.app.ActivityCompat;
@@ -10,7 +11,6 @@ import android.telephony.TelephonyManager;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -28,6 +28,7 @@ import static android.content.Context.TELEPHONY_SERVICE;
 public class ChatControl extends RelativeLayout {
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
+    public static final int SELECT_FILE = 100;
     private ListView mConversationView;
     private EditText mOutEditText;
     private EditText mServerAddress;
@@ -48,9 +49,10 @@ public class ChatControl extends RelativeLayout {
     private String packageName;
     private int resIcon;
     private String notificationMessage;
+    private Activity mActivity;
 
     public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
-                       String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage){
+                       String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage, Activity activity){
         super(context);
         this.context = context;
         this.idGroup = idGroup;
@@ -63,7 +65,7 @@ public class ChatControl extends RelativeLayout {
         this.packageName = packageName;
         this.resIcon = resIcon;
         this.notificationMessage = notificationMessage;
-
+        this.mActivity = activity;
 
         initLayout(context);
     }
@@ -82,7 +84,7 @@ public class ChatControl extends RelativeLayout {
         return IMEINumber;
     }
 
-    public void initLayout(Context context) {
+    public void initLayout(final Context context) {
         int idContent = Utils.generateViewId();
 
         ViewGroup.LayoutParams root_LayoutParams =
@@ -198,42 +200,13 @@ public class ChatControl extends RelativeLayout {
             @Override
             public void onClick(View view) {
                 try {
-                    showAddDialog();
+                    mActivity.startActivity(new Intent(context, UtilActivity.class));
                 } catch(Exception e){
                     e.printStackTrace();
                 }
             }
         });
     }
-
-    public void showAddDialog() {
-        final Dialog dialog = new Dialog(context);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_add);
-
-        if(dialog.getWindow()!=null)
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-
-        LinearLayout lnCamera = dialog.findViewById(R.id.lnCamera);
-        LinearLayout lnPhotoVideo = dialog.findViewById(R.id.lnPhotoVideo);
-        LinearLayout lnCancel = dialog.findViewById(R.id.lnCancel);
-
-
-
-
-
-        lnCancel.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-
-
-        dialog.setCancelable(true);
-        dialog.show();
-    }
-
 
     private LinearLayout getLnContentSum(float weight){
         LinearLayout lnContent2 = new LinearLayout(context);
