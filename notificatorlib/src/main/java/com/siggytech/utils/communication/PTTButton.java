@@ -1,6 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -25,6 +26,7 @@ import android.support.v7.widget.AppCompatButton;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.util.StateSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,7 +75,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public AudioRecord recorder;
 
     private String API_KEY;
-    private String name = "";
+    private String name;
     private int idGroup;
     private Context context;
 
@@ -106,21 +108,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
         }
 
+
+
+
+
+
         initView();
 
     }
 
     CountDownTimer timer;
     boolean canTalk = true;
-    /*CountDownTimer timer2 = new CountDownTimer(3000, 1000) {
-        public void onTick(long millisUntilFinished) {
-            //here you can have your logic to set text to edittext
-        }
-        public void onFinish() {
-            flagListen = true;
-        }
-    };*/
-
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -129,6 +127,69 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             mHeight = getHeight();
             mWidth = getWidth();
         }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(event.getAction() == KeyEvent.ACTION_DOWN) {
+
+            System.out.println(keyCode); // 25 is the down volume key
+
+            switch(keyCode) {
+                case 25:
+                    System.out.println("Button pressed");
+                    status = true;
+                    return true;
+
+            }
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(event.getAction() == KeyEvent.ACTION_DOWN) {
+
+            System.out.println(keyCode); // 25 is the down volume key
+
+            switch(keyCode) {
+                case 25:
+                    System.out.println("Button released");
+                    status = false;
+                    recorder.release();
+                    return true;
+
+            }
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    public void startTalking(){
+        Log.d("log", "startStreming");
+        status = true;
+
+        startStreaming();
+        canTalk = false;
+        buttonName = getText().toString();
+        setText(sendingText);
+
+    }
+    public void stopTalking(){
+        Log.d("log", "stopStreming");
+        status = false;
+        recorder.release();
+        blockTouch();
+        timer = new CountDownTimer(3000, 100) {
+            public void onTick(long millisUntilFinished) {
+                //here you can have your logic to set text to edittext
+            }
+            public void onFinish() {
+                canTalk = true;
+                setText(buttonName);
+                unblockTouch();
+            }
+        }.start();
     }
 
     @Override
@@ -158,7 +219,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
     }
 
-    public void startStreaming() {
+    private void startStreaming() {
         String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ this.idGroup +" }";
 
         Thread streamThread = new Thread(new MyRunnable(message) {
@@ -302,7 +363,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 {
                     case MotionEvent.ACTION_DOWN:
                     {
-                        Log.d("log", "onTouch: push");
+                        Log.d("log", "unblockTouch() onTouch: push");
                         status = true;
 
                         startStreaming();
@@ -314,7 +375,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     case MotionEvent.ACTION_UP:
                     {
-                        Log.d("log", "onTouch: release");
+                        Log.d("log", "unblockTouch() onTouch: release");
                         status = false;
                         recorder.release();
                         blockTouch();
@@ -426,7 +487,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
-                        Log.d("log", "onTouch: push");
+                        Log.d("log", "this.setOnTouchListener onTouch: push");
                         status = true;
 
                         startStreaming();
@@ -437,7 +498,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     }
 
                     case MotionEvent.ACTION_UP: {
-                        Log.d("log", "onTouch: release");
+                        Log.d("log", "this.setOnTouchListener onTouch: release");
                         status = false;
                         recorder.release();
                         blockTouch();
