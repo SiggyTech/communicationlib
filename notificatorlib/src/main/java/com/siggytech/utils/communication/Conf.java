@@ -1,6 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.graphics.Color;
+import android.os.Environment;
 
 public class Conf {
 
@@ -17,5 +18,7 @@ public class Conf {
     public static int CHAT_COLOR_FROM = Color.BLACK;
     public static int CHAT_COLOR_TEXT = Color.BLACK;
     public static int CHAT_COLOR_DATE = Color.BLACK;
+    public static boolean CHAT_BASIC = false;
+    public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
 
 }

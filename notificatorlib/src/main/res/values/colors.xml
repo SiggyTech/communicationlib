@@ -9,6 +9,7 @@
     <color name="bt_blue">#1A4468</color>
     <color name="bt_blue_dark">#082B49</color>
     <color name="bt_black">#000000</color>
+    <color name="bt_dark_gray">#4B4747</color>
     <color name="color_transparent">#00000000</color>
 
     <dimen name="bt_corner_radius_2">2dp</dimen>

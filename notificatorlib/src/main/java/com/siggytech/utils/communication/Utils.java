@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.os.Build;
 import android.view.View;
 
+import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Utils {
@@ -26,6 +27,14 @@ public class Utils {
         } else {
             return View.generateViewId();
         }
+    }
 
+    /**
+     * Method that gets a name for a picture
+     * @return name of picture
+     */
+    public static String getDateName(){
+        Calendar calendar = Calendar.getInstance();
+        return String.valueOf(calendar.getTimeInMillis());
     }
 }

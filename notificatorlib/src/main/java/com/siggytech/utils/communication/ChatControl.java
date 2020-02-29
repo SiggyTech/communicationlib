@@ -1,14 +1,21 @@
 package com.siggytech.utils.communication;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.CountDownTimer;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -17,12 +24,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.siggytech.utils.communication.audio.AudioRecorder;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 import static android.content.Context.TELEPHONY_SERVICE;
+import static com.siggytech.utils.communication.Utils.getDateName;
 
 /**
  * @author SIGGI Tech
@@ -36,9 +47,15 @@ public class ChatControl extends RelativeLayout {
     private EditText mServerAddress;
     private LinearLayout mSendButton;
     private LinearLayout mAddFile;
+    private LinearLayout mAudio;
+    private TextView mAudioText;
+    private AudioRecorder ar;
+    private CountDownTimer t;
+
 
     private ArrayAdapter<String> mConversationArrayAdapter;
 
+    private int cnt;
     public String imei;
     public String name;
     public String api_key;
@@ -86,6 +103,7 @@ public class ChatControl extends RelativeLayout {
         return IMEINumber;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public void initLayout(final Context context) {
         int idContent = Utils.generateViewId();
 
@@ -125,24 +143,45 @@ public class ChatControl extends RelativeLayout {
         mOutEditText.setBackgroundResource(R.drawable.gradientbg);
 
         mSendButton = new LinearLayout(context);
-        mSendButton.setLayoutParams(new LayoutParams(120,120));
+        mSendButton.setLayoutParams(new LayoutParams(100,100));
         mSendButton.setId(Utils.generateViewId());
-        mSendButton.setBackgroundResource(R.drawable.circle_blue_selector);
+        mSendButton.setBackgroundResource(R.drawable.send_selector);
         mSendButton.setGravity(Gravity.CENTER);
+        if(!Conf.CHAT_BASIC) mSendButton.setVisibility(GONE);
 
         ImageView iv = new ImageView(context);
         iv.setImageDrawable(getResources().getDrawable(R.drawable.ic_send_24dp));
         mSendButton.addView(iv);
 
+        mAudio = new LinearLayout(context);
+        mAudio.setLayoutParams(new LayoutParams(120,120));
+        mAudio.setId(Utils.generateViewId());
+        mAudio.setGravity(Gravity.CENTER);
+
+        ImageView ivMic = new ImageView(context);
+        ivMic.setImageDrawable(getResources().getDrawable(R.drawable.ic_mic_none_24dp));
+        mAudio.addView(ivMic);
+
+        mAudioText = new TextView(context);
+        mAudioText.setText("00:00:00");
+        mAudioText.setTextColor(getResources().getColor(R.color.bt_dark_gray));
+        mAudioText.setTextSize(TypedValue.COMPLEX_UNIT_SP,17);
+        mAudioText.setPadding(20,0,0,0);
+        mAudioText.setVisibility(GONE);
+
         mAddFile = new LinearLayout(context);
         mAddFile.setLayoutParams(new LayoutParams(120,120));
         mAddFile.setId(Utils.generateViewId());
         mAddFile.setGravity(Gravity.CENTER);
-        mAddFile.setVisibility(View.GONE);
 
-        ImageView iv0 = new ImageView(context);
-        iv0.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_24dp));
-        mAddFile.addView(iv0);
+        final ImageView ivAdd = new ImageView(context);
+        ivAdd.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_24dp));
+        mAddFile.addView(ivAdd);
+
+        final ImageView ivMic2 = new ImageView(context);
+        ivMic2.setImageDrawable(getResources().getDrawable(R.drawable.ic_mic_none_gray_24dp));
+        ivMic2.setVisibility(GONE);
+        mAddFile.addView(ivMic2);
 
         RelativeLayout.LayoutParams mContentParams = new LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT);
         mContentParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
@@ -154,22 +193,110 @@ public class ChatControl extends RelativeLayout {
 
         LinearLayout lnSend = getLnContentSum(6);
         LinearLayout lnH0 = getLnWeight(1);
-        lnH0.setVerticalGravity(Gravity.CENTER);
-        LinearLayout lnH1 = getLnWeight(4);
+        lnH0.setVerticalGravity(Gravity.CENTER|Gravity.BOTTOM);
+        LinearLayout lnH1 = getLnWeight(Conf.CHAT_BASIC?5:4);
         lnH1.setVerticalGravity(Gravity.CENTER);
         LinearLayout lnH2 = getLnWeight(1);
         lnH2.setGravity(Gravity.CENTER|Gravity.BOTTOM);
 
         lnH0.addView(mAddFile);
         lnH1.addView(mOutEditText);
+        lnH1.addView(mAudioText);
         lnH2.addView(mSendButton);
-
-        lnSend.addView(lnH0);
+        if(!Conf.CHAT_BASIC) {
+            lnH2.addView(mAudio);
+            lnSend.addView(lnH0);
+        }
         lnSend.addView(lnH1);
         lnSend.addView(lnH2);
         lnContent.addView(lnSend);
 
         this.addView(lnContent);
+
+        if(!Conf.CHAT_BASIC) {
+            TextWatcher excludeTW;
+            excludeTW = new TextWatcher(){
+                @Override
+                public void afterTextChanged(Editable s) {}
+                @Override
+                public void beforeTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {}
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before,
+                                          int count) {
+                    if (count>0) {
+                        mAudio.setVisibility(GONE);
+                        mSendButton.setVisibility(VISIBLE);
+                    } else {
+                        mAudio.setVisibility(VISIBLE);
+                        mSendButton.setVisibility(GONE);
+                    }
+                }
+            };
+            mOutEditText.addTextChangedListener(excludeTW);
+
+            t = new CountDownTimer( Long.MAX_VALUE , 1000) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                    cnt++;
+                    long millis = cnt;
+                    int seconds = (int) (millis / 60);
+                    int minutes = seconds / 60;
+                    seconds     = seconds % 60;
+                    mAudioText.setText(String.format("%d:%02d:%02d", minutes, seconds,millis));
+                }
+                @Override
+                public void onFinish() {}
+            };
+
+            mAudio.setOnTouchListener(new View.OnTouchListener()
+            {
+                public boolean onTouch(View v, MotionEvent event)
+                {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN: {
+                            ChatControl.this.setFocusable(true);
+                            ChatControl.this.requestFocus();
+
+                            ivAdd.setVisibility(GONE);
+                            ivMic2.setVisibility(VISIBLE);
+                            mOutEditText.setVisibility(GONE);
+                            mAudioText.setVisibility(VISIBLE);
+
+                            String path = Conf.ROOT_PATH + getDateName() + ".3gp";
+                            ar = new AudioRecorder(path);
+
+                            audioRecording(true);
+
+                            return true;
+                        }
+                        case MotionEvent.ACTION_UP: {
+
+                            audioRecording(false);
+                            cnt = 0;
+                            mAudioText.setText("00:00:00");
+
+                            //TODO aca se tiene que enviar al chat
+
+                            ivAdd.setVisibility(VISIBLE);
+                            ivMic2.setVisibility(GONE);
+                            mOutEditText.setVisibility(VISIBLE);
+                            mAudioText.setVisibility(GONE);
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+            });
+
+
+
+
+
+
+
+
+        }
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -234,6 +361,29 @@ public class ChatControl extends RelativeLayout {
         return mSendButton;
     }
 
+
+    /**
+     * Metodo que inicia o para una grabacion.
+     * @param start si true signafica que inicia grabacion, de lo contrario la detiene
+     */
+    private void audioRecording(boolean start){
+        if(start){
+            try {
+                ar.start();
+                cnt=0;
+                t.start();
+            } catch (Exception e) {
+                Log.e("Exception in start", "" + e);
+            }
+        }else{
+            try {
+                ar.stop();
+                t.cancel();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }
 

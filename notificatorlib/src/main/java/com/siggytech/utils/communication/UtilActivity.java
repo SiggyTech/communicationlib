@@ -19,9 +19,9 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
 
 import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
+import static com.siggytech.utils.communication.Utils.getDateName;
 
 /**
  * @author Kussess
@@ -30,7 +30,6 @@ import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
 public class UtilActivity extends AppCompatActivity {
     private static final String TAG = UtilActivity.class.getSimpleName();
     private static final int ACTIVITY_START_CAMARA_APP = 0;
-    private String PATH_FOLDER;
     private String mImageFileLocation = "";
     Context context = this;
 
@@ -149,7 +148,7 @@ public class UtilActivity extends AppCompatActivity {
      * */
     private File createImageFile() throws IOException{
         String imageFileName;
-        File storageDirectory = new File(PATH_FOLDER);
+        File storageDirectory = new File(Conf.ROOT_PATH);
 
         imageFileName = getDateName();
 
@@ -159,23 +158,14 @@ public class UtilActivity extends AppCompatActivity {
         return image;
     }
 
-    /**
-     * Method that gets a name for a picture
-     * @return name of picture
-     */
-    private String getDateName(){
-        Calendar calendar = Calendar.getInstance();
-        return String.valueOf(calendar.getTimeInMillis());
-    }
 
     /**
      * Creates a content folder for files.
      * */
     private void createFolder(){
 
-        PATH_FOLDER = Environment.getExternalStorageDirectory()+"/SIGGI/";
 
-        File directory = new File(PATH_FOLDER);
+        File directory = new File(Conf.ROOT_PATH);
 
         try {
             if (directory.mkdirs()) {
