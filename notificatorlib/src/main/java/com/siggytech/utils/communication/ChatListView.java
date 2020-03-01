@@ -23,9 +23,7 @@ import android.widget.ListView;
 
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import okhttp3.OkHttpClient;
@@ -133,10 +131,9 @@ public class ChatListView extends ListView {
     Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
-
             if(newMessage) {
                 try{
-
+                    //TODO notification
                     //if(!isRunning(context)){
                     //    addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
                     //}
@@ -147,7 +144,6 @@ public class ChatListView extends ListView {
                     SetAdapter();
                 }
                 catch (Exception e){e.printStackTrace();}
-
             }
 
             timerHandler.postDelayed(timerRunnable,100);
@@ -155,9 +151,7 @@ public class ChatListView extends ListView {
     };
 
     public void sendMessage(String from, String text, String dateTime, String type){
-
         try{
-
             socket.sendOnOpen("Message", "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + text +  "\", \n" +
@@ -166,11 +160,11 @@ public class ChatListView extends ListView {
 
             lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime, type)); //TODO agregar fecha a la caja de texto y from
             SetAdapter();
-        }
-        catch(Exception e){
+        } catch(Exception e){
             e.printStackTrace();
         }
     }
+
     public ChatListView (Context context, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
         super(context);
         this.context = context;
@@ -202,13 +196,14 @@ public class ChatListView extends ListView {
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
     }
+
     public void SetAdapter(){
         customAdapterBubble = new CustomAdapterBubble(lsChat, context);
         this.setAdapter(customAdapterBubble);
         this.setSelection(this.getAdapter().getCount()-1);
     }
-    private void webSocketConnection(){
 
+    private void webSocketConnection(){
         WebSocketListener webSocketListenerCoinPrice;
         OkHttpClient clientCoinPrice = new OkHttpClient();
 
@@ -236,62 +231,36 @@ public class ChatListView extends ListView {
                     notificationMessage = text; //message for activity passed through notification
                     JSONObject jObject = new JSONObject(text);
 
-                    switch (jObject.getString("event"))
-                    {
-                        case "Message":
-
+                    switch (jObject.getString("event")) {
+                        case Utils.MESSAGE_TYPE.MESSAGE:
                             from = new JSONObject(jObject.getString("data")).getString("from");
                             messageText = new JSONObject(jObject.getString("data")).getString("text");
                             //dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
-                            SimpleDateFormat sdf;
-                            switch(Conf.DATE_FORMAT) {
-                                case 0:
-                                    sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                                    break;
-                                case 1:
-                                    sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                                    break;
-                                default:
-                                    sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                                    break;
-                            }
 
-                            Date now = new Date();
-                            String strDate = sdf.format(now);
-
-
-                            dateTime = strDate;
+                            dateTime = Utils.GetStringDate();
 
                             break;
+                        case Utils.MESSAGE_TYPE.PHOTO:
+                            break;
+                        case Utils.MESSAGE_TYPE.AUDIO:
 
-                        case "photo":
                             break;
-                        case "audio":
+                        case Utils.MESSAGE_TYPE.VIDEO:
                             break;
-                        case "video":
-                            break;
-
                     }
                     newMessage = true;
                     newMessageType = jObject.getString("event");
 
-
-
-
-
-                }
-                catch(Exception ex){
+                } catch(Exception ex){
                     Log.e(TAG, ex.getMessage());
                 }
             }
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-                try
-                {
+                try {
                     Log.e(TAG, "MESSAGE bytes: " + bytes.hex()); //
-                }
-                catch(Exception ex){
+                } catch(Exception ex){
                     System.out.print(ex.getMessage());
                 }
             }
@@ -317,6 +286,7 @@ public class ChatListView extends ListView {
         clientCoinPrice.newWebSocket(requestCoinPrice, webSocketListenerCoinPrice);
         clientCoinPrice.dispatcher().executorService().shutdown();
     }
+
     @SuppressWarnings("deprecation")
     private String getIMEINumber() {
         String IMEINumber = "";

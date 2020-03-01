@@ -28,12 +28,12 @@ import android.widget.TextView;
 
 import com.siggytech.utils.communication.audio.AudioRecorder;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
+import java.io.File;
 
 import static android.content.Context.TELEPHONY_SERVICE;
-import static com.siggytech.utils.communication.Utils.getDateName;
+import static com.siggytech.utils.communication.Utils.FileToBase64;
+import static com.siggytech.utils.communication.Utils.GetDateName;
+import static com.siggytech.utils.communication.Utils.GetStringDate;
 
 /**
  * @author SIGGI Tech
@@ -56,6 +56,7 @@ public class ChatControl extends RelativeLayout {
     private ArrayAdapter<String> mConversationArrayAdapter;
 
     private int cnt;
+    private String filePath;
     public String imei;
     public String name;
     public String api_key;
@@ -105,7 +106,7 @@ public class ChatControl extends RelativeLayout {
 
     @SuppressLint("ClickableViewAccessibility")
     public void initLayout(final Context context) {
-        int idContent = Utils.generateViewId();
+        int idContent = Utils.GenerateViewId();
 
         ViewGroup.LayoutParams root_LayoutParams =
                 new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -134,17 +135,17 @@ public class ChatControl extends RelativeLayout {
         rl.addView(abc);
         this.addView(rl);
         rl.setLayoutParams(abc_LayoutParams);
-        rl.setId(Utils.generateViewId());
+        rl.setId(Utils.GenerateViewId());
 
         mOutEditText = new EditText(context);
-        mOutEditText.setId(Utils.generateViewId());
+        mOutEditText.setId(Utils.GenerateViewId());
         mOutEditText.setMaxLines(5);
         mOutEditText.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         mOutEditText.setBackgroundResource(R.drawable.gradientbg);
 
         mSendButton = new LinearLayout(context);
         mSendButton.setLayoutParams(new LayoutParams(100,100));
-        mSendButton.setId(Utils.generateViewId());
+        mSendButton.setId(Utils.GenerateViewId());
         mSendButton.setBackgroundResource(R.drawable.send_selector);
         mSendButton.setGravity(Gravity.CENTER);
         if(!Conf.CHAT_BASIC) mSendButton.setVisibility(GONE);
@@ -155,7 +156,7 @@ public class ChatControl extends RelativeLayout {
 
         mAudio = new LinearLayout(context);
         mAudio.setLayoutParams(new LayoutParams(120,120));
-        mAudio.setId(Utils.generateViewId());
+        mAudio.setId(Utils.GenerateViewId());
         mAudio.setGravity(Gravity.CENTER);
 
         ImageView ivMic = new ImageView(context);
@@ -171,7 +172,7 @@ public class ChatControl extends RelativeLayout {
 
         mAddFile = new LinearLayout(context);
         mAddFile.setLayoutParams(new LayoutParams(120,120));
-        mAddFile.setId(Utils.generateViewId());
+        mAddFile.setId(Utils.GenerateViewId());
         mAddFile.setGravity(Gravity.CENTER);
 
         final ImageView ivAdd = new ImageView(context);
@@ -248,10 +249,8 @@ public class ChatControl extends RelativeLayout {
                 public void onFinish() {}
             };
 
-            mAudio.setOnTouchListener(new View.OnTouchListener()
-            {
-                public boolean onTouch(View v, MotionEvent event)
-                {
+            mAudio.setOnTouchListener(new View.OnTouchListener() {
+                public boolean onTouch(View v, MotionEvent event) {
                     switch (event.getAction()) {
                         case MotionEvent.ACTION_DOWN: {
                             ChatControl.this.setFocusable(true);
@@ -262,25 +261,31 @@ public class ChatControl extends RelativeLayout {
                             mOutEditText.setVisibility(GONE);
                             mAudioText.setVisibility(VISIBLE);
 
-                            String path = Conf.ROOT_PATH + getDateName() + ".3gp";
-                            ar = new AudioRecorder(path);
+                            filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
+                            ar = new AudioRecorder(filePath);
 
                             audioRecording(true);
 
                             return true;
                         }
                         case MotionEvent.ACTION_UP: {
+                            try {
+                                File audioFile = new File(filePath);
 
-                            audioRecording(false);
-                            cnt = 0;
-                            mAudioText.setText("00:00:00");
+                                if(audioFile!=null && audioFile.length()>0)
+                                    abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(audioFile)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
 
-                            //TODO aca se tiene que enviar al chat
+                                audioRecording(false);
+                                cnt = 0;
+                                mAudioText.setText("00:00:00");
 
-                            ivAdd.setVisibility(VISIBLE);
-                            ivMic2.setVisibility(GONE);
-                            mOutEditText.setVisibility(VISIBLE);
-                            mAudioText.setVisibility(GONE);
+                                ivAdd.setVisibility(VISIBLE);
+                                ivMic2.setVisibility(GONE);
+                                mOutEditText.setVisibility(VISIBLE);
+                                mAudioText.setVisibility(GONE);
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
                             return true;
                         }
                     }
@@ -288,14 +293,6 @@ public class ChatControl extends RelativeLayout {
                     return false;
                 }
             });
-
-
-
-
-
-
-
-
         }
 
         mSendButton.setOnClickListener(new View.OnClickListener() {
@@ -304,22 +301,7 @@ public class ChatControl extends RelativeLayout {
                 try {
                     if(!"".equals(mOutEditText.getText().toString().trim())) {
                         String m = AESUtils.encrypt(mOutEditText.getText().toString());
-                        SimpleDateFormat sdf;
-                        switch (Conf.DATE_FORMAT) {
-                            case 0:
-                                sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-                                break;
-                            case 1:
-                                sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
-                                break;
-                            default:
-                                sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
-                                break;
-                        }
-
-                        Date now = new Date();
-                        String strDate = sdf.format(now);
-                        abc.sendMessage(userName, m, strDate, "text");
+                        abc.sendMessage(userName, m, GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
                         mOutEditText.setText("");
                     }
                 } catch(Exception e){e.printStackTrace();}
@@ -384,6 +366,7 @@ public class ChatControl extends RelativeLayout {
             }
         }
     }
+
 
 }
 

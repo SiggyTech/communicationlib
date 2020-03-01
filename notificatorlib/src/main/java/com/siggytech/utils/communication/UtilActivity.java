@@ -21,7 +21,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
-import static com.siggytech.utils.communication.Utils.getDateName;
+import static com.siggytech.utils.communication.Utils.GetDateName;
 
 /**
  * @author Kussess
@@ -150,7 +150,7 @@ public class UtilActivity extends AppCompatActivity {
         String imageFileName;
         File storageDirectory = new File(Conf.ROOT_PATH);
 
-        imageFileName = getDateName();
+        imageFileName = GetDateName();
 
         File image = File.createTempFile(imageFileName, ".jpg", storageDirectory);
         mImageFileLocation = image.getAbsolutePath();

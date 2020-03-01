@@ -32,7 +32,9 @@ public class ChatModel {
     public String getDateTimeMessage() {
         return this.dateTime;
     }
-
+    public String getMessageType() {
+        return messageType;
+    }
 
 
 }
