@@ -3,6 +3,7 @@ package com.siggytech.utils.communication;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,9 +89,10 @@ public class CustomAdapterBubble extends BaseAdapter {
         holder.ivPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(((boolean)v.getTag())){
+                if(!((boolean)v.getTag())){
                     v.setTag(true);
                     ((ImageView)v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
+
                     //TODO play audio
                 }else{
                     v.setTag(false);
@@ -99,6 +101,24 @@ public class CustomAdapterBubble extends BaseAdapter {
                 }
 
 
+            }
+        });
+
+        //holder.sbPlay.setMax();
+        holder.sbPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                Log.d("TAG","onProgressChanged");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                Log.d("TAG","onStartTrackingTouch");
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                Log.d("TAG","onStopTrackingTouch");
             }
         });
 
