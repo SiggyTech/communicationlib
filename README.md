@@ -75,5 +75,5 @@
         linearLayout.addView(ch);
     }}
                                 
-For more information see [Siggy Tecnologies web site](https://github.com/SiggyTech/communicationlib)
+For more information see [Siggy Tecnologies web site](http://www.Siggytechnologies.com)
                             
