@@ -25,12 +25,20 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
     String API_KEY = "";
-    //String name = "";
+
     String name = "";
     //String name = "";
     ChatControl ch;
 
 
+    @Override
+    public void onResume(){
+        super.onResume();
+        if (getIntent().hasExtra("notificationMessage")) {
+            System.out.println(getIntent().getExtras().getString("notificationMessage"));
+        }
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,10 +46,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
         //Conf.SERVER_IP = "192.168.1.148";
 
         onNewIntent(getIntent());
+
+
+
+
+
 
         //check permissions
         if (Build.VERSION.SDK_INT >= 23) {
@@ -79,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
             //subscribeForNotifications();
             addChatListView();
 
-            //YAS
         }
 
 
@@ -184,8 +195,10 @@ public class MainActivity extends AppCompatActivity {
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
         ch = new ChatControl(this, 6870, API_KEY, getIMEINumber(), "Felipe",
                 "Titulo del mensaje", "Texto del Mensaje",
-                getApplicationContext().getPackageName(),getResources().getIdentifier("siggy_logo",
-                "drawable", getPackageName()), "Mensaje a la actividad" , this);//user name to show to others
+                getApplicationContext().getPackageName(),
+                getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
+                "Mensaje a la actividad" ,
+                this);//user name to show to others
         linearLayout.addView(ch);
     }
 }

@@ -15,6 +15,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.StrictMode;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.TelephonyManager;
@@ -116,15 +117,19 @@ public class ChatListView extends ListView {
         }
     }
 
-    public boolean isRunning(Context ctx) {
-        ActivityManager activityManager = (ActivityManager) ctx.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningTaskInfo> tasks = activityManager.getRunningTasks(Integer.MAX_VALUE);
-
-        for (ActivityManager.RunningTaskInfo task : tasks) {
-            if (ctx.getPackageName().equalsIgnoreCase(task.baseActivity.getPackageName()))
-                return true;
+    private boolean appInForeground(@NonNull Context context) {
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
+        if (runningAppProcesses == null) {
+            return false;
         }
 
+        for (ActivityManager.RunningAppProcessInfo runningAppProcess : runningAppProcesses) {
+            if (runningAppProcess.processName.equals(context.getPackageName()) &&
+                    runningAppProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -133,17 +138,17 @@ public class ChatListView extends ListView {
         public void run() {
             if(newMessage) {
                 try{
-                    //TODO notification
-                    //if(!isRunning(context)){
-                    //    addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
-                    //}
-
+                    if(!appInForeground(context)){
+                        addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
+                    }
 
                     newMessage = false;
                     lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime, newMessageType)); //TODO agregar fecha a la caja de texto
                     SetAdapter();
                 }
-                catch (Exception e){e.printStackTrace();}
+                catch (Exception e){
+                    e.printStackTrace();
+                }
             }
 
             timerHandler.postDelayed(timerRunnable,100);

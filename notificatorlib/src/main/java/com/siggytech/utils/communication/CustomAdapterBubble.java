@@ -70,11 +70,14 @@ public class CustomAdapterBubble extends BaseAdapter {
         holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
         holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
         holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
-        if(!Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageType())) {
-            holder.chat_out_text.setVisibility(View.GONE);
+        if(Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageType())) {
+            holder.lnAudio.setVisibility(View.GONE);
+            holder.chat_out_text.setVisibility(View.VISIBLE);
         }
         if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
+            holder.chat_out_text.setVisibility(View.GONE);
+
         }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageType())) {
             //TODO do staff
         } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageType())) {

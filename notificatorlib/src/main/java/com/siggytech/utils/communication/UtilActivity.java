@@ -3,10 +3,12 @@ package com.siggytech.utils.communication;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
@@ -38,6 +40,8 @@ public class UtilActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_util);
+
+        System.out.println("Package name: " + getApplicationContext().getPackageName());
 
         if(getWindow()!=null) {
             getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -94,13 +98,16 @@ public class UtilActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Log.v(TAG, "Entro al onActivityResult del Main el codigo " + requestCode);
         if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
-            File imgFile = new File(mImageFileLocation);
-
+            //File imgFile = new File(mImageFileLocation);
+            setPathToFile(new File(mImageFileLocation).getAbsolutePath());
         }else if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_CANCELED){
-            File imgFile = new File(mImageFileLocation);
+            //File imgFile = new File(mImageFileLocation);
+            setPathToFile(new File(mImageFileLocation).getAbsolutePath());
+
 
         }else if(requestCode == SELECT_FILE && data!=null){
-            String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
+            // String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
+            setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()));
            /* FileModel fileModel = null;
 
             if(selectedImagePath!=null){
@@ -177,5 +184,33 @@ public class UtilActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        // Store our shared preference
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("pickFile", true);
+        editor.commit();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        // Store our shared preference
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("pickFile", false);
+        editor.commit();
+
+    }
+    private void setPathToFile(String abolutePath){
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString("pathToFile", abolutePath);
+        editor.commit();
     }
 }
