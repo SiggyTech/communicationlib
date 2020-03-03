@@ -1,13 +1,17 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Base64;
 import android.view.View;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -96,9 +100,55 @@ public class Utils {
         return base64;
     }
 
+    public static void testAudio(File file){
+        try {
+            byte[] bytes = FileUtils.readFileToByteArray(file);
+            String encoded = Base64.encodeToString(bytes, 0);
+            byte[] decoded = Base64.decode(encoded, 0);
 
+            try {
+                File file2 = new File(Conf.ROOT_PATH + "/replica2.3gp");
+                FileOutputStream os = new FileOutputStream(file2, true);
+                //os.write(decoded);
+                os.write(bytes);
+                os.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Converts byte[] to base 64
+     * @param byteArray data
+     * @return base64
+     */
     public static String ToBase64(byte[] byteArray){
-        return Base64.encodeToString(byteArray,Base64.NO_WRAP);
+        return Base64.encodeToString(byteArray,Base64.DEFAULT);
+    }
+
+    /**
+     * Converts base64 to file and returns file absolute path
+     * @param encoded base64 file
+     * @param fileName name of file with extension
+     * @return file absolute path
+     */
+    public static Uri Base64ToUrl(String encoded, String fileName) throws Exception {
+        byte[] decoded = Base64.decode(encoded, Base64.DEFAULT);
+        String path = Conf.ROOT_PATH + "/"+fileName;
+        try {
+            File file2 = new File(path);
+            FileOutputStream os = new FileOutputStream(file2, true);
+            os.write(decoded);
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        return Uri.parse(path);
     }
 
 }

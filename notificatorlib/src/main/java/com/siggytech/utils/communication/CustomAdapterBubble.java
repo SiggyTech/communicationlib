@@ -1,9 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.util.Log;
+import android.media.MediaPlayer;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +19,7 @@ public class CustomAdapterBubble extends BaseAdapter {
     private List<ChatModel> lstChat;
     private Context context;
     private LayoutInflater inflater;
+    private MediaPlayer mediaPlayer = new MediaPlayer();
 
     public CustomAdapterBubble(List<ChatModel> lstChat, Context context) {
         this.lstChat = lstChat;
@@ -47,7 +46,7 @@ public class CustomAdapterBubble extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View vi = convertView;
 
-        ViewHolder holder;
+        final ViewHolder holder;
 
         if (convertView == null) {
 
@@ -78,6 +77,14 @@ public class CustomAdapterBubble extends BaseAdapter {
             holder.lnAudio.setVisibility(View.VISIBLE);
             holder.chat_out_text.setVisibility(View.GONE);
 
+            try {
+                mediaPlayer = MediaPlayer.create(context, Utils.Base64ToUrl(lstChat.get(position).getTextMessage(),Utils.GetDateName()+".3gp"));
+                mediaPlayer.prepare();
+                mediaPlayer.setVolume(0.5f, 0.5f);
+                mediaPlayer.setLooping(false);
+                holder.sbPlay.setMax(mediaPlayer.getDuration());
+            } catch(Exception e) { e.printStackTrace(); }
+
         }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageType())) {
             //TODO do staff
         } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageType())) {
@@ -92,45 +99,84 @@ public class CustomAdapterBubble extends BaseAdapter {
         holder.ivPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
+                try {
+                    if (mediaPlayer.isPlaying()) {
+                        mediaPlayer.stop();
+                        mediaPlayer.release();
+                    }
+                } catch(Exception e) { e.printStackTrace(); }
+
                 if(!((boolean)v.getTag())){
                     v.setTag(true);
                     ((ImageView)v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
+                    try {
+                        mediaPlayer.start();
 
-                    //TODO play audio
-                }else{
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                int currentPosition = mediaPlayer.getCurrentPosition();
+                                int total = mediaPlayer.getDuration();
+
+                                while (mediaPlayer != null && mediaPlayer.isPlaying() && currentPosition < total) {
+                                    try {
+                                        Thread.sleep(1000);
+                                        currentPosition = mediaPlayer.getCurrentPosition();
+                                    } catch (InterruptedException e) {
+                                        return;
+                                    } catch (Exception e) {
+                                        return;
+                                    }
+
+                                    holder.sbPlay.setProgress(currentPosition);
+                                }
+                            }
+                        }).start();
+                    } catch(Exception e) { e.printStackTrace(); }
+                }else {
                     v.setTag(false);
-                    ((ImageView)v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
-                    //TODO stop audio
+                    ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
                 }
-
-
             }
         });
 
-        //holder.sbPlay.setMax();
         holder.sbPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                Log.d("TAG","onProgressChanged");
+            public void onStartTrackingTouch(SeekBar seekBar) {
             }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                Log.d("TAG","onStartTrackingTouch");
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
+                
+                int x = (int) Math.ceil(progress / 1000f);
+
+                double percent = progress / (double) seekBar.getMax();
+                int offset = seekBar.getThumbOffset();
+                int seekWidth = seekBar.getWidth();
+                int val = (int) Math.round(percent * (seekWidth - 2 * offset));
+              
+               
+                if (progress > 0 && mediaPlayer != null && !mediaPlayer.isPlaying()) {
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                    seekBar.setProgress(0);
+                }
+
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                Log.d("TAG","onStopTrackingTouch");
+                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                    mediaPlayer.seekTo(seekBar.getProgress());
+                }
             }
         });
-
+        
         return vi;
     }
 
-    private Bitmap getFromByteArray(byte[] bytes){
-        return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-    }
+
 
     class ViewHolder {
         TextView chat_out_from;

@@ -200,6 +200,8 @@ public class ChatListView extends ListView {
         catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
+
+
     }
 
     public void SetAdapter(){

@@ -264,20 +264,21 @@ public class ChatControl extends RelativeLayout {
                             filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
                             ar = new AudioRecorder(filePath);
 
+
                             audioRecording(true);
 
                             return true;
                         }
                         case MotionEvent.ACTION_UP: {
                             try {
+                                audioRecording(false);
+                                cnt = 0;
+                                mAudioText.setText("00:00:00");
+
                                 File audioFile = new File(filePath);
 
                                 if(audioFile!=null && audioFile.length()>0)
                                     abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(audioFile)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
-
-                                audioRecording(false);
-                                cnt = 0;
-                                mAudioText.setText("00:00:00");
 
                                 ivAdd.setVisibility(VISIBLE);
                                 ivMic2.setVisibility(GONE);
