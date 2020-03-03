@@ -3,7 +3,6 @@ package com.siggytech.utils.communication;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,14 +22,11 @@ public class CustomAdapterBubble extends BaseAdapter {
     private Context context;
     private LayoutInflater inflater;
     private MediaPlayer mPlayer;
-    private Handler mHandler;
 
     public CustomAdapterBubble(List<ChatModel> lstChat, Context context) {
         this.lstChat = lstChat;
         this.context = context;
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        // Initialize the handler
-        this.mHandler = new Handler();
     }
 
     @Override
@@ -115,7 +111,7 @@ public class CustomAdapterBubble extends BaseAdapter {
                         mPlayer.start();
 
                         // Initialize the seek bar
-                        initializeSeekBar(holder.sbPlay,holder.ivPlay);
+                        initializeSeekBar(holder.sbPlay,holder.ivPlay,holder.factor);
                     } else {
                         stopPlaying(holder.sbPlay,holder.ivPlay);
                     }
@@ -133,7 +129,7 @@ public class CustomAdapterBubble extends BaseAdapter {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
                try {
-                  if(fromTouch) mPlayer.seekTo(progress*1000);
+                  if(fromTouch) mPlayer.seekTo(progress * holder.factor);
                }catch (Exception e){
                    e.printStackTrace();
                }
@@ -156,6 +152,7 @@ public class CustomAdapterBubble extends BaseAdapter {
         ImageView ivPlay;
         SeekBar sbPlay;
         Uri audioUri;
+        int factor = 1; //Esto es por si es necesario dividir el factor de duracion
     }
 
     private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
@@ -169,9 +166,6 @@ public class CustomAdapterBubble extends BaseAdapter {
                 mPlayer.stop();
                 mPlayer.release();
                 mPlayer = null;
-                if (mHandler != null) {
-                    //mHandler.removeCallbacks(mRunnable);
-                }
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -179,17 +173,17 @@ public class CustomAdapterBubble extends BaseAdapter {
     }
 
 
-    private void initializeSeekBar(final SeekBar mSeekBar, final ImageView mImage){
-        final int var = 1;//1000;
-        Log.d(TAG,"TOTAL "+mPlayer.getDuration()/var);
-        mSeekBar.setMax(mPlayer.getDuration()/var);
+    private void initializeSeekBar(final SeekBar mSeekBar, final ImageView mImage, final int factor){
+
+        Log.d(TAG,"TOTAL "+mPlayer.getDuration()/factor);
+        mSeekBar.setMax(mPlayer.getDuration()/factor);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    while (mPlayer != null && mPlayer.isPlaying() && (mPlayer.getCurrentPosition() / var) < (mPlayer.getDuration() / var)) {
-                        int mCurrentPosition = mPlayer.getCurrentPosition() / var;
+                    while (mPlayer != null && mPlayer.isPlaying() && (mPlayer.getCurrentPosition() / factor) < (mPlayer.getDuration() / factor)) {
+                        int mCurrentPosition = mPlayer.getCurrentPosition() / factor;
                         Log.d(TAG,"Posicion actual "+mPlayer.getCurrentPosition());
                         mSeekBar.setProgress(mCurrentPosition);
                     }
@@ -207,6 +201,4 @@ public class CustomAdapterBubble extends BaseAdapter {
             }
         }).start();
     }
-
-
 }
