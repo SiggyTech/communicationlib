@@ -5,11 +5,9 @@ public class ChatModel {
     private Long id;
 
     private String textMessage;
-
     private String from;
     private String dateTime;
     private String messageType;
-
 
     public ChatModel(Long id, String textMessage, String from, String dateTime, String type) {
         this.id = id;
@@ -35,6 +33,5 @@ public class ChatModel {
     public String getMessageType() {
         return messageType;
     }
-
 
 }

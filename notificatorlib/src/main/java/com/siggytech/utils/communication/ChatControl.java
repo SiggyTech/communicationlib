@@ -39,6 +39,7 @@ import static com.siggytech.utils.communication.Utils.GetStringDate;
  * @author SIGGI Tech
  */
 public class ChatControl extends RelativeLayout {
+    private static final String TAG = ChatControl.class.getSimpleName();
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
     public static final int SELECT_FILE = 100;
@@ -264,7 +265,6 @@ public class ChatControl extends RelativeLayout {
                             filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
                             ar = new AudioRecorder(filePath);
 
-
                             audioRecording(true);
 
                             return true;
@@ -279,6 +279,9 @@ public class ChatControl extends RelativeLayout {
 
                                 if(audioFile!=null && audioFile.length()>0)
                                     abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(audioFile)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+
+                                boolean deleted = deleteFile(audioFile);
+                                if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!!!");
 
                                 ivAdd.setVisibility(VISIBLE);
                                 ivMic2.setVisibility(GONE);
@@ -366,6 +369,25 @@ public class ChatControl extends RelativeLayout {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Deletes file
+     *
+     * @param file file
+     * @return true if was deleted otherwise false
+     */
+    private boolean deleteFile(File file){
+        boolean deleted = false;
+        try{
+            if(file!=null){
+                deleted = file.delete();
+            }
+        }catch (Exception e){
+            deleted = false;
+            e.printStackTrace();
+        }
+        return deleted;
     }
 
 

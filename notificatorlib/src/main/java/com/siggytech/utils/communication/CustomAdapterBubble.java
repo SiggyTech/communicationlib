@@ -2,6 +2,9 @@ package com.siggytech.utils.communication;
 
 import android.content.Context;
 import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,16 +18,19 @@ import java.util.List;
 
 
 public class CustomAdapterBubble extends BaseAdapter {
-
+    private static final String TAG = CustomAdapterBubble.class.getSimpleName();
     private List<ChatModel> lstChat;
     private Context context;
     private LayoutInflater inflater;
-    private MediaPlayer mediaPlayer = new MediaPlayer();
+    private MediaPlayer mPlayer;
+    private Handler mHandler;
 
     public CustomAdapterBubble(List<ChatModel> lstChat, Context context) {
         this.lstChat = lstChat;
         this.context = context;
         inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        // Initialize the handler
+        this.mHandler = new Handler();
     }
 
     @Override
@@ -76,13 +82,8 @@ public class CustomAdapterBubble extends BaseAdapter {
         if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
             holder.chat_out_text.setVisibility(View.GONE);
-
             try {
-                mediaPlayer = MediaPlayer.create(context, Utils.Base64ToUrl(lstChat.get(position).getTextMessage(),Utils.GetDateName()+".3gp"));
-                mediaPlayer.prepare();
-                mediaPlayer.setVolume(0.5f, 0.5f);
-                mediaPlayer.setLooping(false);
-                holder.sbPlay.setMax(mediaPlayer.getDuration());
+                holder.audioUri = Utils.Base64ToUrl(lstChat.get(position).getTextMessage(),Utils.GetDateName()+".3gp");
             } catch(Exception e) { e.printStackTrace(); }
 
         }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageType())) {
@@ -99,44 +100,27 @@ public class CustomAdapterBubble extends BaseAdapter {
         holder.ivPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 try {
-                    if (mediaPlayer.isPlaying()) {
-                        mediaPlayer.stop();
-                        mediaPlayer.release();
+                    if (!((boolean) v.getTag())) {
+                        // If media player another instance already running then stop it first
+                        stopPlaying(holder.sbPlay,holder.ivPlay);
+
+                        v.setTag(true);
+                        ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
+
+                        // Initialize media player
+                        mPlayer = MediaPlayer.create(context, holder.audioUri);
+
+                        // Start the media player
+                        mPlayer.start();
+
+                        // Initialize the seek bar
+                        initializeSeekBar(holder.sbPlay,holder.ivPlay);
+                    } else {
+                        stopPlaying(holder.sbPlay,holder.ivPlay);
                     }
-                } catch(Exception e) { e.printStackTrace(); }
-
-                if(!((boolean)v.getTag())){
-                    v.setTag(true);
-                    ((ImageView)v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
-                    try {
-                        mediaPlayer.start();
-
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                int currentPosition = mediaPlayer.getCurrentPosition();
-                                int total = mediaPlayer.getDuration();
-
-                                while (mediaPlayer != null && mediaPlayer.isPlaying() && currentPosition < total) {
-                                    try {
-                                        Thread.sleep(1000);
-                                        currentPosition = mediaPlayer.getCurrentPosition();
-                                    } catch (InterruptedException e) {
-                                        return;
-                                    } catch (Exception e) {
-                                        return;
-                                    }
-
-                                    holder.sbPlay.setProgress(currentPosition);
-                                }
-                            }
-                        }).start();
-                    } catch(Exception e) { e.printStackTrace(); }
-                }else {
-                    v.setTag(false);
-                    ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
         });
@@ -148,35 +132,21 @@ public class CustomAdapterBubble extends BaseAdapter {
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
-                
-                int x = (int) Math.ceil(progress / 1000f);
-
-                double percent = progress / (double) seekBar.getMax();
-                int offset = seekBar.getThumbOffset();
-                int seekWidth = seekBar.getWidth();
-                int val = (int) Math.round(percent * (seekWidth - 2 * offset));
-              
-               
-                if (progress > 0 && mediaPlayer != null && !mediaPlayer.isPlaying()) {
-                    mediaPlayer.stop();
-                    mediaPlayer.release();
-                    seekBar.setProgress(0);
-                }
-
+               try {
+                  if(fromTouch) mPlayer.seekTo(progress*1000);
+               }catch (Exception e){
+                   e.printStackTrace();
+               }
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                    mediaPlayer.seekTo(seekBar.getProgress());
-                }
+
             }
         });
         
         return vi;
     }
-
-
 
     class ViewHolder {
         TextView chat_out_from;
@@ -185,6 +155,58 @@ public class CustomAdapterBubble extends BaseAdapter {
         LinearLayout lnAudio;
         ImageView ivPlay;
         SeekBar sbPlay;
+        Uri audioUri;
     }
+
+    private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
+        mImage.setTag(false);
+        mImage.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
+        mSeekBar.setProgress(0);
+
+        try {
+            // If media player is not null then try to stop it
+            if (mPlayer != null) {
+                mPlayer.stop();
+                mPlayer.release();
+                mPlayer = null;
+                if (mHandler != null) {
+                    //mHandler.removeCallbacks(mRunnable);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+
+    private void initializeSeekBar(final SeekBar mSeekBar, final ImageView mImage){
+        final int var = 1;//1000;
+        Log.d(TAG,"TOTAL "+mPlayer.getDuration()/var);
+        mSeekBar.setMax(mPlayer.getDuration()/var);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (mPlayer != null && mPlayer.isPlaying() && (mPlayer.getCurrentPosition() / var) < (mPlayer.getDuration() / var)) {
+                        int mCurrentPosition = mPlayer.getCurrentPosition() / var;
+                        Log.d(TAG,"Posicion actual "+mPlayer.getCurrentPosition());
+                        mSeekBar.setProgress(mCurrentPosition);
+                    }
+                    Log.d(TAG,"mPlayer.getCurrentPosition(): "+mPlayer.getCurrentPosition()+" - "+mPlayer.getDuration());
+                    if (mPlayer != null && mPlayer.getDuration() == mPlayer.getCurrentPosition()) {
+                        stopPlaying(mSeekBar,mImage);
+                    }
+                    if(mPlayer != null &&  !mPlayer.isPlaying()){
+                        stopPlaying(mSeekBar,mImage);
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    stopPlaying(mSeekBar,mImage);
+                }
+            }
+        }).start();
+    }
+
 
 }
