@@ -31,14 +31,7 @@ public class MainActivity extends AppCompatActivity {
     ChatControl ch;
 
 
-    @Override
-    public void onResume(){
-        super.onResume();
-        if (getIntent().hasExtra("notificationMessage")) {
-            System.out.println(getIntent().getExtras().getString("notificationMessage"));
-        }
 
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,14 +39,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
         //Conf.SERVER_IP = "192.168.1.148";
 
         onNewIntent(getIntent());
-
-
-
-
-
 
         //check permissions
         if (Build.VERSION.SDK_INT >= 23) {
@@ -130,7 +119,8 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            addPTTButton();
+            //addPTTButton();
+            addChatListView();
 
             subscribeForNotifications();
         } else {
@@ -173,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
             if(extras.containsKey("notificationMessage"))
             {
 
-                System.out.println("Message from notifcation: " + extras.getString("notificationMessage").toString());
+                System.out.println("Message from notification: " + extras.getString("notificationMessage").toString());
             }
         }
 

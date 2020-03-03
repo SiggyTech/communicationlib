@@ -6,7 +6,6 @@ import android.os.Build;
 import android.util.Base64;
 import android.view.View;
 
-import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -100,26 +99,6 @@ public class Utils {
         return base64;
     }
 
-    public static void testAudio(File file){
-        try {
-            byte[] bytes = FileUtils.readFileToByteArray(file);
-            String encoded = Base64.encodeToString(bytes, 0);
-            byte[] decoded = Base64.decode(encoded, 0);
-
-            try {
-                File file2 = new File(Conf.ROOT_PATH + "/replica2.3gp");
-                FileOutputStream os = new FileOutputStream(file2, true);
-                //os.write(decoded);
-                os.write(bytes);
-                os.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
 
     /**
      * Converts byte[] to base 64

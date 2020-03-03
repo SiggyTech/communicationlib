@@ -74,7 +74,7 @@ public class ChatListView extends ListView {
         }
         Intent intent = LaunchIntent; // new Intent();
         intent.putExtra("notificationMessage", notificationMessage);
-        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
         Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -157,7 +157,7 @@ public class ChatListView extends ListView {
 
     public void sendMessage(String from, String text, String dateTime, String type){
         try{
-            socket.sendOnOpen("Message", "{\n" +
+            socket.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + text +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
@@ -238,25 +238,12 @@ public class ChatListView extends ListView {
                     notificationMessage = text; //message for activity passed through notification
                     JSONObject jObject = new JSONObject(text);
 
-                    switch (jObject.getString("event")) {
-                        case Utils.MESSAGE_TYPE.MESSAGE:
-                            from = new JSONObject(jObject.getString("data")).getString("from");
-                            messageText = new JSONObject(jObject.getString("data")).getString("text");
-                            //dateTime = new JSONObject(jObject.getString("data")).getString("dateTime");
-
-                            dateTime = Utils.GetStringDate();
-
-                            break;
-                        case Utils.MESSAGE_TYPE.PHOTO:
-                            break;
-                        case Utils.MESSAGE_TYPE.AUDIO:
-
-                            break;
-                        case Utils.MESSAGE_TYPE.VIDEO:
-                            break;
-                    }
-                    newMessage = true;
+                    from = new JSONObject(jObject.getString("data")).getString("from");
+                    messageText = new JSONObject(jObject.getString("data")).getString("text");
                     newMessageType = jObject.getString("event");
+                    dateTime = Utils.GetStringDate();
+
+                    newMessage = true;
 
                 } catch(Exception ex){
                     Log.e(TAG, ex.getMessage());
