@@ -5,9 +5,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
@@ -52,6 +55,8 @@ public class ChatControl extends RelativeLayout {
     private TextView mAudioText;
     private AudioRecorder ar;
     private CountDownTimer t;
+    private boolean isPickingFile = false;
+    Handler timerHandler = new Handler();
 
 
     private ArrayAdapter<String> mConversationArrayAdapter;
@@ -317,11 +322,26 @@ public class ChatControl extends RelativeLayout {
             public void onClick(View view) {
                 try {
                     mActivity.startActivity(new Intent(context, UtilActivity.class));
+
+                    clearPersistentVariables();
+
+                    timerHandler.postDelayed(timerRunnable,0);
+
+                    //
                 } catch(Exception e){
                     e.printStackTrace();
                 }
             }
         });
+    }
+    private void clearPersistentVariables(){
+        isPickingFile  = true; //to start timer looking for a file to send.
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences.Editor editor = settings.edit();
+        settings.edit().remove("pickFile").commit();
+        settings.edit().remove("pathToFile").commit();
+        settings.edit().remove("fileType").commit();
+        editor.commit();
     }
 
     private LinearLayout getLnContentSum(float weight){
@@ -389,6 +409,32 @@ public class ChatControl extends RelativeLayout {
         }
         return deleted;
     }
+    Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(isPickingFile) {
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+                boolean pickFile = settings.getBoolean("pickFile", true);
+
+                if(!pickFile){
+                    try {
+                        String pathToFile = settings.getString("pathToFile", "");
+                        File file = new File(pathToFile);
+                        //File newFile = Utils.getCompressedImageFile(file, context);
+                        abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(file)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
+                        isPickingFile = false;
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                    timerHandler.postDelayed(timerRunnable,1000);
+            }
+
+        }
+    };
 
 
 }

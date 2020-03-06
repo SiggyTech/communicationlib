@@ -56,120 +56,6 @@ public class ChatListView extends ListView {
     int resIcon;
     private Socket socket;
 
-    public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
-
-        PackageManager pmg = context.getPackageManager();
-        String name = "";
-        Intent LaunchIntent = null;
-
-        try {
-            if (pmg != null) {
-                ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
-                name = (String) pmg.getApplicationLabel(app);
-                LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
-            }
-            Log.d("intent.getExtras", "Found!: " + name);
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        Intent intent = LaunchIntent; // new Intent();
-        intent.putExtra("notificationMessage", notificationMessage);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
-
-        Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher_round)
-                .setContentTitle(title)
-                .setContentText(text)
-                .setContentIntent(pIntent)
-                .setSound(uri)
-                .setSmallIcon(resIcon)
-                .setAutoCancel(true)
-                ;
-
-        // Add as notification
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-        {
-            String channelId = "Your_channel_id";
-            NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "Channel human readable title",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            manager.createNotificationChannel(channel);
-            builder.setChannelId(channelId);
-
-        }
-
-        manager.notify(0, builder.build());
-
-        PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
-        boolean isScreenOn = pm.isScreenOn();
-        Log.e("screen on.........", ""+isScreenOn);
-        if(!isScreenOn) {
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,TAG);
-            wl.acquire(10000);
-            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
-
-            wl_cpu.acquire(10000);
-        }
-    }
-
-    private boolean appInForeground(@NonNull Context context) {
-        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
-        if (runningAppProcesses == null) {
-            return false;
-        }
-
-        for (ActivityManager.RunningAppProcessInfo runningAppProcess : runningAppProcesses) {
-            if (runningAppProcess.processName.equals(context.getPackageName()) &&
-                    runningAppProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(newMessage) {
-                try{
-                    if(!appInForeground(context)){
-                        addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
-                    }
-
-                    newMessage = false;
-                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime, newMessageType)); //TODO agregar fecha a la caja de texto
-                    SetAdapter();
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-
-            timerHandler.postDelayed(timerRunnable,100);
-        }
-    };
-
-    public void sendMessage(String from, String text, String dateTime, String type){
-        try{
-            socket.sendOnOpen(type, "{\n" +
-                    "    \"from\": \"" + from +  "\",\n" +
-                    "    \"text\": \"" + text +  "\", \n" +
-                    "    \"dateTime\": \"" + dateTime +  "\" \n" +
-                    "}");
-
-            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime, type)); //TODO agregar fecha a la caja de texto y from
-            SetAdapter();
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
     public ChatListView (Context context, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
         super(context);
         this.context = context;
@@ -293,6 +179,119 @@ public class ChatListView extends ListView {
             }
         }
         return IMEINumber;
+    }
+    public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
+
+        PackageManager pmg = context.getPackageManager();
+        String name = "";
+        Intent LaunchIntent = null;
+
+        try {
+            if (pmg != null) {
+                ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
+                name = (String) pmg.getApplicationLabel(app);
+                LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
+            }
+            Log.d("intent.getExtras", "Found!: " + name);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        Intent intent = LaunchIntent; // new Intent();
+        intent.putExtra("notificationMessage", notificationMessage);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
+
+        Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+                .setSmallIcon(R.drawable.ic_launcher_round)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(pIntent)
+                .setSound(uri)
+                .setSmallIcon(resIcon)
+                .setAutoCancel(true)
+                ;
+
+        // Add as notification
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            String channelId = "Your_channel_id";
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Channel human readable title",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            manager.createNotificationChannel(channel);
+            builder.setChannelId(channelId);
+
+        }
+
+        manager.notify(0, builder.build());
+
+        PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+        boolean isScreenOn = pm.isScreenOn();
+        Log.e("screen on.........", ""+isScreenOn);
+        if(!isScreenOn) {
+            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,TAG);
+            wl.acquire(10000);
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
+
+            wl_cpu.acquire(10000);
+        }
+    }
+
+    private boolean appInForeground(@NonNull Context context) {
+        ActivityManager activityManager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> runningAppProcesses = activityManager.getRunningAppProcesses();
+        if (runningAppProcesses == null) {
+            return false;
+        }
+
+        for (ActivityManager.RunningAppProcessInfo runningAppProcess : runningAppProcesses) {
+            if (runningAppProcess.processName.equals(context.getPackageName()) &&
+                    runningAppProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if(newMessage) {
+                try{
+                    if(!appInForeground(context)){
+                        addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
+                    }
+
+                    newMessage = false;
+                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime, newMessageType));
+                    SetAdapter();
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+            timerHandler.postDelayed(timerRunnable,100);
+        }
+    };
+
+    public void sendMessage(String from, String text, String dateTime, String type){
+        try{
+            socket.sendOnOpen(type, "{\n" +
+                    "    \"from\": \"" + from +  "\",\n" +
+                    "    \"text\": \"" + text +  "\", \n" +
+                    "    \"dateTime\": \"" + dateTime +  "\" \n" +
+                    "}");
+
+            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime, type));
+            SetAdapter();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
 

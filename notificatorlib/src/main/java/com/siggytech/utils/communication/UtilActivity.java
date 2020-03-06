@@ -99,15 +99,36 @@ public class UtilActivity extends AppCompatActivity {
         Log.v(TAG, "Entro al onActivityResult del Main el codigo " + requestCode);
         if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
             //File imgFile = new File(mImageFileLocation);
-            setPathToFile(new File(mImageFileLocation).getAbsolutePath());
+            setPathToFile(new File(mImageFileLocation).getAbsolutePath(), Utils.MESSAGE_TYPE.PHOTO);
+
+            finish();
         }else if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_CANCELED){
             //File imgFile = new File(mImageFileLocation);
-            setPathToFile(new File(mImageFileLocation).getAbsolutePath());
+            finish();
 
 
         }else if(requestCode == SELECT_FILE && data!=null){
-            // String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
-            setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()));
+            String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
+            switch (selectedImagePath.substring(selectedImagePath.lastIndexOf(".") + 1).toUpperCase()){
+                case "JPG":
+                case "JPEG":
+                case "BMP":
+                case "TIFF":
+                case "PNG":
+                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
+                    break;
+                case "AVI":
+                case "MP4":
+                case "MOV":
+                case "MPG":
+                case "MPEG":
+                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                    break;
+                default:
+                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.FILE);
+                    break;
+            }
+            finish();
            /* FileModel fileModel = null;
 
             if(selectedImagePath!=null){
@@ -188,29 +209,24 @@ public class UtilActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
-        // Store our shared preference
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
         editor.putBoolean("pickFile", true);
         editor.commit();
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
 
-        // Store our shared preference
+    private void setPathToFile(String abolutePath, String type){
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = settings.edit();
-        editor.putBoolean("pickFile", false);
-        editor.commit();
-
-    }
-    private void setPathToFile(String abolutePath){
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean("pickFile", false);  //set as finish this actitivy
         editor.putString("pathToFile", abolutePath);
+        editor.putString("fileType", type);
+
+
+
         editor.commit();
+
+
     }
 }

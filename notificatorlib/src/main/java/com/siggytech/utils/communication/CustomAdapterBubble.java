@@ -1,8 +1,11 @@
 package com.siggytech.utils.communication;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,6 +65,7 @@ public class CustomAdapterBubble extends BaseAdapter {
             holder.lnAudio = vi.findViewById(R.id.lnAudio);
             holder.ivPlay = vi.findViewById(R.id.ivPlay);
             holder.sbPlay = vi.findViewById(R.id.sbPlay);
+            holder.ivPreviewImage = vi.findViewById(R.id.ivPreviewImage);
             //holder.image = vi.findViewById(R.id.cell_icon);
 
             vi.setTag(holder);
@@ -70,13 +74,17 @@ public class CustomAdapterBubble extends BaseAdapter {
 
         holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
         holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
-        holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
+
         if(Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageType())) {
             holder.lnAudio.setVisibility(View.GONE);
+            holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.VISIBLE);
+            holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
+
         }
         if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
+            holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.GONE);
             try {
                 holder.audioUri = Utils.Base64ToUrl(lstChat.get(position).getTextMessage(),Utils.GetDateName()+".3gp");
@@ -85,7 +93,18 @@ public class CustomAdapterBubble extends BaseAdapter {
         }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageType())) {
             //TODO do staff
         } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageType())) {
-            //TODO do staff
+            holder.lnAudio.setVisibility(View.GONE);
+            holder.ivPreviewImage.setVisibility(View.VISIBLE);
+            holder.chat_out_text.setVisibility(View.GONE);
+
+            try{
+                byte[] decodedString = Base64.decode(lstChat.get(position).getTextMessage(), Base64.DEFAULT);
+                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                holder.ivPreviewImage.setImageBitmap(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                        decodedByte.getHeight(), false));
+            }
+            catch (Exception e){e.printStackTrace();}
         }
         holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
         holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
@@ -153,6 +172,7 @@ public class CustomAdapterBubble extends BaseAdapter {
         SeekBar sbPlay;
         Uri audioUri;
         int factor = 1; //Esto es por si es necesario dividir el factor de duracion
+        ImageView ivPreviewImage;
     }
 
     private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
