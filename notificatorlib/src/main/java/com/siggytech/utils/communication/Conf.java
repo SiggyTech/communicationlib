@@ -20,5 +20,8 @@ public class Conf {
     public static int CHAT_COLOR_DATE = Color.BLACK;
     public static boolean CHAT_BASIC = false;
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
+    public static boolean SEND_AUDIO = true;
+    public static boolean SEND_FILES = true;
+
 
 }

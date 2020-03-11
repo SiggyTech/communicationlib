@@ -207,6 +207,11 @@ public class ChatControl extends RelativeLayout {
         lnH2.setGravity(Gravity.CENTER|Gravity.BOTTOM);
 
         lnH0.addView(mAddFile);
+
+        if(!Conf.SEND_FILES){
+            lnH0.setVisibility(View.GONE);
+        }
+
         lnH1.addView(mOutEditText);
         lnH1.addView(mAudioText);
         lnH2.addView(mSendButton);
