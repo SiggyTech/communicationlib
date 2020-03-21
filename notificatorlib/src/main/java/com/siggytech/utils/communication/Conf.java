@@ -17,7 +17,7 @@ public class Conf {
     public static String SEND_BUTTON_TEXT = "Send";
     public static int CHAT_COLOR_FROM = Color.BLACK;
     public static int CHAT_COLOR_TEXT = Color.BLACK;
-    public static int CHAT_COLOR_DATE = Color.BLACK;
+    public static int CHAT_COLOR_DATE = Color.DKGRAY;
     public static boolean CHAT_BASIC = false;
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
     public static boolean SEND_AUDIO = true;

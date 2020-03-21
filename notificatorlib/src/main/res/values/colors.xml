@@ -10,7 +10,11 @@
     <color name="bt_blue_dark">#082B49</color>
     <color name="bt_black">#000000</color>
     <color name="bt_dark_gray">#4B4747</color>
+    <color name="yellow_green">#6CDA1E</color>
     <color name="color_transparent">#00000000</color>
+
+    <color name="speech_bubble">#6CDA1E</color>
+    <color name="speech_bubble_agent">#EBE7E7</color>
 
     <dimen name="bt_corner_radius_2">2dp</dimen>
     <dimen name="bt_corner_radius_4">4dp</dimen>

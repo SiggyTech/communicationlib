@@ -12,7 +12,6 @@ import android.os.Environment;
 import android.util.Base64;
 import android.view.View;
 
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -124,7 +123,7 @@ public class Utils {
      */
     public static Uri Base64ToUrl(String encoded, String fileName) throws Exception {
         byte[] decoded = Base64.decode(encoded, Base64.DEFAULT);
-        String path = Conf.ROOT_PATH + "/"+fileName;
+        String path = Conf.ROOT_PATH +fileName;
         try {
             File file2 = new File(path);
             FileOutputStream os = new FileOutputStream(file2, true);
@@ -136,6 +135,7 @@ public class Utils {
         }
         return Uri.parse(path);
     }
+
     public static File getCompressedImageFile(File file, Context mContext) {
         try {
             BitmapFactory.Options o = new BitmapFactory.Options();

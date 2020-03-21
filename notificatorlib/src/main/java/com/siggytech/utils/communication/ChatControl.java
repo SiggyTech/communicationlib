@@ -29,6 +29,7 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
 
 import java.io.File;
@@ -76,6 +77,7 @@ public class ChatControl extends RelativeLayout {
     private int resIcon;
     private String notificationMessage;
     private Activity mActivity;
+    private Gson gson;
 
     public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
                        String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage, Activity activity){
@@ -92,7 +94,7 @@ public class ChatControl extends RelativeLayout {
         this.resIcon = resIcon;
         this.notificationMessage = notificationMessage;
         this.mActivity = activity;
-
+        this.gson = new Gson();
         initLayout(context);
     }
 
@@ -161,7 +163,7 @@ public class ChatControl extends RelativeLayout {
         mSendButton.addView(iv);
 
         mAudio = new LinearLayout(context);
-        mAudio.setLayoutParams(new LayoutParams(120,120));
+        mAudio.setLayoutParams(new LayoutParams(130,130));
         mAudio.setId(Utils.GenerateViewId());
         mAudio.setGravity(Gravity.CENTER);
 
@@ -170,7 +172,7 @@ public class ChatControl extends RelativeLayout {
         mAudio.addView(ivMic);
 
         mAudioText = new TextView(context);
-        mAudioText.setText("00:00:00");
+        mAudioText.setText("00:00");
         mAudioText.setTextColor(getResources().getColor(R.color.bt_dark_gray));
         mAudioText.setTextSize(TypedValue.COMPLEX_UNIT_SP,17);
         mAudioText.setPadding(20,0,0,0);
@@ -199,6 +201,7 @@ public class ChatControl extends RelativeLayout {
         lnContent.setPadding(10,10,10,10);
 
         LinearLayout lnSend = getLnContentSum(6);
+        lnSend.setGravity(Gravity.CENTER_HORIZONTAL);
         LinearLayout lnH0 = getLnWeight(1);
         lnH0.setVerticalGravity(Gravity.CENTER|Gravity.BOTTOM);
         LinearLayout lnH1 = getLnWeight(Conf.CHAT_BASIC?5:4);
@@ -250,11 +253,10 @@ public class ChatControl extends RelativeLayout {
                 @Override
                 public void onTick(long millisUntilFinished) {
                     cnt++;
-                    long millis = cnt;
-                    int seconds = (int) (millis / 60);
+                    int seconds = cnt;
                     int minutes = seconds / 60;
                     seconds     = seconds % 60;
-                    mAudioText.setText(String.format("%d:%02d:%02d", minutes, seconds,millis));
+                    mAudioText.setText(String.format("%02d:%02d", minutes, seconds));
                 }
                 @Override
                 public void onFinish() {}
@@ -282,16 +284,24 @@ public class ChatControl extends RelativeLayout {
                         case MotionEvent.ACTION_UP: {
                             try {
                                 audioRecording(false);
-                                cnt = 0;
-                                mAudioText.setText("00:00:00");
+                                mAudioText.setText("00:00");
 
                                 File audioFile = new File(filePath);
+                                if(cnt > 1) {
+                                    MessageModel messageModel = new MessageModel();
+                                    messageModel.setType(Utils.MESSAGE_TYPE.AUDIO);
+                                    messageModel.setMessage(FileToBase64(audioFile));
+                                    messageModel.setDuration(cnt);
 
-                                if(audioFile!=null && audioFile.length()>0)
-                                    abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(audioFile)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+                                    if (audioFile != null && audioFile.length() > 0)
+                                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+
+                                }
+                                cnt = 0;
 
                                 boolean deleted = deleteFile(audioFile);
-                                if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!!!");
+                                if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!!!");
+
 
                                 ivAdd.setVisibility(VISIBLE);
                                 ivMic2.setVisibility(GONE);
@@ -314,8 +324,11 @@ public class ChatControl extends RelativeLayout {
             public void onClick(View view) {
                 try {
                     if(!"".equals(mOutEditText.getText().toString().trim())) {
-                        String m = AESUtils.encrypt(mOutEditText.getText().toString());
-                        abc.sendMessage(userName, m, GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
+
+                        MessageModel messageModel = new MessageModel();
+                        messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
+                        messageModel.setMessage(mOutEditText.getText().toString());
+                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
                         mOutEditText.setText("");
                     }
                 } catch(Exception e){e.printStackTrace();}
@@ -414,6 +427,7 @@ public class ChatControl extends RelativeLayout {
         }
         return deleted;
     }
+
     Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
@@ -425,12 +439,15 @@ public class ChatControl extends RelativeLayout {
                     try {
                         String pathToFile = settings.getString("pathToFile", "");
                         File file = new File(pathToFile);
-                        //File newFile = Utils.getCompressedImageFile(file, context);
-                        abc.sendMessage(userName, AESUtils.encrypt(FileToBase64(file)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
+                        MessageModel messageModel = new MessageModel();
+                        messageModel.setMessage(FileToBase64(Utils.getCompressedImageFile(file, context)));
+                        messageModel.setType(Utils.MESSAGE_TYPE.PHOTO);
+                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
                         isPickingFile = false;
+                        boolean deleted = deleteFile(file);
+                        if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!!!");
                     }
-                    catch(Exception e)
-                    {
+                    catch(Exception e) {
                         e.printStackTrace();
                     }
                 }

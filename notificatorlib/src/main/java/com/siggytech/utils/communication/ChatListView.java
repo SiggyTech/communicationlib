@@ -22,6 +22,8 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
 
+import com.google.gson.Gson;
+
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class ChatListView extends ListView {
     private String messageTittle, notificationText, packageName, notificationMessage;
     int resIcon;
     private Socket socket;
+    private Gson gson;
 
     public ChatListView (Context context, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
         super(context);
@@ -69,6 +72,7 @@ public class ChatListView extends ListView {
         this.notificationText = messageText;
         this.packageName = packageName;
         this.resIcon = resIcon;
+        this.gson = new Gson();
 
         timerHandler.postDelayed(timerRunnable,0);
 
@@ -87,7 +91,7 @@ public class ChatListView extends ListView {
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
 
-
+        setDividerHeight(0);
     }
 
     public void SetAdapter(){
@@ -180,6 +184,7 @@ public class ChatListView extends ListView {
         }
         return IMEINumber;
     }
+
     public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
 
         PackageManager pmg = context.getPackageManager();
@@ -265,9 +270,8 @@ public class ChatListView extends ListView {
                     if(!appInForeground(context)){
                         addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
                     }
-
                     newMessage = false;
-                    lsChat.add(new ChatModel(1L, AESUtils.decrypt(messageText), from, dateTime, newMessageType));
+                    lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decrypt(messageText),MessageModel.class), from, dateTime,false));
                     SetAdapter();
                 }
                 catch (Exception e){
@@ -279,15 +283,15 @@ public class ChatListView extends ListView {
         }
     };
 
-    public void sendMessage(String from, String text, String dateTime, String type){
+    public void sendMessage(String from, String encryptedData, String dateTime, String type){
         try{
+
             socket.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
-                    "    \"text\": \"" + text +  "\", \n" +
+                    "    \"text\": \"" + encryptedData +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
                     "}");
-
-            lsChat.add(new ChatModel(1L, AESUtils.decrypt(text), Conf.LOCAL_USER, dateTime, type));
+            lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decrypt(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
             SetAdapter();
         } catch(Exception e){
             e.printStackTrace();

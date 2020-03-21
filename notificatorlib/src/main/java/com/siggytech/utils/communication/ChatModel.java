@@ -4,34 +4,33 @@ public class ChatModel {
 
     private Long id;
 
-    private String textMessage;
+    private MessageModel messageModel;
     private String from;
     private String dateTime;
-    private String messageType;
+    private boolean isMine;
 
-    public ChatModel(Long id, String textMessage, String from, String dateTime, String type) {
+    public ChatModel(Long id, MessageModel messageModel, String from, String dateTime, boolean isMine) {
         this.id = id;
-        this.textMessage = textMessage;
+        this.messageModel = messageModel;
         this.from = from;
         this.dateTime = dateTime;
-        this.messageType = type;
-
+        this.isMine = isMine;
     }
 
     public Long getIdMessage() {
         return this.id;
     }
-    public String getTextMessage() {
-        return this.textMessage;
-    }
+
     public String getFromMessage() {
         return this.from;
     }
     public String getDateTimeMessage() {
         return this.dateTime;
     }
-    public String getMessageType() {
-        return messageType;
+    public MessageModel getMessageModel() {
+        return messageModel;
     }
-
+    public boolean isMine() {
+        return isMine;
+    }
 }

@@ -9,9 +9,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <application>
-        <activity android:name=".UtilActivity"
-            android:theme="@style/Theme.AppCompat.Dialog"/>
+    <application
+        android:hardwareAccelerated="false"
+        android:largeHeap="true">
+        <activity android:name=".TransitionToActivity"/>
+        <activity
+            android:name=".UtilActivity"
+            android:theme="@style/Theme.AppCompat.Dialog" />
     </application>
 
 </manifest>

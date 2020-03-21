@@ -2,71 +2,76 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical" >
-
-    <TextView
-        android:id="@+id/chat_out_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|left"
-        android:layout_marginLeft="14dp"
-        android:layout_weight="1"
-        android:text=""
-        android:textStyle="bold"/>
-    <TextView
-        android:id="@+id/chat_out_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|left"
-        android:layout_marginLeft="16dp"
-        android:layout_weight="1"
-        android:text="" />
-    <ImageView
-        android:id="@+id/ivPreviewImage"
-        android:layout_width="100sp"
-        android:layout_height="100sp"
-        android:layout_marginLeft="20dp"
-        android:focusable="true"
-        android:clickable="true"/>
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:gravity="end"
+    android:id="@+id/lnLayout">
 
     <LinearLayout
-        android:id="@+id/lnAudio"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="6"
-        android:gravity="center_vertical"
-        android:layout_gravity="center_vertical">
-        <LinearLayout
-            android:id="@+id/lnPlay"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content">
-            <ImageView
-                android:id="@+id/ivPlay"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:focusable="true"
-                android:clickable="true"
-                android:src="@drawable/ic_play_arrow"/>
-        </LinearLayout>
-        <SeekBar
-            android:id="@+id/sbPlay"
-            android:layout_width="0dp"
-            android:layout_weight="5"
-            android:layout_marginRight="20dp"
-            android:layout_height="wrap_content" />
-    </LinearLayout>
-
-    <TextView
-        android:id="@+id/chat_text_datetime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical|right"
-        android:layout_marginLeft="8dp"
-        android:layout_weight="1"
-        android:text=""
-        android:textStyle="italic"/>
+        android:id="@+id/lnMessage"
+        android:orientation="vertical"
+        android:padding="10dp">
+        <TextView
+            android:id="@+id/chat_out_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start"
+            android:textStyle="bold"/>
+        <TextView
+            android:id="@+id/chat_out_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|start" />
+        <ImageView
+            android:id="@+id/ivPreviewImage"
+            android:layout_width="100sp"
+            android:layout_height="100sp"
+            android:focusable="true"
+            android:clickable="true"/>
+
+        <LinearLayout
+            android:id="@+id/lnAudio"
+            android:layout_width="250dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="6"
+            android:gravity="center_vertical"
+            android:layout_gravity="center_vertical">
+            <LinearLayout
+                android:id="@+id/lnPlay"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content">
+                <ImageView
+                    android:id="@+id/ivPlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
+                    android:focusable="true"
+                    android:clickable="true"
+                    android:src="@drawable/ic_play_arrow"/>
+            </LinearLayout>
+            <SeekBar
+                android:id="@+id/sbPlay"
+                android:layout_width="0dp"
+                android:layout_weight="5"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/chat_text_datetime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginLeft="20dp"
+            android:layout_marginStart="20dp"
+            android:textSize="14sp"
+            android:textColor="@color/light_grey"
+            android:textStyle="italic"/>
+    </LinearLayout>
+
 
 </LinearLayout>

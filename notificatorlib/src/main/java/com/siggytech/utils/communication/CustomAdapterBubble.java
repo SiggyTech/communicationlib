@@ -1,12 +1,15 @@
 package com.siggytech.utils.communication;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +28,7 @@ public class CustomAdapterBubble extends BaseAdapter {
     private Context context;
     private LayoutInflater inflater;
     private MediaPlayer mPlayer;
+
 
     public CustomAdapterBubble(List<ChatModel> lstChat, Context context) {
         this.lstChat = lstChat;
@@ -59,6 +63,8 @@ public class CustomAdapterBubble extends BaseAdapter {
 
             holder = new ViewHolder();
 
+            holder.lnLayout = vi.findViewById(R.id.lnLayout);
+            holder.lnMessage = vi.findViewById(R.id.lnMessage);
             holder.chat_out_from = vi.findViewById(R.id.chat_out_name);
             holder.chat_out_text = vi.findViewById(R.id.chat_out_text);
             holder.chat_text_datetime = vi.findViewById(R.id.chat_text_datetime);
@@ -72,39 +78,63 @@ public class CustomAdapterBubble extends BaseAdapter {
 
         } else holder = (ViewHolder)vi.getTag();
 
+        if(lstChat.get(position).isMine()){
+            if (Build.VERSION.SDK_INT > 23){
+                holder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach);
+            }else holder.lnMessage.setBackgroundResource(R.drawable.mine_bubble);
+
+            holder.lnLayout.setGravity(Gravity.END);
+        }else{
+            if (Build.VERSION.SDK_INT > 23){
+                holder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach_agent);
+            }else holder.lnMessage.setBackgroundResource(R.drawable.other_bubble);
+
+            holder.lnLayout.setGravity(Gravity.START);
+        }
+
         holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
         holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
 
-        if(Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageType())) {
+        if(Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.VISIBLE);
-            holder.chat_out_text.setText(lstChat.get(position).getTextMessage());
+            holder.chat_out_text.setText(lstChat.get(position).getMessageModel().getMessage());
 
         }
-        if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageType())) {
+        if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
             holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.GONE);
             try {
-                holder.audioUri = Utils.Base64ToUrl(lstChat.get(position).getTextMessage(),Utils.GetDateName()+".3gp");
+                holder.audioUri = Utils.Base64ToUrl(lstChat.get(position).getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
             } catch(Exception e) { e.printStackTrace(); }
 
-        }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageType())) {
+        }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageModel().getType())) {
             //TODO do staff
-        } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageType())) {
+        } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.VISIBLE);
             holder.chat_out_text.setVisibility(View.GONE);
 
             try{
-                byte[] decodedString = Base64.decode(lstChat.get(position).getTextMessage(), Base64.DEFAULT);
-                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                byte[] decodedString = Base64.decode(lstChat.get(position).getMessageModel().getMessage(), Base64.DEFAULT);
+                final Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
                 holder.ivPreviewImage.setImageBitmap(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
                         decodedByte.getHeight(), false));
-            }
-            catch (Exception e){e.printStackTrace();}
+
+                try {
+                    holder.uri = Utils.Base64ToUrl(lstChat.get(position).getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
+                } catch(Exception e) { e.printStackTrace(); }
+
+                holder.ivPreviewImage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        transition(holder.uri);
+                    }
+                });
+            } catch (Exception e){e.printStackTrace();}
         }
         holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
         holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
@@ -142,8 +172,7 @@ public class CustomAdapterBubble extends BaseAdapter {
 
         holder.sbPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-            }
+            public void onStartTrackingTouch(SeekBar seekBar) { }
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
@@ -155,15 +184,15 @@ public class CustomAdapterBubble extends BaseAdapter {
             }
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) { }
         });
         
         return vi;
     }
 
     class ViewHolder {
+        LinearLayout lnLayout;
+        LinearLayout lnMessage;
         TextView chat_out_from;
         TextView chat_out_text;
         TextView chat_text_datetime;
@@ -171,6 +200,7 @@ public class CustomAdapterBubble extends BaseAdapter {
         ImageView ivPlay;
         SeekBar sbPlay;
         Uri audioUri;
+        Uri uri;
         int factor = 1; //Esto es por si es necesario dividir el factor de duracion
         ImageView ivPreviewImage;
     }
@@ -207,7 +237,7 @@ public class CustomAdapterBubble extends BaseAdapter {
                         Log.d(TAG,"Posicion actual "+mPlayer.getCurrentPosition());
                         mSeekBar.setProgress(mCurrentPosition);
                     }
-                    Log.d(TAG,"mPlayer.getCurrentPosition(): "+mPlayer.getCurrentPosition()+" - "+mPlayer.getDuration());
+
                     if (mPlayer != null && mPlayer.getDuration() == mPlayer.getCurrentPosition()) {
                         stopPlaying(mSeekBar,mImage);
                     }
@@ -220,5 +250,17 @@ public class CustomAdapterBubble extends BaseAdapter {
                 }
             }
         }).start();
+    }
+
+
+    private void transition(Uri uri) {
+        try {
+            Intent intent = new Intent(context, TransitionToActivity.class);
+            intent.putExtra("ImageUri",uri.toString());
+
+            context.startActivity(intent);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
