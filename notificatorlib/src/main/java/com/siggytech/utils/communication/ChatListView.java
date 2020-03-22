@@ -291,7 +291,9 @@ public class ChatListView extends ListView {
                     "    \"text\": \"" + encryptedData +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
                     "}");
-            lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decrypt(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
+                lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
+
+
             SetAdapter();
         } catch(Exception e){
             e.printStackTrace();

@@ -23,6 +23,11 @@ public class AESUtils  {
     private static final String AESSalt = "9gje84hc9FKEef8";
     private static final String initializationVector = "3197418115125014";
 
+    private static final byte[] key = { 1,2,3,4,5,6,7,8,9,10,1,2,3,4,5,6 };
+
+    // iv size must be 16
+    private static final byte[] ivk = { 6, 9, 6, 9, 4, 4, 7, 0, 7, 1, 1, 0, 2, 3, 3, 4 };
+
     public static String encrypt(String textToEncrypt) throws Exception {
 
         SecretKeySpec skeySpec = new SecretKeySpec(getRaw(plainText, AESSalt), "AES");
@@ -54,5 +59,38 @@ public class AESUtils  {
         }
         return new byte[0];
     }
+
+    public static final byte[] encBytes(byte[] srcBytes ) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec iv = new IvParameterSpec(ivk);
+        cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+        byte[] encrypted = cipher.doFinal(srcBytes);
+        return encrypted;
+    }
+
+    public static final String encText(String sSrc)
+            throws Exception {
+        byte[] srcBytes = sSrc.getBytes("utf-8");
+        byte[] encrypted = encBytes(srcBytes);
+        return Base64.encodeToString(encrypted, Base64.DEFAULT);
+    }
+
+    public static final byte[] decBytes(byte[] srcBytes) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        SecretKeySpec skeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec iv = new IvParameterSpec(ivk);
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+        byte[] encrypted = cipher.doFinal(srcBytes);
+        return encrypted;
+    }
+
+    public static final String decText(String sSrc)
+            throws Exception {
+        byte[] srcBytes = Base64.decode(sSrc, Base64.DEFAULT);
+        byte[] decrypted = decBytes(srcBytes);
+        return new String(decrypted, "utf-8");
+    }
+
 
 }

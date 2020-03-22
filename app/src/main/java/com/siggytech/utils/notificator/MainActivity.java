@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     LinearLayout linearLayout;
     String TAG = "SAMPLE APP";
-    String API_KEY = "";
+    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
 
     String name = "";
     //String name = "";
@@ -36,8 +36,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server
-        Conf.SEND_FILES = false;
+        Conf.SERVER_IP = "192.168.0.22"; //Set dedicated IP server
+        Conf.SEND_FILES = true;
 
         //Conf.SERVER_IP = "192.168.1.148";
 
@@ -161,7 +161,6 @@ public class MainActivity extends AppCompatActivity {
         if(extras != null){
             if(extras.containsKey("notificationMessage"))
             {
-
                 System.out.println("Message from notification: " + extras.getString("notificationMessage").toString());
             }
         }
@@ -182,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
     {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
-        ch = new ChatControl(this, 6870, API_KEY, getIMEINumber(), "Felipe",
+        ch = new ChatControl(this, 1, API_KEY, getIMEINumber(), "Felipe",
                 "Titulo del mensaje", "Texto del Mensaje",
                 getApplicationContext().getPackageName(),
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),

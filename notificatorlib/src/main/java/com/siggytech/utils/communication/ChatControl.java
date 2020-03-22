@@ -15,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -28,7 +29,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
 
@@ -442,7 +442,9 @@ public class ChatControl extends RelativeLayout {
                         MessageModel messageModel = new MessageModel();
                         messageModel.setMessage(FileToBase64(Utils.getCompressedImageFile(file, context)));
                         messageModel.setType(Utils.MESSAGE_TYPE.PHOTO);
-                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
+
+                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
+
                         isPickingFile = false;
                         boolean deleted = deleteFile(file);
                         if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!!!");
