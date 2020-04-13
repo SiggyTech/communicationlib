@@ -126,8 +126,6 @@ public class ChatControl extends RelativeLayout {
                 idGroup,
                 api_key,
                 name,
-                messageTittle,
-                messageText,
                 packageName,
                 resIcon);
 

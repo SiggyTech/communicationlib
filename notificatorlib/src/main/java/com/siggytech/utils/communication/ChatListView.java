@@ -41,8 +41,7 @@ import okio.ByteString;
 import static android.content.Context.TELEPHONY_SERVICE;
 
 public class ChatListView extends RecyclerView {
-
-    private String TAG = "ChatListView";
+    private String TAG = ChatListView.class.getSimpleName();
     List<ChatModel> lsChat = new ArrayList<>();
     Handler timerHandler = new Handler();
     Context context;
@@ -55,13 +54,13 @@ public class ChatListView extends RecyclerView {
     private String messageText;
     private String from;
     private String dateTime;
-    private String messageTittle, notificationText, packageName, notificationMessage;
+    private String packageName, notificationMessage;
     int resIcon;
     private Socket socket;
     private Gson gson;
     private Activity mActivity;
 
-    public ChatListView (Context context, Activity activity, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
+    public ChatListView (Context context, Activity activity, int idGroup, String API_KEY, String nameClient, String packageName, int resIcon){
         super(context);
         this.context = context;
         this.mActivity = activity;
@@ -71,8 +70,6 @@ public class ChatListView extends RecyclerView {
 
         imei = getIMEINumber();
 
-        this.messageTittle = messageTittle;
-        this.notificationText = messageText;
         this.packageName = packageName;
         this.resIcon = resIcon;
         this.gson = new Gson();
@@ -222,8 +219,7 @@ public class ChatListView extends RecyclerView {
                 .setContentIntent(pIntent)
                 .setSound(uri)
                 .setSmallIcon(resIcon)
-                .setAutoCancel(true)
-                ;
+                .setAutoCancel(true);
 
         // Add as notification
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -274,11 +270,16 @@ public class ChatListView extends RecyclerView {
         public void run() {
             if(newMessage) {
                 try{
+                    MessageModel model = gson.fromJson(AESUtils.decText(messageText),MessageModel.class);
                     if(!appInForeground(context)){
-                        addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
+                        String messageText = context.getString(R.string.new_message);
+                        if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getType())){
+                            messageText = model.getMessage();
+                        }
+                        addNotification(from, messageText, packageName, resIcon, notificationMessage);
                     }
                     newMessage = false;
-                    lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(messageText),MessageModel.class), from, dateTime,false));
+                    lsChat.add(new ChatModel(1L, model, from, dateTime,false));
                     notifyItemInserted();
                 }
                 catch (Exception e){
