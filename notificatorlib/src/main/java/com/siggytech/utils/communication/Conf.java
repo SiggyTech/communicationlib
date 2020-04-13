@@ -23,6 +23,7 @@ public class Conf {
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
     public static boolean SEND_AUDIO = true;
     public static boolean SEND_FILES = true;
+    public static String HTTP = "http://";
 
 
 }

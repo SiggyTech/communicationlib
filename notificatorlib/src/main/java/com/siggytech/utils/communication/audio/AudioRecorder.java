@@ -26,6 +26,7 @@ import java.io.IOException;
 public class AudioRecorder {
     final MediaRecorder recorder = new MediaRecorder();
     final String path;
+    private int duration;
 
     /**
      * Creates a new audio recording at the given path (relative to root of SD card).
@@ -104,5 +105,13 @@ public class AudioRecorder {
 
     public int getMaxAmplitude()    {
         return recorder.getMaxAmplitude();
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 }

@@ -8,27 +8,27 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
-import android.util.Base64;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
 
@@ -55,14 +55,9 @@ public class ChatControl extends RelativeLayout {
     private LinearLayout mAudio;
     private TextView mAudioText;
     private AudioRecorder ar;
-    private CountDownTimer t;
     private boolean isPickingFile = false;
     Handler timerHandler = new Handler();
 
-
-    private ArrayAdapter<String> mConversationArrayAdapter;
-
-    private int cnt;
     private String filePath;
     public String imei;
     public String name;
@@ -78,6 +73,7 @@ public class ChatControl extends RelativeLayout {
     private String notificationMessage;
     private Activity mActivity;
     private Gson gson;
+
 
     public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
                        String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage, Activity activity){
@@ -124,7 +120,10 @@ public class ChatControl extends RelativeLayout {
 
         RelativeLayout rl = new RelativeLayout(context);
 
-        abc = new ChatListView(context, idGroup,
+        abc = new ChatListView(
+                context,
+                mActivity,
+                idGroup,
                 api_key,
                 name,
                 messageTittle,
@@ -132,7 +131,6 @@ public class ChatControl extends RelativeLayout {
                 packageName,
                 resIcon);
 
-        abc.setTranscriptMode(ListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
         abc.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         RelativeLayout.LayoutParams abc_LayoutParams =
                 new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
@@ -150,6 +148,7 @@ public class ChatControl extends RelativeLayout {
         mOutEditText.setMaxLines(5);
         mOutEditText.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         mOutEditText.setBackgroundResource(R.drawable.gradientbg);
+        mOutEditText.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         mSendButton = new LinearLayout(context);
         mSendButton.setLayoutParams(new LayoutParams(100,100));
@@ -249,19 +248,6 @@ public class ChatControl extends RelativeLayout {
             };
             mOutEditText.addTextChangedListener(excludeTW);
 
-            t = new CountDownTimer( Long.MAX_VALUE , 1000) {
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    cnt++;
-                    int seconds = cnt;
-                    int minutes = seconds / 60;
-                    seconds     = seconds % 60;
-                    mAudioText.setText(String.format("%02d:%02d", minutes, seconds));
-                }
-                @Override
-                public void onFinish() {}
-            };
-
             mAudio.setOnTouchListener(new View.OnTouchListener() {
                 public boolean onTouch(View v, MotionEvent event) {
                     switch (event.getAction()) {
@@ -287,17 +273,18 @@ public class ChatControl extends RelativeLayout {
                                 mAudioText.setText("00:00");
 
                                 File audioFile = new File(filePath);
-                                if(cnt > 1) {
+                                if(ar.getDuration() > 1) {
                                     MessageModel messageModel = new MessageModel();
                                     messageModel.setType(Utils.MESSAGE_TYPE.AUDIO);
                                     messageModel.setMessage(FileToBase64(audioFile));
-                                    messageModel.setDuration(cnt);
+                                    messageModel.setDuration(ar.getDuration());
 
                                     if (audioFile != null && audioFile.length() > 0)
-                                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+                                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
 
                                 }
-                                cnt = 0;
+                                ar.setDuration(0);
+                                timeSwapBuff = 0L;
 
                                 boolean deleted = deleteFile(audioFile);
                                 if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!!!");
@@ -328,7 +315,7 @@ public class ChatControl extends RelativeLayout {
                         MessageModel messageModel = new MessageModel();
                         messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
                         messageModel.setMessage(mOutEditText.getText().toString());
-                        abc.sendMessage(userName, AESUtils.encrypt(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
+                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
                         mOutEditText.setText("");
                     }
                 } catch(Exception e){e.printStackTrace();}
@@ -394,15 +381,16 @@ public class ChatControl extends RelativeLayout {
         if(start){
             try {
                 ar.start();
-                cnt=0;
-                t.start();
+                startHTime = SystemClock.uptimeMillis();
+                customHandler.postDelayed(updateTimerThread, 0);
             } catch (Exception e) {
                 Log.e("Exception in start", "" + e);
             }
         }else{
             try {
                 ar.stop();
-                t.cancel();
+                timeSwapBuff += timeInMilliseconds;
+                customHandler.removeCallbacks(updateTimerThread);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -440,14 +428,16 @@ public class ChatControl extends RelativeLayout {
                         String pathToFile = settings.getString("pathToFile", "");
                         File file = new File(pathToFile);
                         MessageModel messageModel = new MessageModel();
-                        messageModel.setMessage(FileToBase64(Utils.getCompressedImageFile(file, context)));
+                        //TODO cuando sea una imagen sacada desde la camara se debe usar ese compress,
+                        //TODO Si es selecionado debe usarse CompressImage con uri.
+                        messageModel.setMessage(FileToBase64(Utils.CompressImage(pathToFile)));
                         messageModel.setType(Utils.MESSAGE_TYPE.PHOTO);
 
                         abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
 
                         isPickingFile = false;
                         boolean deleted = deleteFile(file);
-                        if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!!!");
+                        if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!");
                     }
                     catch(Exception e) {
                         e.printStackTrace();
@@ -460,6 +450,32 @@ public class ChatControl extends RelativeLayout {
         }
     };
 
+    private long startHTime = 0L;
+    private Handler customHandler = new Handler();
+    long timeInMilliseconds = 0L;
+    long timeSwapBuff = 0L;
+    long updatedTime = 0L;
+
+    private Runnable updateTimerThread = new Runnable() {
+        public void run() {
+
+            timeInMilliseconds = SystemClock.uptimeMillis() - startHTime;
+
+            updatedTime = timeSwapBuff + timeInMilliseconds;
+
+            int secs = (int) (updatedTime / 1000);
+            int mins = secs / 60;
+            secs = secs % 60;
+
+            ar.setDuration((int)(updatedTime / 1000));
+
+            if (mAudioText != null)
+                mAudioText.setText(String.format("%02d:%02d", mins, secs));
+
+            customHandler.postDelayed(this, 0);
+        }
+
+    };
 
 }
 

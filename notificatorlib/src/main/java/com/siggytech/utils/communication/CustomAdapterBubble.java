@@ -1,5 +1,6 @@
 package com.siggytech.utils.communication;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -7,78 +8,48 @@ import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
+import android.support.v7.widget.AppCompatSeekBar;
+import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.siggytech.view.MyImage;
+
 import java.util.List;
 
 
-public class CustomAdapterBubble extends BaseAdapter {
+public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubble.ViewHolder> {
     private static final String TAG = CustomAdapterBubble.class.getSimpleName();
     private List<ChatModel> lstChat;
     private Context context;
-    private LayoutInflater inflater;
     private MediaPlayer mPlayer;
+    private Activity mActivity;
 
-
-    public CustomAdapterBubble(List<ChatModel> lstChat, Context context) {
+    public CustomAdapterBubble(List<ChatModel> lstChat, Context context, Activity activity) {
         this.lstChat = lstChat;
         this.context = context;
-        inflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.mActivity = activity;
     }
 
     @Override
-    public int getCount() {
-        return lstChat.size();
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_cell_out,parent,false);
+        return new ViewHolder(view);
     }
 
     @Override
-    public Object getItem(int position) {
-        return lstChat.get(position);
-    }
+    public void onBindViewHolder(final ViewHolder holder, int position) {
+        ChatModel model = lstChat.get(position);
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View vi = convertView;
-
-        final ViewHolder holder;
-
-        if (convertView == null) {
-
-            vi = inflater.inflate(R.layout.chat_cell_out, null);
-
-            holder = new ViewHolder();
-
-            holder.lnLayout = vi.findViewById(R.id.lnLayout);
-            holder.lnMessage = vi.findViewById(R.id.lnMessage);
-            holder.chat_out_from = vi.findViewById(R.id.chat_out_name);
-            holder.chat_out_text = vi.findViewById(R.id.chat_out_text);
-            holder.chat_text_datetime = vi.findViewById(R.id.chat_text_datetime);
-            holder.lnAudio = vi.findViewById(R.id.lnAudio);
-            holder.ivPlay = vi.findViewById(R.id.ivPlay);
-            holder.sbPlay = vi.findViewById(R.id.sbPlay);
-            holder.ivPreviewImage = vi.findViewById(R.id.ivPreviewImage);
-            //holder.image = vi.findViewById(R.id.cell_icon);
-
-            vi.setTag(holder);
-
-        } else holder = (ViewHolder)vi.getTag();
-
-        if(lstChat.get(position).isMine()){
+        if(model.isMine()){
             if (Build.VERSION.SDK_INT > 23){
                 holder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach);
             }else holder.lnMessage.setBackgroundResource(R.drawable.mine_bubble);
@@ -92,53 +63,60 @@ public class CustomAdapterBubble extends BaseAdapter {
             holder.lnLayout.setGravity(Gravity.START);
         }
 
-        holder.chat_out_from.setText(lstChat.get(position).getFromMessage());
-        holder.chat_text_datetime.setText(lstChat.get(position).getDateTimeMessage());
+        holder.chat_out_from.setText(model.getFromMessage());
+        holder.chat_text_datetime.setText(model.getDateTimeMessage());
 
-        if(Utils.MESSAGE_TYPE.MESSAGE.equals(lstChat.get(position).getMessageModel().getType())) {
+        if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.VISIBLE);
-            holder.chat_out_text.setText(lstChat.get(position).getMessageModel().getMessage());
+            holder.chat_out_text.setText(model.getMessageModel().getMessage());
 
         }
-        if(Utils.MESSAGE_TYPE.AUDIO.equals(lstChat.get(position).getMessageModel().getType())) {
+        if(Utils.MESSAGE_TYPE.AUDIO.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
             holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.GONE);
+            holder.tvAudioDuration.setText(getDurationString(model.getMessageModel().getDuration()));
+            holder.tvAudioDuration.setTag(getDurationString(model.getMessageModel().getDuration()));
             try {
-                holder.audioUri = Utils.Base64ToUrl(lstChat.get(position).getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
+                holder.audioUri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
             } catch(Exception e) { e.printStackTrace(); }
 
-        }else if(Utils.MESSAGE_TYPE.VIDEO.equals(lstChat.get(position).getMessageModel().getType())) {
+        }else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
             //TODO do staff
-        } else if(Utils.MESSAGE_TYPE.PHOTO.equals(lstChat.get(position).getMessageModel().getType())) {
+        } else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.VISIBLE);
             holder.chat_out_text.setVisibility(View.GONE);
 
             try{
-                byte[] decodedString = Base64.decode(lstChat.get(position).getMessageModel().getMessage(), Base64.DEFAULT);
-                final Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                if(model.isMine()){
+                    byte[] decodedString = Base64.decode(model.getMessageModel().getMessage(), Base64.DEFAULT);
+                    final Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
-                holder.ivPreviewImage.setImageBitmap(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
-                        decodedByte.getHeight(), false));
+                    holder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                            decodedByte.getHeight(), false));
+                    holder.ivPreviewImage.getProgressBar().hide();
+                    try {
+                        holder.uri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
+                    } catch(Exception e) { e.printStackTrace(); }
 
-                try {
-                    holder.uri = Utils.Base64ToUrl(lstChat.get(position).getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
-                } catch(Exception e) { e.printStackTrace(); }
-
-                holder.ivPreviewImage.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        transition(holder.uri);
-                    }
-                });
+                    holder.ivPreviewImage.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            transition(holder.uri);
+                        }
+                    });
+                }else{
+                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage);
+                }
             } catch (Exception e){e.printStackTrace();}
         }
         holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
         holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
         holder.chat_text_datetime.setTextColor(Conf.CHAT_COLOR_DATE);
+        holder.tvAudioDuration.setTextColor(Conf.CHAT_COLOR_DATE);
         //holder.image.setImageResource(R.drawable.ic_launcher_round);
 
         holder.ivPlay.setTag(false);
@@ -160,7 +138,7 @@ public class CustomAdapterBubble extends BaseAdapter {
                         mPlayer.start();
 
                         // Initialize the seek bar
-                        initializeSeekBar(holder.sbPlay,holder.ivPlay,holder.factor);
+                        initializeSeekBar(holder.sbPlay,holder.tvAudioDuration,holder.ivPlay,holder.factor);
                     } else {
                         stopPlaying(holder.sbPlay,holder.ivPlay);
                     }
@@ -176,55 +154,55 @@ public class CustomAdapterBubble extends BaseAdapter {
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
-               try {
-                  if(fromTouch) mPlayer.seekTo(progress * holder.factor);
-               }catch (Exception e){
-                   e.printStackTrace();
-               }
+                try {
+                    if(fromTouch) mPlayer.seekTo(progress * holder.factor);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) { }
         });
-        
-        return vi;
     }
 
-    class ViewHolder {
-        LinearLayout lnLayout;
-        LinearLayout lnMessage;
-        TextView chat_out_from;
-        TextView chat_out_text;
-        TextView chat_text_datetime;
-        LinearLayout lnAudio;
-        ImageView ivPlay;
-        SeekBar sbPlay;
-        Uri audioUri;
-        Uri uri;
-        int factor = 1; //Esto es por si es necesario dividir el factor de duracion
-        ImageView ivPreviewImage;
+    @Override
+    public long getItemId(int position) {
+        return position;
     }
 
-    private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
-        mImage.setTag(false);
-        mImage.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
-        mSeekBar.setProgress(0);
+    @Override
+    public int getItemCount() {
+        return lstChat.size();
+    }
 
+
+    private void stopPlaying(final AppCompatSeekBar mSeekBar, final ImageView mImage){
         try {
-            // If media player is not null then try to stop it
-            if (mPlayer != null) {
-                mPlayer.stop();
-                mPlayer.release();
-                mPlayer = null;
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mImage.setTag(false);
+                    mImage.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
+                    mSeekBar.setProgress(0);
+                }
+            });
+            try {
+                // If media player is not null then try to stop it
+                if (mPlayer != null) {
+                    mPlayer.stop();
+                    mPlayer.release();
+                    mPlayer = null;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-
-    private void initializeSeekBar(final SeekBar mSeekBar, final ImageView mImage, final int factor){
-
+    private void initializeSeekBar(final AppCompatSeekBar mSeekBar, final TextView tvDuration, final ImageView mImage, final int factor){
         Log.d(TAG,"TOTAL "+mPlayer.getDuration()/factor);
         mSeekBar.setMax(mPlayer.getDuration()/factor);
 
@@ -236,6 +214,19 @@ public class CustomAdapterBubble extends BaseAdapter {
                         int mCurrentPosition = mPlayer.getCurrentPosition() / factor;
                         Log.d(TAG,"Posicion actual "+mPlayer.getCurrentPosition());
                         mSeekBar.setProgress(mCurrentPosition);
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(mPlayer!=null) {
+                                    try {
+                                        if(mPlayer.isPlaying()) tvDuration.setText(getDurationString(mPlayer.getCurrentPosition() / 1000));
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                    }
+                                }else tvDuration.setText((String)tvDuration.getTag());
+                            }
+                        });
+
                     }
 
                     if (mPlayer != null && mPlayer.getDuration() == mPlayer.getCurrentPosition()) {
@@ -252,15 +243,62 @@ public class CustomAdapterBubble extends BaseAdapter {
         }).start();
     }
 
+    private String getDurationString(int seconds){
+        int minutes = seconds / 60;
+        seconds     = seconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
+    }
 
     private void transition(Uri uri) {
         try {
             Intent intent = new Intent(context, TransitionToActivity.class);
             intent.putExtra("ImageUri",uri.toString());
-
             context.startActivity(intent);
         }catch (Exception e){
             e.printStackTrace();
+        }
+    }
+
+    private String getDownloadUrl(String name){
+        return Conf.HTTP+""+Conf.SERVER_IP+":"+Conf.SERVER_IMAGE_PORT+"/"+name;
+    }
+
+
+
+    class ViewHolder extends RecyclerView.ViewHolder{
+        LinearLayout lnLayout;
+        LinearLayout lnMessage;
+        LinearLayout lnDate;
+        TextView chat_out_from;
+        TextView chat_out_text;
+        TextView chat_text_datetime;
+        TextView tvDate;
+        LinearLayout lnAudio;
+        TextView tvAudioDuration;
+        ImageView ivPlay;
+        AppCompatSeekBar sbPlay;
+        Uri audioUri;
+        Uri uri;
+        int factor = 1; //Esto es por si es necesario dividir el factor de duracion
+        MyImage ivPreviewImage;
+
+
+        public ViewHolder(View itemView) {
+            super(itemView);
+
+            lnLayout = itemView.findViewById(R.id.lnLayout);
+            lnDate = itemView.findViewById(R.id.lnDate);
+            lnMessage = itemView.findViewById(R.id.lnMessage);
+            chat_out_from = itemView.findViewById(R.id.chat_out_name);
+            chat_out_text = itemView.findViewById(R.id.chat_out_text);
+            chat_text_datetime = itemView.findViewById(R.id.chat_text_datetime);
+            tvDate = itemView.findViewById(R.id.tvDate);
+            lnAudio = itemView.findViewById(R.id.lnAudio);
+            tvAudioDuration = itemView.findViewById(R.id.tvAudioDuration);
+            ivPlay = itemView.findViewById(R.id.ivPlay);
+            sbPlay = itemView.findViewById(R.id.sbPlay);
+            ivPreviewImage = itemView.findViewById(R.id.ivPreviewImage);
+            //image = itemView.findViewById(R.id.cell_icon);
         }
     }
 }

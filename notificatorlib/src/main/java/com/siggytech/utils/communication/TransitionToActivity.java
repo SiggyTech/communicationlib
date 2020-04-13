@@ -16,13 +16,17 @@ public class TransitionToActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transition_to);
 
-        Uri imageUri = Uri.parse(getIntent().getStringExtra("ImageUri"));
-
         try {
-            //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-            Bitmap bitmap = BitmapFactory.decodeFile(imageUri.toString());
-            PhotoView photoView = findViewById(R.id.iv_photo);
-            photoView.setImageBitmap(bitmap);
+            Uri imageUri = Uri.parse(getIntent().getStringExtra("ImageUri"));
+            try {
+                //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+                Bitmap bitmap = BitmapFactory.decodeFile(imageUri.toString());
+                PhotoView photoView = findViewById(R.id.iv_photo);
+                photoView.setImageBitmap(bitmap);
+            } catch (Exception e) {
+                e.printStackTrace();
+                finish();
+            }
         }catch (Exception e){
             e.printStackTrace();
             finish();

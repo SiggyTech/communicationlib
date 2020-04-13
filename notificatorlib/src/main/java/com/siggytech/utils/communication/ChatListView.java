@@ -1,6 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -18,9 +19,10 @@ import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.ListView;
 
 import com.google.gson.Gson;
 
@@ -38,11 +40,10 @@ import okio.ByteString;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
-public class ChatListView extends ListView {
+public class ChatListView extends RecyclerView {
 
     private String TAG = "ChatListView";
     List<ChatModel> lsChat = new ArrayList<>();
-    CustomAdapterBubble customAdapterBubble;
     Handler timerHandler = new Handler();
     Context context;
     private int idGroup;
@@ -58,10 +59,12 @@ public class ChatListView extends ListView {
     int resIcon;
     private Socket socket;
     private Gson gson;
+    private Activity mActivity;
 
-    public ChatListView (Context context, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
+    public ChatListView (Context context, Activity activity, int idGroup, String API_KEY, String nameClient, String messageTittle, String messageText, String packageName, int resIcon){
         super(context);
         this.context = context;
+        this.mActivity = activity;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
         this.name = nameClient;
@@ -90,14 +93,21 @@ public class ChatListView extends ListView {
         catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
-
-        setDividerHeight(0);
+        setAdapter();
     }
 
-    public void SetAdapter(){
-        customAdapterBubble = new CustomAdapterBubble(lsChat, context);
-        this.setAdapter(customAdapterBubble);
-        this.setSelection(this.getAdapter().getCount()-1);
+    private void setAdapter(){
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
+        linearLayoutManager.setStackFromEnd(true);
+        this.setLayoutManager(linearLayoutManager);
+        this.setHasFixedSize(true);
+        this.setAdapter(new CustomAdapterBubble(lsChat, context,mActivity));
+        this.getLayoutManager().scrollToPosition(this.getAdapter().getItemCount()-1);
+    }
+
+    private void notifyItemInserted(){
+        this.getAdapter().notifyItemInserted(lsChat.size() - 1);
+        this.getLayoutManager().scrollToPosition(this.getAdapter().getItemCount()-1);
     }
 
     private void webSocketConnection(){
@@ -108,8 +118,6 @@ public class ChatListView extends ListView {
         Log.e(TAG, url);
 
         Request requestCoinPrice = new Request.Builder().url(url).build();
-
-        //OLD: Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT).build();
 
         webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
@@ -186,7 +194,6 @@ public class ChatListView extends ListView {
     }
 
     public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
-
         PackageManager pmg = context.getPackageManager();
         String name = "";
         Intent LaunchIntent = null;
@@ -271,8 +278,8 @@ public class ChatListView extends ListView {
                         addNotification(messageTittle, notificationText, packageName, resIcon, notificationMessage);
                     }
                     newMessage = false;
-                    lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decrypt(messageText),MessageModel.class), from, dateTime,false));
-                    SetAdapter();
+                    lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(messageText),MessageModel.class), from, dateTime,false));
+                    notifyItemInserted();
                 }
                 catch (Exception e){
                     e.printStackTrace();
@@ -285,16 +292,14 @@ public class ChatListView extends ListView {
 
     public void sendMessage(String from, String encryptedData, String dateTime, String type){
         try{
-
             socket.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + encryptedData +  "\", \n" +
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
                     "}");
-                lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
 
-
-            SetAdapter();
+            lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
+            notifyItemInserted();
         } catch(Exception e){
             e.printStackTrace();
         }
