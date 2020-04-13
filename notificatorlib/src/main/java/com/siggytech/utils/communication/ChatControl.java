@@ -1,6 +1,5 @@
 package com.siggytech.utils.communication;
 
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -14,7 +13,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
@@ -142,13 +140,11 @@ public class ChatControl extends RelativeLayout {
         mOutEditText.setMaxLines(5);
         mOutEditText.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
         mOutEditText.setBackgroundResource(R.drawable.gradientbg);
-        mOutEditText.setInputType(InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
 
         mSendButton = new LinearLayout(context);
-        mSendButton.setLayoutParams(new LayoutParams(100,100));
         mSendButton.setId(Utils.GenerateViewId());
-        mSendButton.setBackgroundResource(R.drawable.send_selector);
         mSendButton.setGravity(Gravity.CENTER);
+        mSendButton.setPadding(10,10,10,10);
         if(!Conf.CHAT_BASIC) mSendButton.setVisibility(GONE);
 
         ImageView iv = new ImageView(context);
@@ -156,7 +152,7 @@ public class ChatControl extends RelativeLayout {
         mSendButton.addView(iv);
 
         mAudio = new LinearLayout(context);
-        mAudio.setLayoutParams(new LayoutParams(130,130));
+        mAudio.setPadding(10,10,10,20);
         mAudio.setId(Utils.GenerateViewId());
         mAudio.setGravity(Gravity.CENTER);
 
@@ -172,7 +168,7 @@ public class ChatControl extends RelativeLayout {
         mAudioText.setVisibility(GONE);
 
         mAddFile = new LinearLayout(context);
-        mAddFile.setLayoutParams(new LayoutParams(120,120));
+        mAddFile.setPadding(20,10,10,20);
         mAddFile.setId(Utils.GenerateViewId());
         mAddFile.setGravity(Gravity.CENTER);
 
@@ -191,7 +187,7 @@ public class ChatControl extends RelativeLayout {
         lnContent.setId(idContent);
         lnContent.setLayoutParams(mContentParams);
         lnContent.setBackgroundColor(getResources().getColor(R.color.light_grey));
-        lnContent.setPadding(10,10,10,10);
+        lnContent.setPadding(10,10,10,20);
 
         LinearLayout lnSend = getLnContentSum(6);
         lnSend.setGravity(Gravity.CENTER_HORIZONTAL);
