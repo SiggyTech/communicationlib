@@ -21,13 +21,11 @@ public class MainActivity extends AppCompatActivity {
 
     PTTButton pttButton;
     Boolean keyDown = false;
-
     LinearLayout linearLayout;
-    String TAG = "SAMPLE APP";
-    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
+    String API_KEY = "";
 
     String name = "";
-    //String name = "";
+
     ChatControl ch;
 
     @Override
@@ -36,10 +34,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
-        Conf.SERVER_IP = "192.168.0.22"; //Set dedicated IP server
         Conf.SEND_FILES = true;
+        Conf.CHAT_BASIC = false;
 
-        //Conf.SERVER_IP = "192.168.1.148";
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
+        
 
         onNewIntent(getIntent());
 
@@ -52,9 +51,8 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_WIFI_STATE,
                     Manifest.permission.INTERNET,
                     Manifest.permission.RECORD_AUDIO
-
-
             };
+
             if (!hasPermissions(this, PERMISSIONS)) {
                 ActivityCompat.requestPermissions(this, PERMISSIONS, 112 );
             } else {
@@ -80,40 +78,31 @@ public class MainActivity extends AppCompatActivity {
             addChatListView();
 
         }
-
-
-
-
     }
+
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(keyDown == false  && keyCode == 25 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
-            pttButton.startTalking();
+            if(pttButton!=null)
+                pttButton.startTalking();
 
         keyDown = true;
-
         return true;
-
     }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if(keyCode == 25 && event.getAction() == KeyEvent.ACTION_UP ) {
             keyDown = false;
-            pttButton.stopTalking();
+            if(pttButton!=null)
+                pttButton.stopTalking();
         }
-
         return true;
-
     }
 
-
-
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String[] permissions, int[] grantResults) {
-
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
             System.out.println(getApplicationContext().getPackageName());
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
@@ -126,22 +115,20 @@ public class MainActivity extends AppCompatActivity {
                     // exit app
         }
     }
+
     private void subscribeForNotifications(){
         NotificationAgent na = new NotificationAgent();
         na.register(this, 1, API_KEY, name);
     }
+
     private void addPTTButton(){
-
         pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
-
         pttButton.setWidth(200);
         pttButton.setHeight(200);
         pttButton.setText("Hablar!");
-
         linearLayout.addView(pttButton);
-
-
     }
+
     @SuppressWarnings("deprecation")
     private String getIMEINumber() {
         String IMEINumber = "";
@@ -155,18 +142,17 @@ public class MainActivity extends AppCompatActivity {
         }
         return IMEINumber;
     }
+
     @Override
     public void onNewIntent(Intent intent){
         Bundle extras = intent.getExtras();
         if(extras != null){
-            if(extras.containsKey("notificationMessage"))
-            {
+            if(extras.containsKey("notificationMessage")) {
                 System.out.println("Message from notification: " + extras.getString("notificationMessage").toString());
             }
         }
-
-
     }
+
     public static boolean hasPermissions(Context context, String... permissions) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
             for (String permission : permissions) {
@@ -177,15 +163,13 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-    public void addChatListView()
-    {
+
+    public void addChatListView() {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
-        ch = new ChatControl(this, 1, API_KEY, getIMEINumber(), "Felipe",
-                "Titulo del mensaje", "Texto del Mensaje",
+        ch = new ChatControl(this, 6870, API_KEY, getIMEINumber(), "Felipe",
                 getApplicationContext().getPackageName(),
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
-                "Mensaje a la actividad" ,
                 this);//user name to show to others
         linearLayout.addView(ch);
     }

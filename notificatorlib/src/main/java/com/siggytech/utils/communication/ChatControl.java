@@ -66,17 +66,15 @@ public class ChatControl extends RelativeLayout {
     public int idGroup;
     private final Context context;
     private ChatListView abc;
-    private String messageTittle;
-    private String messageText;
+
     private String packageName;
     private int resIcon;
-    private String notificationMessage;
     private Activity mActivity;
     private Gson gson;
 
 
     public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
-                       String messageTittle, String messageText, String packageName, int resIcon, String notificationMessage, Activity activity){
+                        String packageName, int resIcon, Activity activity){
         super(context);
         this.context = context;
         this.idGroup = idGroup;
@@ -84,11 +82,9 @@ public class ChatControl extends RelativeLayout {
         this.name = nameClient;
         this.imei = getIMEINumber();
         this.userName = userName;
-        this.messageTittle = messageTittle;
-        this.messageText = messageText;
+
         this.packageName = packageName;
         this.resIcon = resIcon;
-        this.notificationMessage = notificationMessage;
         this.mActivity = activity;
         this.gson = new Gson();
         initLayout(context);
@@ -329,8 +325,6 @@ public class ChatControl extends RelativeLayout {
                     clearPersistentVariables();
 
                     timerHandler.postDelayed(timerRunnable,0);
-
-                    //
                 } catch(Exception e){
                     e.printStackTrace();
                 }
