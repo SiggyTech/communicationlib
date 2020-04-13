@@ -144,7 +144,7 @@ public class ChatControl extends RelativeLayout {
         mSendButton = new LinearLayout(context);
         mSendButton.setId(Utils.GenerateViewId());
         mSendButton.setGravity(Gravity.CENTER);
-        mSendButton.setPadding(10,10,10,10);
+        mSendButton.setPadding(10,10,10,15);
         if(!Conf.CHAT_BASIC) mSendButton.setVisibility(GONE);
 
         ImageView iv = new ImageView(context);
@@ -152,7 +152,7 @@ public class ChatControl extends RelativeLayout {
         mSendButton.addView(iv);
 
         mAudio = new LinearLayout(context);
-        mAudio.setPadding(10,10,10,20);
+        mAudio.setPadding(10,10,10,15);
         mAudio.setId(Utils.GenerateViewId());
         mAudio.setGravity(Gravity.CENTER);
 
@@ -168,7 +168,7 @@ public class ChatControl extends RelativeLayout {
         mAudioText.setVisibility(GONE);
 
         mAddFile = new LinearLayout(context);
-        mAddFile.setPadding(20,10,10,20);
+        mAddFile.setPadding(20,10,10,15);
         mAddFile.setId(Utils.GenerateViewId());
         mAddFile.setGravity(Gravity.CENTER);
 
