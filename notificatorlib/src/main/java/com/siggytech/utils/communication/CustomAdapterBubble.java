@@ -6,10 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.Build;
-import android.support.v7.widget.AppCompatSeekBar;
-import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
@@ -21,9 +20,14 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.appcompat.widget.AppCompatSeekBar;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.siggytech.view.MyImage;
 
 import java.util.List;
+
+import static android.provider.MediaStore.Video.Thumbnails.MINI_KIND;
 
 
 public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubble.ViewHolder> {
@@ -84,7 +88,25 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
             } catch(Exception e) { e.printStackTrace(); }
 
         }else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
-            //TODO do staff
+            holder.chat_out_text.setVisibility(View.GONE);
+            holder.lnAudio.setVisibility(View.GONE);
+            holder.ivPreviewImage.setVisibility(View.VISIBLE);
+            try{
+                if(model.isMine()){
+                    try {
+                        holder.uri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".mp4");
+                        Bitmap decodedByte = ThumbnailUtils.createVideoThumbnail(holder.uri.toString(),MINI_KIND);
+                        holder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                                decodedByte.getHeight(), false));
+                        holder.ivPreviewImage.getProgressBar().hide();
+                    } catch(Exception e) { e.printStackTrace(); }
+
+                    holder.ivPreviewImage.setOnClickListener(v -> goVideoView(holder.uri));
+                }else{
+                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage,model.getMessageModel().getType());
+                }
+            } catch (Exception e){e.printStackTrace();}
+
         } else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.VISIBLE);
@@ -102,14 +124,9 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
                         holder.uri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
                     } catch(Exception e) { e.printStackTrace(); }
 
-                    holder.ivPreviewImage.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            transition(holder.uri);
-                        }
-                    });
+                    holder.ivPreviewImage.setOnClickListener(v -> goImageView(holder.uri));
                 }else{
-                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage);
+                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage,model.getMessageModel().getType());
                 }
             } catch (Exception e){e.printStackTrace();}
         }
@@ -120,31 +137,28 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         //holder.image.setImageResource(R.drawable.ic_launcher_round);
 
         holder.ivPlay.setTag(false);
-        holder.ivPlay.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    if (!((boolean) v.getTag())) {
-                        // If media player another instance already running then stop it first
-                        stopPlaying(holder.sbPlay,holder.ivPlay);
+        holder.ivPlay.setOnClickListener(v -> {
+            try {
+                if (!((boolean) v.getTag())) {
+                    // If media player another instance already running then stop it first
+                    stopPlaying(holder.sbPlay,holder.ivPlay);
 
-                        v.setTag(true);
-                        ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
+                    v.setTag(true);
+                    ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
 
-                        // Initialize media player
-                        mPlayer = MediaPlayer.create(context, holder.audioUri);
+                    // Initialize media player
+                    mPlayer = MediaPlayer.create(context, holder.audioUri);
 
-                        // Start the media player
-                        mPlayer.start();
+                    // Start the media player
+                    mPlayer.start();
 
-                        // Initialize the seek bar
-                        initializeSeekBar(holder.sbPlay,holder.tvAudioDuration,holder.ivPlay,holder.factor);
-                    } else {
-                        stopPlaying(holder.sbPlay,holder.ivPlay);
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
+                    // Initialize the seek bar
+                    initializeSeekBar(holder.sbPlay,holder.tvAudioDuration,holder.ivPlay,holder.factor);
+                } else {
+                    stopPlaying(holder.sbPlay,holder.ivPlay);
                 }
+            }catch (Exception e){
+                e.printStackTrace();
             }
         });
 
@@ -179,13 +193,10 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
 
     private void stopPlaying(final AppCompatSeekBar mSeekBar, final ImageView mImage){
         try {
-            mActivity.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mImage.setTag(false);
-                    mImage.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
-                    mSeekBar.setProgress(0);
-                }
+            mActivity.runOnUiThread(() -> {
+                mImage.setTag(false);
+                mImage.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_play_arrow));
+                mSeekBar.setProgress(0);
             });
             try {
                 // If media player is not null then try to stop it
@@ -206,39 +217,32 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         Log.d(TAG,"TOTAL "+mPlayer.getDuration()/factor);
         mSeekBar.setMax(mPlayer.getDuration()/factor);
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (mPlayer != null && mPlayer.isPlaying() && (mPlayer.getCurrentPosition() / factor) < (mPlayer.getDuration() / factor)) {
-                        int mCurrentPosition = mPlayer.getCurrentPosition() / factor;
-                        Log.d(TAG,"Posicion actual "+mPlayer.getCurrentPosition());
-                        mSeekBar.setProgress(mCurrentPosition);
-                        mActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(mPlayer!=null) {
-                                    try {
-                                        if(mPlayer.isPlaying()) tvDuration.setText(getDurationString(mPlayer.getCurrentPosition() / 1000));
-                                    }catch (Exception e){
-                                        e.printStackTrace();
-                                    }
-                                }else tvDuration.setText((String)tvDuration.getTag());
+        new Thread(() -> {
+            try {
+                while (mPlayer != null && mPlayer.isPlaying() && (mPlayer.getCurrentPosition() / factor) < (mPlayer.getDuration() / factor)) {
+                    int mCurrentPosition = mPlayer.getCurrentPosition() / factor;
+                    mSeekBar.setProgress(mCurrentPosition);
+                    mActivity.runOnUiThread(() -> {
+                        if(mPlayer!=null) {
+                            try {
+                                if(mPlayer.isPlaying()) tvDuration.setText(getDurationString(mPlayer.getCurrentPosition() / 1000));
+                            }catch (Exception e){
+                                e.printStackTrace();
                             }
-                        });
+                        }else tvDuration.setText((String)tvDuration.getTag());
+                    });
 
-                    }
+                }
 
-                    if (mPlayer != null && mPlayer.getDuration() == mPlayer.getCurrentPosition()) {
-                        stopPlaying(mSeekBar,mImage);
-                    }
-                    if(mPlayer != null &&  !mPlayer.isPlaying()){
-                        stopPlaying(mSeekBar,mImage);
-                    }
-                }catch (Exception e){
-                    e.printStackTrace();
+                if (mPlayer != null && mPlayer.getDuration() == mPlayer.getCurrentPosition()) {
                     stopPlaying(mSeekBar,mImage);
                 }
+                if(mPlayer != null &&  !mPlayer.isPlaying()){
+                    stopPlaying(mSeekBar,mImage);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+                stopPlaying(mSeekBar,mImage);
             }
         }).start();
     }
@@ -249,10 +253,20 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         return String.format("%02d:%02d", minutes, seconds);
     }
 
-    private void transition(Uri uri) {
+    private void goImageView(Uri uri) {
         try {
-            Intent intent = new Intent(context, TransitionToActivity.class);
+            Intent intent = new Intent(context, ImageActivity.class);
             intent.putExtra("ImageUri",uri.toString());
+            context.startActivity(intent);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void goVideoView(Uri uri) {
+        try {
+            Intent intent = new Intent(context, VideoActivity.class);
+            intent.putExtra("VideoUri",uri.toString());
             context.startActivity(intent);
         }catch (Exception e){
             e.printStackTrace();

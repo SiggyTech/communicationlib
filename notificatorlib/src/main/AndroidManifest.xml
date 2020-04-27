@@ -8,14 +8,18 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:hardwareAccelerated="false"
         android:largeHeap="true">
-        <activity android:name=".TransitionToActivity"/>
+        <activity android:name=".ImageActivity"
+            android:theme="@style/BlackTheme"/>
+        <activity android:name=".VideoActivity"
+            android:theme="@style/BlackTheme"/>
         <activity
             android:name=".UtilActivity"
-            android:theme="@style/Theme.AppCompat.Dialog" />
+            android:theme="@style/ChooserTheme" />
     </application>
 
 </manifest>

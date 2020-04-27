@@ -15,7 +15,7 @@
         android:layout_width="fill_parent"
         android:layout_height="150dp">
 
-        <android.support.v4.widget.ContentLoadingProgressBar
+        <androidx.core.widget.ContentLoadingProgressBar
             android:id="@+id/pbProgress"
             android:padding="20dp"
             android:layout_width="match_parent"

@@ -6,11 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -26,6 +26,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.core.app.ActivityCompat;
 
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
@@ -63,7 +66,7 @@ public class ChatControl extends RelativeLayout {
     public String userName;
     public int idGroup;
     private final Context context;
-    private ChatListView abc;
+    private ChatListView chatListView;
 
     private String packageName;
     private int resIcon;
@@ -114,7 +117,7 @@ public class ChatControl extends RelativeLayout {
 
         RelativeLayout rl = new RelativeLayout(context);
 
-        abc = new ChatListView(
+        chatListView = new ChatListView(
                 context,
                 mActivity,
                 idGroup,
@@ -123,14 +126,14 @@ public class ChatControl extends RelativeLayout {
                 packageName,
                 resIcon);
 
-        abc.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        chatListView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         RelativeLayout.LayoutParams abc_LayoutParams =
                 new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
         abc_LayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         abc_LayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
         abc_LayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         abc_LayoutParams.addRule(ABOVE,idContent);
-        rl.addView(abc);
+        rl.addView(chatListView);
         this.addView(rl);
         rl.setLayoutParams(abc_LayoutParams);
         rl.setId(Utils.GenerateViewId());
@@ -238,92 +241,84 @@ public class ChatControl extends RelativeLayout {
             };
             mOutEditText.addTextChangedListener(excludeTW);
 
-            mAudio.setOnTouchListener(new View.OnTouchListener() {
-                public boolean onTouch(View v, MotionEvent event) {
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN: {
-                            ChatControl.this.setFocusable(true);
-                            ChatControl.this.requestFocus();
+            mAudio.setOnTouchListener((v, event) -> {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN: {
+                        ChatControl.this.setFocusable(true);
+                        ChatControl.this.requestFocus();
 
-                            ivAdd.setVisibility(GONE);
-                            ivMic2.setVisibility(VISIBLE);
-                            mOutEditText.setVisibility(GONE);
-                            mAudioText.setVisibility(VISIBLE);
+                        ivAdd.setVisibility(GONE);
+                        ivMic2.setVisibility(VISIBLE);
+                        mOutEditText.setVisibility(GONE);
+                        mAudioText.setVisibility(VISIBLE);
 
-                            filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
-                            ar = new AudioRecorder(filePath);
+                        filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
+                        ar = new AudioRecorder(filePath);
 
-                            audioRecording(true);
+                        audioRecording(true);
 
-                            return true;
-                        }
-                        case MotionEvent.ACTION_UP: {
-                            try {
-                                audioRecording(false);
-                                mAudioText.setText("00:00");
-
-                                File audioFile = new File(filePath);
-                                if(ar.getDuration() > 1) {
-                                    MessageModel messageModel = new MessageModel();
-                                    messageModel.setType(Utils.MESSAGE_TYPE.AUDIO);
-                                    messageModel.setMessage(FileToBase64(audioFile));
-                                    messageModel.setDuration(ar.getDuration());
-
-                                    if (audioFile != null && audioFile.length() > 0)
-                                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
-
-                                }
-                                ar.setDuration(0);
-                                timeSwapBuff = 0L;
-
-                                boolean deleted = deleteFile(audioFile);
-                                if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!!!");
-
-
-                                ivAdd.setVisibility(VISIBLE);
-                                ivMic2.setVisibility(GONE);
-                                mOutEditText.setVisibility(VISIBLE);
-                                mAudioText.setVisibility(GONE);
-                            }catch (Exception e){
-                                e.printStackTrace();
-                            }
-                            return true;
-                        }
+                        return true;
                     }
+                    case MotionEvent.ACTION_UP: {
+                        try {
+                            audioRecording(false);
+                            mAudioText.setText("00:00");
 
-                    return false;
+                            File audioFile = new File(filePath);
+                            if(ar.getDuration() > 1) {
+                                MessageModel messageModel = new MessageModel();
+                                messageModel.setType(Utils.MESSAGE_TYPE.AUDIO);
+                                messageModel.setMessage(FileToBase64(audioFile));
+                                messageModel.setDuration(ar.getDuration());
+
+                                if (audioFile != null && audioFile.length() > 0)
+                                    chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+
+                            }
+                            ar.setDuration(0);
+                            timeSwapBuff = 0L;
+
+                            boolean deleted = deleteFile(audioFile);
+                            if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!!!");
+
+
+                            ivAdd.setVisibility(VISIBLE);
+                            ivMic2.setVisibility(GONE);
+                            mOutEditText.setVisibility(VISIBLE);
+                            mAudioText.setVisibility(GONE);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                        return true;
+                    }
                 }
+
+                return false;
             });
         }
 
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    if(!"".equals(mOutEditText.getText().toString().trim())) {
+        mSendButton.setOnClickListener(view -> {
+            try {
+                if(!"".equals(mOutEditText.getText().toString().trim())) {
 
-                        MessageModel messageModel = new MessageModel();
-                        messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
-                        messageModel.setMessage(mOutEditText.getText().toString());
-                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
-                        mOutEditText.setText("");
-                    }
-                } catch(Exception e){e.printStackTrace();}
-            }
+                    MessageModel messageModel = new MessageModel();
+                    messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
+                    messageModel.setMessage(mOutEditText.getText().toString());
+                    chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
+                    mOutEditText.setText("");
+                }
+            } catch(Exception e){e.printStackTrace();}
         });
 
-        mAddFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    mActivity.startActivity(new Intent(context, UtilActivity.class));
+        mAddFile.setOnClickListener(view -> {
+            try {
+                mActivity.startActivity(new Intent(context, UtilActivity.class));
 
-                    clearPersistentVariables();
+                clearPersistentVariables();
 
-                    timerHandler.postDelayed(timerRunnable,0);
-                } catch(Exception e){
-                    e.printStackTrace();
-                }
+                timerHandler.postDelayed(timerRunnable,0);
+            } catch(Exception e){
+                e.printStackTrace();
             }
         });
     }
@@ -410,24 +405,41 @@ public class ChatControl extends RelativeLayout {
             if(isPickingFile) {
                 SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
                 boolean pickFile = settings.getBoolean("pickFile", true);
-
+                boolean deleteFile = true;
                 if(!pickFile){
                     try {
+                        String fileType = settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO);
                         String pathToFile = settings.getString("pathToFile", "");
                         File file = new File(pathToFile);
-                        MessageModel messageModel = new MessageModel();
-                        //TODO cuando sea una imagen sacada desde la camara se debe usar ese compress,
-                        //TODO Si es selecionado debe usarse CompressImage con uri.
-                        messageModel.setMessage(FileToBase64(Utils.CompressImage(pathToFile)));
-                        messageModel.setType(Utils.MESSAGE_TYPE.PHOTO);
+                        if(!file.exists()) file = new File(Utils.getRealPathFromURI(context, Uri.parse(pathToFile)));
 
-                        abc.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), settings.getString("fileType", Utils.MESSAGE_TYPE.PHOTO));
+                        if(file.exists()) {
+                            MessageModel messageModel = new MessageModel();
+                            if (Utils.MESSAGE_TYPE.PHOTO.equals(fileType)) {
+                                messageModel.setMessage(FileToBase64(Utils.CompressImage(pathToFile)));
+                            }
+                            messageModel.setType(fileType);
+                            messageModel.setFrom(userName);
+                            messageModel.setDate(GetStringDate());
 
-                        isPickingFile = false;
-                        boolean deleted = deleteFile(file);
-                        if(!deleted) Log.d(TAG,"CAN'T DELETE FILE!");
-                    }
-                    catch(Exception e) {
+                            if (Utils.MESSAGE_TYPE.VIDEO.equals(fileType)) {
+                                deleteFile = false;
+                                messageModel.setFile(file);
+                                chatListView.callToBase64(messageModel);
+                            } else {
+                                chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), fileType);
+                            }
+
+                            isPickingFile = false;
+                            if (deleteFile && pathToFile.contains("SIGGI")) {
+                                boolean deleted = deleteFile(file);
+                                if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!");
+                            }
+                        }else{
+                            isPickingFile = false;
+                            Toast.makeText(context,"CAN'T FIND FILE: "+pathToFile,Toast.LENGTH_LONG).show();
+                        }
+                    } catch(Exception e) {
                         e.printStackTrace();
                     }
                 }
@@ -446,9 +458,7 @@ public class ChatControl extends RelativeLayout {
 
     private Runnable updateTimerThread = new Runnable() {
         public void run() {
-
             timeInMilliseconds = SystemClock.uptimeMillis() - startHTime;
-
             updatedTime = timeSwapBuff + timeInMilliseconds;
 
             int secs = (int) (updatedTime / 1000);
@@ -456,10 +466,8 @@ public class ChatControl extends RelativeLayout {
             secs = secs % 60;
 
             ar.setDuration((int)(updatedTime / 1000));
-
             if (mAudioText != null)
                 mAudioText.setText(String.format("%02d:%02d", mins, secs));
-
             customHandler.postDelayed(this, 0);
         }
 

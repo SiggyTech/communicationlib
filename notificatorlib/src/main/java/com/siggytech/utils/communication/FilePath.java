@@ -46,7 +46,7 @@ public class FilePath {
                     contentUri = Audio.Media.EXTERNAL_CONTENT_URI;
                 }
                 String selection = "_id=?";
-                return getDataColumn(context, contentUri, "_id=?", new String[]{split[1]});
+                return getDataColumn(context, contentUri, selection, new String[]{split[1]});
             }
         } else if ("content".equalsIgnoreCase(uri.getScheme())) {
             if (isGooglePhotosUri(uri)) {

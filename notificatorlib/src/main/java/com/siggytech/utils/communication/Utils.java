@@ -18,6 +18,12 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -144,90 +150,7 @@ public class Utils {
         return Uri.parse(path);
     }
 
-    public static File getCompressedImageFile(File file, Context mContext) {
-        try {
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
 
-            if (getFileExt(file.getName()).equals("png") || getFileExt(file.getName()).equals("PNG")) {
-                o.inSampleSize = 6;
-            } else {
-                o.inSampleSize = 6;
-            }
-
-            FileInputStream inputStream = new FileInputStream(file);
-            BitmapFactory.decodeStream(inputStream, null, o);
-            inputStream.close();
-
-            // The new size we want to scale to
-            final int REQUIRED_SIZE = 100;
-
-            // Find the correct scale value. It should be the power of 2.
-            int scale = 1;
-            while (o.outWidth / scale / 2 >= REQUIRED_SIZE &&
-                    o.outHeight / scale / 2 >= REQUIRED_SIZE) {
-                scale *= 2;
-            }
-
-            BitmapFactory.Options o2 = new BitmapFactory.Options();
-            o2.inSampleSize = scale;
-            inputStream = new FileInputStream(file);
-
-            Bitmap selectedBitmap = BitmapFactory.decodeStream(inputStream, null, o2);
-
-            ExifInterface ei = new ExifInterface(file.getAbsolutePath());
-            int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                    ExifInterface.ORIENTATION_UNDEFINED);
-
-            switch (orientation) {
-
-                case ExifInterface.ORIENTATION_ROTATE_90:
-                    selectedBitmap = rotateImage(selectedBitmap, 90);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_180:
-                    selectedBitmap = rotateImage(selectedBitmap, 180);
-                    break;
-
-                case ExifInterface.ORIENTATION_ROTATE_270:
-                    selectedBitmap = rotateImage(selectedBitmap, 270);
-                    break;
-
-                case ExifInterface.ORIENTATION_NORMAL:
-
-                default:
-                    break;
-            }
-            inputStream.close();
-
-
-            // here i override the original image file
-            File folder = new File(Environment.getExternalStorageDirectory() + "/FolderName");
-            boolean success = true;
-            if (!folder.exists()) {
-                success = folder.mkdir();
-            }
-            if (success) {
-                File newFile = new File(new File(folder.getAbsolutePath()), file.getName());
-                if (newFile.exists()) {
-                    newFile.delete();
-                }
-                FileOutputStream outputStream = new FileOutputStream(newFile);
-
-                if (getFileExt(file.getName()).equals("png") || getFileExt(file.getName()).equals("PNG")) {
-                    selectedBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-                } else {
-                    selectedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-                }
-
-                return newFile;
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     public static String getFileExt(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
@@ -373,6 +296,10 @@ public class Utils {
 
     public static String getRealPathFromURI(Context context, Uri uri) {
         Uri queryUri = MediaStore.Files.getContentUri("external");
+        if(uri.toString().contains("/storage/emulated/0")
+            || uri.toString().contains("/storage/sdcard0"))
+            queryUri = MediaStore.Files.getContentUri("internal");
+
         String columnData = MediaStore.Files.FileColumns.DATA;
         String columnSize = MediaStore.Files.FileColumns.SIZE;
 
@@ -443,4 +370,20 @@ public class Utils {
         return inSampleSize;
     }
 
+    public static Gson GetGson(){
+        GsonBuilder gsonBuilder = new GsonBuilder();
+        gsonBuilder.setExclusionStrategies(new ExclusionStrategy() {
+            @Override
+            public boolean shouldSkipField(FieldAttributes f) {
+                return  f.getAnnotation(Expose.class)!=null;
+            }
+
+            @Override
+            public boolean shouldSkipClass(Class<?> clazz) {
+                return false;
+            }
+        });
+        gsonBuilder.disableHtmlEscaping();
+        return gsonBuilder.serializeNulls().create();
+    }
 }

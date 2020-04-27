@@ -24,6 +24,8 @@ public class Conf {
     public static boolean SEND_AUDIO = true;
     public static boolean SEND_FILES = true;
     public static String HTTP = "http://";
+    public static int NOTIFICATION_ID_FOREGROUND_SERVICE = 8466503;
+    public static String FOREGROUND_CHANNEL_ID = "foreground_channel_id";
 
 
 }

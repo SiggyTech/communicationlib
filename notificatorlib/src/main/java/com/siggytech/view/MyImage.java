@@ -7,10 +7,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.support.v4.widget.ContentLoadingProgressBar;
 import android.util.AttributeSet;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+
+import androidx.core.widget.ContentLoadingProgressBar;
 
 import com.siggytech.utils.communication.R;
 

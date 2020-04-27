@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
         android:allowBackup="true"
@@ -20,7 +21,7 @@
         android:hardwareAccelerated="false"
         android:theme="@style/AppTheme">
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
@@ -42,8 +43,7 @@
         <receiver
             android:name="com.siggytech.utils.communication.MessengerBroadcastReceiver"
             android:enabled="true"
-            android:exported="true"
-            >
+            android:exported="true">
         </receiver>
     </application>
 

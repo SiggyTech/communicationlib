@@ -2,8 +2,9 @@ package com.siggytech.utils.communication;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.support.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,7 +20,6 @@ import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okhttp3.internal.ws.RealWebSocket;
-
 import okio.ByteString;
 
 public class Socket {

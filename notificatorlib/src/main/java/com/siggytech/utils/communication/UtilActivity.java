@@ -10,14 +10,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +39,7 @@ public class UtilActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_util);
 
         System.out.println("Package name: " + getApplicationContext().getPackageName());
@@ -55,35 +56,23 @@ public class UtilActivity extends AppCompatActivity {
         LinearLayout lnPhotoVideo = findViewById(R.id.lnPhotoVideo);
         LinearLayout lnCancel = findViewById(R.id.lnCancel);
 
-        lnCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePhoto(v);
+        lnCamera.setOnClickListener(v -> takePhoto(v));
+
+        lnPhotoVideo.setOnClickListener(v -> {
+            Intent chooser = new Intent(Intent.ACTION_GET_CONTENT);
+            Uri uri = Uri.parse(Environment.getDownloadCacheDirectory().getPath());
+            chooser.addCategory(Intent.CATEGORY_OPENABLE);
+            chooser.setDataAndType(uri, "*/*");
+            chooser.setType("video/*, image/*");
+            try {
+                startActivityForResult(chooser, SELECT_FILE);
+            } catch (ActivityNotFoundException ex) {
+                Toast.makeText(context, "Por favor instale un gestor de archivos (File Manager).",
+                        Toast.LENGTH_SHORT).show();
             }
         });
 
-        lnPhotoVideo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent chooser = new Intent(Intent.ACTION_GET_CONTENT);
-                Uri uri = Uri.parse(Environment.getDownloadCacheDirectory().getPath());
-                chooser.addCategory(Intent.CATEGORY_OPENABLE);
-                chooser.setDataAndType(uri, "*/*");
-                try {
-                    startActivityForResult(chooser, SELECT_FILE);
-                } catch (ActivityNotFoundException ex) {
-                    Toast.makeText(context, "Por favor instale un gestor de archivos (File Manager).",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        lnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        lnCancel.setOnClickListener(v -> finish());
 
         createFolder();
 
@@ -109,6 +98,9 @@ public class UtilActivity extends AppCompatActivity {
 
         }else if(requestCode == SELECT_FILE && data!=null){
             String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
+            File filex = new File(selectedImagePath);
+            if(filex.exists()) Log.d(TAG,"EXISTS");
+
             switch (selectedImagePath.substring(selectedImagePath.lastIndexOf(".") + 1).toUpperCase()){
                 case "JPG":
                 case "JPEG":
@@ -117,10 +109,12 @@ public class UtilActivity extends AppCompatActivity {
                 case "PNG":
                     setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
                     break;
-                case "AVI":
+                case "3GP":
+                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                    break;
                 case "MP4":
-                case "MOV":
-                case "MPG":
+                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                    break;
                 case "MPEG":
                     setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
                     break;
@@ -129,17 +123,6 @@ public class UtilActivity extends AppCompatActivity {
                     break;
             }
             finish();
-           /* FileModel fileModel = null;
-
-            if(selectedImagePath!=null){
-                fileModel = setFileMetaData(selectedImagePath);
-            }
-
-            if(fileModel!=null && fileModel.getPath()!=null) {
-                showDialogDoc(fileModel);
-            }else{
-                Toast.makeText(getActivity(),"Error al adjuntar documento.",Toast.LENGTH_SHORT).show();
-            }*/
         }
     }
 
@@ -148,7 +131,6 @@ public class UtilActivity extends AppCompatActivity {
      * @param view vista
      * */
     public void takePhoto(View view){
-
         Intent callCamaraApplicationIntent = new Intent();
         callCamaraApplicationIntent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
 
@@ -191,10 +173,7 @@ public class UtilActivity extends AppCompatActivity {
      * Creates a content folder for files.
      * */
     private void createFolder(){
-
-
         File directory = new File(Conf.ROOT_PATH);
-
         try {
             if (directory.mkdirs()) {
                 Log.v(TAG, "Directory created");
@@ -222,11 +201,6 @@ public class UtilActivity extends AppCompatActivity {
         editor.putBoolean("pickFile", false);  //set as finish this actitivy
         editor.putString("pathToFile", abolutePath);
         editor.putString("fileType", type);
-
-
-
         editor.commit();
-
-
     }
 }

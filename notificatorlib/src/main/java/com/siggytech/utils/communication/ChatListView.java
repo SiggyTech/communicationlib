@@ -16,15 +16,19 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.StrictMode;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.gson.Gson;
+import com.siggytech.utils.communication.async.AsyncTaskCompleteListener;
+import com.siggytech.utils.communication.async.CallTask;
+import com.siggytech.utils.communication.async.TaskMessage;
 
 import org.json.JSONObject;
 
@@ -38,9 +42,10 @@ import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.Context.TELEPHONY_SERVICE;
 
-public class ChatListView extends RecyclerView {
+public class ChatListView extends RecyclerView implements AsyncTaskCompleteListener<TaskMessage> {
     private String TAG = ChatListView.class.getSimpleName();
     List<ChatModel> lsChat = new ArrayList<>();
     Handler timerHandler = new Handler();
@@ -50,7 +55,6 @@ public class ChatListView extends RecyclerView {
     private String imei;
     private String name;
     private boolean newMessage = false;
-    private String newMessageType;
     private String messageText;
     private String from;
     private String dateTime;
@@ -72,7 +76,7 @@ public class ChatListView extends RecyclerView {
 
         this.packageName = packageName;
         this.resIcon = resIcon;
-        this.gson = new Gson();
+        this.gson = Utils.GetGson();
 
         timerHandler.postDelayed(timerRunnable,0);
 
@@ -135,7 +139,7 @@ public class ChatListView extends RecyclerView {
 
                     from = new JSONObject(jObject.getString("data")).getString("from");
                     messageText = new JSONObject(jObject.getString("data")).getString("text");
-                    newMessageType = jObject.getString("event");
+                    //newMessageType = jObject.getString("event");
                     dateTime = Utils.GetStringDate();
 
                     newMessage = true;
@@ -205,37 +209,50 @@ public class ChatListView extends RecyclerView {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        // handle build version above android oreo
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O &&
+                mNotificationManager.getNotificationChannel(Conf.FOREGROUND_CHANNEL_ID) == null) {
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(Conf.FOREGROUND_CHANNEL_ID, name, importance);
+            channel.enableVibration(false);
+            mNotificationManager.createNotificationChannel(channel);
+        }
+
+
+
         Intent intent = LaunchIntent; // new Intent();
         intent.putExtra("notificationMessage", notificationMessage);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
+
+        // notification builder
+        NotificationCompat.Builder notificationBuilder;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            notificationBuilder = new NotificationCompat.Builder(context, Conf.FOREGROUND_CHANNEL_ID);
+        } else {
+            notificationBuilder = new NotificationCompat.Builder(context);
+        }
+
         Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+        notificationBuilder
                 .setSmallIcon(R.drawable.ic_launcher_round)
                 .setContentTitle(title)
                 .setContentText(text)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setContentIntent(pIntent)
                 .setSound(uri)
                 .setSmallIcon(resIcon)
                 .setAutoCancel(true);
 
-        // Add as notification
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-        {
-            String channelId = "Your_channel_id";
-            NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "Channel human readable title",
-                    NotificationManager.IMPORTANCE_DEFAULT);
-            manager.createNotificationChannel(channel);
-            builder.setChannelId(channelId);
-
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
         }
 
-        manager.notify(0, builder.build());
+        mNotificationManager.notify(Conf.NOTIFICATION_ID_FOREGROUND_SERVICE, notificationBuilder.build());
+
 
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         boolean isScreenOn = pm.isScreenOn();
@@ -306,5 +323,25 @@ public class ChatListView extends RecyclerView {
         }
     }
 
+    public void callToBase64(MessageModel messageModel){
+        try{
+            new CallTask(context,this).execute(messageModel);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
+    @Override
+    public void onTaskCompleted(TaskMessage result) {
+        try {
+            if (result != null && result.getMessageModel() != null) {
+                sendMessage(result.getMessageModel().getFrom()
+                        ,AESUtils.encText(gson.toJson(result.getMessageModel()))
+                        ,result.getMessageModel().getDate()
+                        ,result.getMessageModel().getType());
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }

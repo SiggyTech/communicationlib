@@ -2,14 +2,15 @@ package com.siggytech.utils.communication;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.siggytech.view.MyImage;
@@ -20,18 +21,21 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static android.provider.MediaStore.Video.Thumbnails.MINI_KIND;
+
 public class DownloadTask {
     private static final String TAG = DownloadTask.class.getSimpleName();
     private Context context;
     private String downloadUrl = "", downloadFileName = "";
     private MyImage mImage;
+    private String mType;
 
-    public DownloadTask(Context context, String downloadUrl, MyImage imageView) {
+    public DownloadTask(Context context, String downloadUrl, MyImage imageView, String type) {
         this.context = context;
         this.downloadUrl = downloadUrl;
         this.mImage = imageView;
         this.downloadFileName = downloadUrl.substring(downloadUrl.lastIndexOf( '/' ),downloadUrl.length());//Create file name by picking download file name from URL
-
+        this.mType = type;
         //Start Downloading Task
         new DownloadingTask().execute();
     }
@@ -50,30 +54,38 @@ public class DownloadTask {
         protected void onPostExecute(Void result) {
             try {
                 if (outputFile != null) {
+                    Uri uri = Uri.parse(outputFile.getPath());
                     //success
-                    mImage.setRoundImage(BitmapFactory.decodeFile(outputFile.getPath()));
+                    if(Utils.MESSAGE_TYPE.VIDEO.equals(mType)){
+                        Bitmap decodedByte = ThumbnailUtils.createVideoThumbnail(uri.toString(),MINI_KIND);
+                        mImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                                decodedByte.getHeight(), false));
+                    }else {
+                        mImage.setRoundImage(BitmapFactory.decodeFile(outputFile.getPath()));
+                    }
 
-                    mImage.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            try {
-                                Uri uri = Uri.parse(outputFile.getPath());
-                                Intent intent = new Intent(context, TransitionToActivity.class);
+                    mImage.getProgressBar().hide();
+
+                    mImage.setOnClickListener(v -> {
+                        try {
+                            if(Utils.MESSAGE_TYPE.VIDEO.equals(mType)){
+                                Intent intent = new Intent(context, VideoActivity.class);
+                                intent.putExtra("VideoUri",uri.toString());
+                                context.startActivity(intent);
+                            }else{
+                                Intent intent = new Intent(context, ImageActivity.class);
                                 intent.putExtra("ImageUri", uri.toString());
                                 context.startActivity(intent);
-                            }catch (Exception e){
-                                e.printStackTrace();
                             }
+                        }catch (Exception e){
+                            e.printStackTrace();
                         }
                     });
-                    mImage.getProgressBar().hide();
+
                 } else {
                     //fail
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
+                    new Handler().postDelayed(() -> {
 
-                        }
                     }, 3000);
                     Toast.makeText(context, "Fail", Toast.LENGTH_SHORT).show();
                     if(outputFile.exists()){
@@ -88,11 +100,8 @@ public class DownloadTask {
 
                 //Change button text if exception occurs
 
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
+                new Handler().postDelayed(() -> {
 
-                    }
                 }, 3000);
                 Log.e(TAG, "Download Failed with Exception - " + e.getLocalizedMessage());
                 if(outputFile!=null && outputFile.exists()){
@@ -114,7 +123,6 @@ public class DownloadTask {
                 if (c.getResponseCode() != HttpURLConnection.HTTP_OK) {
                     Log.e(TAG, "Server returned HTTP " + c.getResponseCode()
                             + " " + c.getResponseMessage());
-
                 }
                 
                 fileStorage = new File(Conf.ROOT_PATH);
