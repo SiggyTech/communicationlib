@@ -6,15 +6,16 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.siggytech.utils.communication.ChatControl;
 import com.siggytech.utils.communication.Conf;
-import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,10 +24,10 @@ public class MainActivity extends AppCompatActivity {
     Boolean keyDown = false;
     LinearLayout linearLayout;
     String API_KEY = "";
-
     String name = "";
-
     ChatControl ch;
+
+    boolean isChat = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,12 +39,13 @@ public class MainActivity extends AppCompatActivity {
         Conf.CHAT_BASIC = false;
 
         Conf.SERVER_IP = ""; //Set dedicated IP server.
-        
+
 
         onNewIntent(getIntent());
 
         //check permissions
         if (Build.VERSION.SDK_INT >= 23) {
+
             String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     android.Manifest.permission.READ_PHONE_STATE,
@@ -53,18 +55,16 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.RECORD_AUDIO
             };
 
+
             if (!hasPermissions(this, PERMISSIONS)) {
                 ActivityCompat.requestPermissions(this, PERMISSIONS, 112 );
             } else {
                 System.out.println(getApplicationContext().getPackageName());
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
-
-                //addPTTButton();
-
-                //subscribeForNotifications();
-
-                addChatListView();
+                if(isChat){
+                    addChatListView();
+                }else addPTTButton();
             }
         }
         else{
@@ -72,10 +72,9 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
-            //addPTTButton();
-
-            //subscribeForNotifications();
-            addChatListView();
+            if(isChat){
+                addChatListView();
+            }else addPTTButton();
 
         }
     }
@@ -106,26 +105,21 @@ public class MainActivity extends AppCompatActivity {
             System.out.println(getApplicationContext().getPackageName());
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
+            if(isChat){
+                addChatListView();
+            }else addPTTButton();
 
-            //addPTTButton();
-            addChatListView();
-
-            subscribeForNotifications();
         } else {
-                    // exit app
+           //TODO
+            Toast.makeText(MainActivity.this,"Implement!",Toast.LENGTH_LONG).show();
         }
-    }
-
-    private void subscribeForNotifications(){
-        NotificationAgent na = new NotificationAgent();
-        na.register(this, 1, API_KEY, name);
     }
 
     private void addPTTButton(){
         pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
         pttButton.setWidth(200);
         pttButton.setHeight(200);
-        pttButton.setText("Hablar!");
+        pttButton.setText("Talk!");
         linearLayout.addView(pttButton);
     }
 
@@ -151,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println("Message from notification: " + extras.getString("notificationMessage").toString());
             }
         }
+        super.onNewIntent(intent);
     }
 
     public static boolean hasPermissions(Context context, String... permissions) {
@@ -172,5 +167,11 @@ public class MainActivity extends AppCompatActivity {
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
                 this);//user name to show to others
         linearLayout.addView(ch);
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 }
