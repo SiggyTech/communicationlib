@@ -19,7 +19,7 @@ import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.PTTButton;
 
 public class MainActivity extends AppCompatActivity {
-
+    
     PTTButton pttButton;
     Boolean keyDown = false;
     LinearLayout linearLayout;
