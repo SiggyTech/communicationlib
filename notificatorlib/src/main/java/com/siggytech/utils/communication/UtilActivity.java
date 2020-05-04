@@ -14,7 +14,9 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -51,6 +53,13 @@ public class UtilActivity extends AppCompatActivity {
             // ...but notify us that it happened.
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
         }
+
+        ImageView ivCamera = findViewById(R.id.ivCamera);
+        ivCamera.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
+        ImageView ivPhotoVideo = findViewById(R.id.ivPhotoVideo);
+        ivPhotoVideo.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
+        TextView tvCancel =  findViewById(R.id.tvCancel);
+        tvCancel.setTextColor(Conf.CHAT_COLOR_COMPONENTS);
 
         LinearLayout lnCamera = findViewById(R.id.lnCamera);
         LinearLayout lnPhotoVideo = findViewById(R.id.lnPhotoVideo);
@@ -98,29 +107,33 @@ public class UtilActivity extends AppCompatActivity {
 
         }else if(requestCode == SELECT_FILE && data!=null){
             String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
-            File filex = new File(selectedImagePath);
-            if(filex.exists()) Log.d(TAG,"EXISTS");
+            if(selectedImagePath!=null) {
+                File filex = new File(selectedImagePath);
+                if (filex.exists()) Log.d(TAG, "EXISTS");
 
-            switch (selectedImagePath.substring(selectedImagePath.lastIndexOf(".") + 1).toUpperCase()){
-                case "JPG":
-                case "JPEG":
-                case "BMP":
-                case "TIFF":
-                case "PNG":
-                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
-                    break;
-                case "3GP":
-                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
-                    break;
-                case "MP4":
-                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
-                    break;
-                case "MPEG":
-                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
-                    break;
-                default:
-                    setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.FILE);
-                    break;
+                switch (selectedImagePath.substring(selectedImagePath.lastIndexOf(".") + 1).toUpperCase()) {
+                    case "JPG":
+                    case "JPEG":
+                    case "BMP":
+                    case "TIFF":
+                    case "PNG":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
+                        break;
+                    case "3GP":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                        break;
+                    case "MP4":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                        break;
+                    case "MPEG":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.VIDEO);
+                        break;
+                    default:
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.FILE);
+                        break;
+                }
+            }else{
+                Toast.makeText(context,getString(R.string.not_supported),Toast.LENGTH_LONG).show();
             }
             finish();
         }

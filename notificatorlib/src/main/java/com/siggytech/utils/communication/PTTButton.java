@@ -102,7 +102,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 audioFormat = AudioFormat.ENCODING_PCM_8BIT;
                 minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                 break;
-
         }
 
         initView();

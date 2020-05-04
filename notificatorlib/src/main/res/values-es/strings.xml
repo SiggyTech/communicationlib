@@ -4,4 +4,5 @@
     <string name="camera">Cámara</string>
     <string name="photo_videos">Fotos y Videos</string>
     <string name="cancel">Cancelar</string>
+    <string name="not_supported">Archivo no soportado</string>
 </resources>
