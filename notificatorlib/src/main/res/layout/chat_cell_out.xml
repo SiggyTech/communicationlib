@@ -71,7 +71,7 @@
                     android:focusable="true"
                     android:clickable="true"
                     android:src="@drawable/ic_play_arrow"/>
-                <androidx.appcompat.widget.AppCompatSeekBar
+                <SeekBar
                     android:id="@+id/sbPlay"
                     android:layout_width="200dp"
                     android:layout_height="wrap_content" />

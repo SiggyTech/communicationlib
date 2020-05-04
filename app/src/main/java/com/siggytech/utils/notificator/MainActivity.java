@@ -23,7 +23,8 @@ public class MainActivity extends AppCompatActivity {
     PTTButton pttButton;
     Boolean keyDown = false;
     LinearLayout linearLayout;
-    String API_KEY = "";
+    //String API_KEY = "";
+    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ"; //TODO borrarlo
     String name = "";
     ChatControl ch;
 
@@ -38,8 +39,8 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
-
+        //Conf.SERVER_IP = ""; //Set dedicated IP server.
+        Conf.SERVER_IP = "35.247.219.199"; //TODO borrarlo
 
         onNewIntent(getIntent());
 
@@ -110,8 +111,8 @@ public class MainActivity extends AppCompatActivity {
             }else addPTTButton();
 
         } else {
-           //TODO
-            Toast.makeText(MainActivity.this,"Implement!",Toast.LENGTH_LONG).show();
+           //TODO VOLVER a pedir permisos          // exit app
+            Toast.makeText(MainActivity.this,"HAY QUE IMPLEMENTAR PEDIR DE NUEVO",Toast.LENGTH_LONG).show();
         }
     }
 
@@ -119,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
         pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
         pttButton.setWidth(200);
         pttButton.setHeight(200);
-        pttButton.setText("Talk!");
+        pttButton.setText("Hablar!");
         linearLayout.addView(pttButton);
     }
 

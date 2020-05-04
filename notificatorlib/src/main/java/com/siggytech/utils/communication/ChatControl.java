@@ -152,6 +152,7 @@ public class ChatControl extends RelativeLayout {
 
         ImageView iv = new ImageView(context);
         iv.setImageDrawable(getResources().getDrawable(R.drawable.ic_send_24dp));
+        iv.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
         mSendButton.addView(iv);
 
         mAudio = new LinearLayout(context);
@@ -161,6 +162,7 @@ public class ChatControl extends RelativeLayout {
 
         ImageView ivMic = new ImageView(context);
         ivMic.setImageDrawable(getResources().getDrawable(R.drawable.ic_mic_none_24dp));
+        ivMic.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
         mAudio.addView(ivMic);
 
         mAudioText = new TextView(context);
@@ -177,6 +179,7 @@ public class ChatControl extends RelativeLayout {
 
         final ImageView ivAdd = new ImageView(context);
         ivAdd.setImageDrawable(getResources().getDrawable(R.drawable.ic_add_24dp));
+        ivAdd.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
         mAddFile.addView(ivAdd);
 
         final ImageView ivMic2 = new ImageView(context);

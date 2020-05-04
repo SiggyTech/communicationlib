@@ -194,7 +194,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         return IMEINumber;
     }
 
-    public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
+    public void addNotification(String title, String text, String packageName, Class<?> launchClass , int resIcon, String notificationMessage) {
         PackageManager pmg = context.getPackageManager();
         String name = "";
         Intent LaunchIntent = null;
@@ -203,7 +203,9 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             if (pmg != null) {
                 ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
                 name = (String) pmg.getApplicationLabel(app);
-                LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
+
+                LaunchIntent = new Intent(context, launchClass);
+                //LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
             }
             Log.d("intent.getExtras", "Found!: " + name);
         } catch (PackageManager.NameNotFoundException e) {
@@ -293,7 +295,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                         if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getType())){
                             messageText = model.getMessage();
                         }
-                        addNotification(from, messageText, packageName, resIcon, notificationMessage);
+                        addNotification(from, messageText, packageName,mActivity.getClass(), resIcon, notificationMessage);
                     }
                     newMessage = false;
                     lsChat.add(new ChatModel(1L, model, from, dateTime,false));

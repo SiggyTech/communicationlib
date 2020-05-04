@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="new_message">Nuevo mensaje</string>
+    <string name="camera">Cámara</string>
+    <string name="photo_videos">Fotos y Videos</string>
+    <string name="cancel">Cancelar</string>
 </resources>

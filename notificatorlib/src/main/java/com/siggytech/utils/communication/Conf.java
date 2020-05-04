@@ -19,13 +19,14 @@ public class Conf {
     public static int CHAT_COLOR_FROM = Color.BLACK;
     public static int CHAT_COLOR_TEXT = Color.BLACK;
     public static int CHAT_COLOR_DATE = Color.DKGRAY;
+    public static int CHAT_COLOR_COMPONENTS = Color.parseColor("#2155C0");;
     public static boolean CHAT_BASIC = false;
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
     public static boolean SEND_AUDIO = true;
     public static boolean SEND_FILES = true;
     public static String HTTP = "http://";
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE = 8466503;
-    public static String FOREGROUND_CHANNEL_ID = "foreground_channel_id";
+    public static String FOREGROUND_CHANNEL_ID = "foreground_channel_id_56";
 
 
 }

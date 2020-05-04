@@ -20,7 +20,6 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import androidx.appcompat.widget.AppCompatSeekBar;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.siggytech.view.MyImage;
@@ -191,7 +190,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
     }
 
 
-    private void stopPlaying(final AppCompatSeekBar mSeekBar, final ImageView mImage){
+    private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
         try {
             mActivity.runOnUiThread(() -> {
                 mImage.setTag(false);
@@ -213,7 +212,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         }
     }
 
-    private void initializeSeekBar(final AppCompatSeekBar mSeekBar, final TextView tvDuration, final ImageView mImage, final int factor){
+    private void initializeSeekBar(final SeekBar mSeekBar, final TextView tvDuration, final ImageView mImage, final int factor){
         Log.d(TAG,"TOTAL "+mPlayer.getDuration()/factor);
         mSeekBar.setMax(mPlayer.getDuration()/factor);
 
@@ -290,7 +289,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         LinearLayout lnAudio;
         TextView tvAudioDuration;
         ImageView ivPlay;
-        AppCompatSeekBar sbPlay;
+        SeekBar sbPlay;
         Uri audioUri;
         Uri uri;
         int factor = 1; //Esto es por si es necesario dividir el factor de duracion
