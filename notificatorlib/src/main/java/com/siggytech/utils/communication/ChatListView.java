@@ -3,6 +3,7 @@ package com.siggytech.utils.communication;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -253,7 +254,11 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
         }
 
-        mNotificationManager.notify(Conf.NOTIFICATION_ID_FOREGROUND_SERVICE, notificationBuilder.build());
+        Notification notification =  notificationBuilder.build();
+        // Cancel the notification after its selected
+        notification.flags |= Notification.FLAG_AUTO_CANCEL;
+
+        mNotificationManager.notify(Conf.NOTIFICATION_ID_FOREGROUND_SERVICE,notification);
 
 
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
