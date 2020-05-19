@@ -15,13 +15,14 @@ import static android.content.Context.TELEPHONY_SERVICE;
 
 public class NotificationAgent {
 
-    public void register(Context context, int idGroup, String API_KEY, String nameClient){
+    public void register(Context context, int idGroup, String API_KEY, String nameClient, String iconName){
         Intent intent = new Intent(context, MessengerService.class);
 
         intent.putExtra("imei", getIMEINumber(context).toString());
         intent.putExtra("clientname", nameClient);
         intent.putExtra("groupid", idGroup);
         intent.putExtra("api_key", API_KEY);
+        intent.putExtra("iconName", iconName);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
@@ -29,7 +30,12 @@ public class NotificationAgent {
         editor.putString("clientname", nameClient);
         editor.putString("groupid", String.valueOf(idGroup));
         editor.putString("api_key", API_KEY);
+        editor.putString("iconName", iconName);
         editor.commit();
+
+        Utils.writeToFile(getIMEINumber(context).toString() + ";" + nameClient + ";" +
+                               API_KEY + ";" + String.valueOf(idGroup) + ";" + iconName, context);
+
 
         context.startService(intent);
     }

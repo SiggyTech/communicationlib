@@ -88,7 +88,7 @@ public class UtilActivity extends AppCompatActivity {
     }
 
     /**
-     * Este metodo está sobreescrito dado que es requerido por uno de los fragments que esta
+     * Este metodo esta sobreescrito dado que es requerido por uno de los fragments que esta
      * implementando este activity
      * */
     @Override
@@ -166,7 +166,7 @@ public class UtilActivity extends AppCompatActivity {
 
     /**
      * Metodo que se encarga de crear la fotografia en formato jpg en la carpeta SAG_IMAGES
-     * @return fotografía en formato File
+     * @return fotografia en formato File
      * @throws IOException
      * */
     private File createImageFile() throws IOException{

@@ -1,5 +1,6 @@
 package com.siggytech.utils.communication;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
@@ -18,6 +20,7 @@ import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import org.json.JSONObject;
@@ -54,6 +57,8 @@ public class MessengerService extends Service {
     public static String api_key;
     public static String messageText;
     public static String idgroup;
+    public static String iconName;
+
     WebSocketListener webSocketListenerCoinPrice;
     OkHttpClient clientCoinPrice;
     Response responseObj;
@@ -70,7 +75,44 @@ public class MessengerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        startForeground(1,new Notification());
+
+        context = getApplicationContext();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            startMyOwnForeground();
+        else
+            startForeground(1,new Notification());
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startMyOwnForeground(){
+        String NOTIFICATION_CHANNEL_ID = "com.siggy.service";
+        String channelName = "My Background Service";
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert manager != null;
+        manager.createNotificationChannel(chan);
+
+        String res = readFromFile(context);
+
+        String resArray[] = res.split(";");
+        imei = resArray[0];
+        clientname = resArray[1];
+        api_key = resArray[2];
+        idgroup = resArray[3];
+        iconName = resArray[4];
+
+        int idResIcon = getResourceId(iconName, "drawable", packageName);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        Notification notification = notificationBuilder.setOngoing(true)
+                .setSmallIcon(idResIcon)
+                .setContentTitle("App is running in background")
+                .setPriority(NotificationManager.IMPORTANCE_MIN)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .build();
+        startForeground(2, notification);
     }
     @Override
     public void onStart(Intent intent, int startid) {
@@ -81,13 +123,14 @@ public class MessengerService extends Service {
 
             if (extras == null) {
                 Log.d(TAG, "extras null");
-                String res = readFromFile(this.context);
+                String res = readFromFile(context);
 
                 String resArray[] = res.split(";");
                 imei = resArray[0];
                 clientname = resArray[1];
                 api_key = resArray[2];
                 idgroup = resArray[3];
+                iconName = resArray[4];
 
             } else {
                 Log.d(TAG, "extras not null");
@@ -96,9 +139,9 @@ public class MessengerService extends Service {
                 clientname = extras.get("clientname").toString();
                 api_key = extras.get("api_key").toString();
                 idgroup = extras.get("groupid").toString();
+                iconName =  extras.get("iconName").toString();
 
-                writeToFile(imei + ";" + clientname + ";" + api_key + ";" + String.valueOf(idgroup), this.context);
-
+                Utils.writeToFile(imei + ";" + clientname + ";" + api_key + ";" + String.valueOf(idgroup) + ";" + iconName, this.context);
             }
         }
         catch(Exception ex)
@@ -122,6 +165,7 @@ public class MessengerService extends Service {
                 Log.d("Service", "not null");
 
                 packageName = extras.get("packageName").toString();
+                iconName = extras.get("iconName").toString();
 
             }
         }
@@ -140,8 +184,9 @@ public class MessengerService extends Service {
 
         clientCoinPrice = new OkHttpClient();
 
+
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_MSG_PORT + "?imei=" + imei + "&groupId=" + idgroup + "&API_KEY="+ api_key +"&clientName=" + clientname;
-       // Log.e(TAG, url);
+        Log.e(TAG, url);
 
         Request requestCoinPrice = new Request.Builder().url(url).build();
 
@@ -150,17 +195,17 @@ public class MessengerService extends Service {
             public void onOpen(WebSocket webSocket, Response response) {
                 responseObj = response;
                 //webSocket.send("{ \"packageName\": \"packageName\", \"messageText\": \"messageText\", \"messageTittle\": \"messageTittle\", \"from\": \"BLUEBIRD1\" }");
-               // Log.e(TAG, "onOpen");
+                Log.e(TAG, "onOpen");
             }
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
 
                 try {
-                   // Log.e(TAG, "MESSAGE String: " + text);
+                    Log.e(TAG, "MESSAGE String: " + text);
                     JSONObject obj = new JSONObject(text);
 
-                    addNotification(obj.getString("messageTittle"), obj.getString("messageText"), obj.getString("packageName"), obj.getInt("resIcon"), obj.getString("notificationMessage"));
+                    addNotification(obj.getString("messageTittle"), obj.getString("messageText"), obj.getString("packageName"), obj.getString("iconName"), obj.getString("notificationMessage"));
                 }
                 catch(Exception ex){
                     Log.e(TAG, "Error MESSAGE String: " + ex.getMessage());
@@ -169,14 +214,14 @@ public class MessengerService extends Service {
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-               // Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
             }
 
             @Override
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
-               // Log.e(TAG, "CLOSE: " + code + " " + reason);
+                Log.e(TAG, "CLOSE: " + code + " " + reason);
             }
 
             @Override
@@ -199,7 +244,10 @@ public class MessengerService extends Service {
         super.onDestroy();
         Log.e("EXIT", "ondestroy!");
 
-        responseObj.body().close();
+        try {
+            responseObj.body().close();
+        }
+        catch(Exception ex){Log.e("EXIT", ex.getMessage());}
 
 
         Intent broadcastIntent = new Intent(this, MessengerBroadcastReceiver.class);
@@ -242,12 +290,12 @@ public class MessengerService extends Service {
         return null;
     }
 
-    public void addNotification(String title, String text, String packageName, int resIcon, String notificationMessage) {
+    public void addNotification(String title, String text, String packageName, String iconName, String notificationMessage) {
 
         PackageManager pmg = context.getPackageManager();
         String name = "";
         Intent LaunchIntent = null;
-
+        int idResIcon = getResourceId(iconName, "drawable", packageName);
         try {
             if (pmg != null) {
                 ApplicationInfo app = context.getPackageManager().getApplicationInfo(packageName, 0);
@@ -266,12 +314,11 @@ public class MessengerService extends Service {
         Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.drawable.ic_launcher_round)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(pIntent)
                 .setSound(uri)
-                .setSmallIcon(resIcon)
+                .setSmallIcon(idResIcon)
                 .setAutoCancel(true)
                 ;
 
@@ -296,23 +343,23 @@ public class MessengerService extends Service {
         Log.e("screen on.........", ""+isScreenOn);
         if(isScreenOn==false)
         {
-            PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,"MyLock");
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,"MyLock");
             wl.acquire(10000);
-            PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
+            @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
 
             wl_cpu.acquire(10000);
         }
     }
-    private void writeToFile(String data,Context context) {
+    public int getResourceId(String pVariableName, String pResourcename, String pPackageName)
+    {
         try {
-            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
-            outputStreamWriter.write(data);
-            outputStreamWriter.close();
-        }
-        catch (IOException e) {
-            Log.e(TAG, "File write failed: " + e.toString());
+            return getResources().getIdentifier(pVariableName, pResourcename, pPackageName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
         }
     }
+
     private String readFromFile(Context context) {
 
         String ret = "";

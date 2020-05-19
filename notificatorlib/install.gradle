@@ -1,0 +1,39 @@
+apply plugin: 'com.github.dcendents.android-maven'
+
+group = 'com.siggytech.communication'
+
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                groupId 'com.siggytech.communication'
+                artifactId 'utils'
+                name 'utils'
+                description 'Utilities to develor amazing apps.'
+                url 'https://github.com/SiggyTech/communicationlib'
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'larrymoe'
+                        name 'Larry Moe'
+                        email 'larry@thatmail.com'
+                    }
+                }
+
+                scm {
+                    connection 'https://github.com/SiggyTech/communicationlib.git'
+                    developerConnection 'https://github.com/SiggyTech/communicationlib.git'
+                    url 'https://github.com/SiggyTech/communicationlib'
+                }
+            }
+        }
+    }
+}

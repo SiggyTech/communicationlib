@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Utils {
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
+    private static final String TAG = "Utils";
 
     public class MESSAGE_TYPE{
         public static final String MESSAGE = "Message";
@@ -385,5 +387,15 @@ public class Utils {
         });
         gsonBuilder.disableHtmlEscaping();
         return gsonBuilder.serializeNulls().create();
+    }
+    public static void writeToFile(String data,Context context) {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        }
+        catch (IOException e) {
+            Log.e(TAG, "File write failed: " + e.toString());
+        }
     }
 }

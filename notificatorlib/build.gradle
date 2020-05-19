@@ -31,6 +31,9 @@ android {
             sourceCompatibility JavaVersion.VERSION_1_8
             targetCompatibility JavaVersion.VERSION_1_8
         }
+        lintOptions {
+            disable 'GradleDependency'
+        }
     }
 }
 
@@ -50,3 +53,5 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
 }
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'

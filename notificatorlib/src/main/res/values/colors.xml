@@ -26,5 +26,5 @@
     <dimen name="bt_height_4">4dp</dimen>
 
     <integer name="bt_animation">500</integer>
-    <string name="bt_button">Talk</string>
+    <string name="bt_button" translatable="false">Talk</string>
 </resources>

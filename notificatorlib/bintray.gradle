@@ -1,0 +1,30 @@
+apply plugin: 'com.jfrog.bintray'
+
+version = '2.0.7'
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+// Bintray
+bintray {
+    user = 'siggytech'
+    key = '3a0613ff63ffdbad757ba92a713288e7b3068aba'
+
+    pkg {
+        repo = 'utilities'
+        name = 'com.siggytech.communication'
+        configurations = ['archives']
+        desc = 'An android library.'
+        websiteUrl = 'https://github.com/SiggyTech/communicationlib'
+        vcsUrl = 'https://github.com/SiggyTech/communicationlib.git'
+        licenses = ["Apache-2.0"]
+        publish = true
+        publicDownloadNumbers = true
+    }
+}
