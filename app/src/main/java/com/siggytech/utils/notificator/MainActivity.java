@@ -16,10 +16,11 @@ import androidx.core.app.ActivityCompat;
 
 import com.siggytech.utils.communication.ChatControl;
 import com.siggytech.utils.communication.Conf;
+import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
 
 public class MainActivity extends AppCompatActivity {
-    
+
     PTTButton pttButton;
     Boolean keyDown = false;
     LinearLayout linearLayout;
@@ -28,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     String name = "";
     ChatControl ch;
 
-    boolean isChat = true;
+    boolean isChat = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +40,10 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
-
+        Conf.SERVER_IP = "192.168.0.16";
+        //Conf.SERVER_IP = ""; //Set dedicated IP server.
+        //Conf.SERVER_IP = "192.168.1.148"; //Set dedicated IP server.
+        name = getIMEINumber();
 
         onNewIntent(getIntent());
 
@@ -56,7 +59,6 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.RECORD_AUDIO
             };
 
-
             if (!hasPermissions(this, PERMISSIONS)) {
                 ActivityCompat.requestPermissions(this, PERMISSIONS, 112 );
             } else {
@@ -64,8 +66,12 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
                 if(isChat){
-                    addChatListView();
-                }else addPTTButton();
+                    //addChatListView();
+                    subscribeForNotifications();
+                }else {
+                    addPTTButton();
+                    //subscribeForNotifications();
+                }
             }
         }
         else{
@@ -74,8 +80,12 @@ public class MainActivity extends AppCompatActivity {
                     "drawable", getPackageName()));
 
             if(isChat){
-                addChatListView();
-            }else addPTTButton();
+                //addChatListView();
+                subscribeForNotifications();
+            }else {
+                addPTTButton();
+                //subscribeForNotifications();
+            }
 
         }
     }
@@ -108,7 +118,9 @@ public class MainActivity extends AppCompatActivity {
                     "drawable", getPackageName()));
             if(isChat){
                 addChatListView();
-            }else addPTTButton();
+                subscribeForNotifications();
+            }else {addPTTButton();
+                subscribeForNotifications();}
 
         } else {
            //TODO ask permission again          // exit app
@@ -117,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addPTTButton(){
-        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.HIGH);
+        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.MEDIUM);
         pttButton.setWidth(200);
         pttButton.setHeight(200);
         pttButton.setText("Hablar!");
@@ -170,7 +182,10 @@ public class MainActivity extends AppCompatActivity {
         linearLayout.addView(ch);
     }
 
-
+    private void subscribeForNotifications() {
+        NotificationAgent na = new NotificationAgent();
+        na.register(this, 1, API_KEY, getIMEINumber(), "siggy_logo");
+    }
     @Override
     protected void onResume() {
         super.onResume();

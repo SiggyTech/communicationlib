@@ -12,7 +12,8 @@
 
     <application
         android:hardwareAccelerated="true"
-        android:largeHeap="true">
+        android:largeHeap="true"
+        android:usesCleartextTraffic="true">
         <activity android:name=".ImageActivity"
             android:theme="@style/BlackTheme"/>
         <activity android:name=".VideoActivity"
@@ -20,6 +21,7 @@
         <activity
             android:name=".UtilActivity"
             android:theme="@style/ChooserTheme" />
+
     </application>
 
 </manifest>

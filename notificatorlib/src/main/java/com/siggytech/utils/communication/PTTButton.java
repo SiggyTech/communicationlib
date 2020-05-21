@@ -11,6 +11,7 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.CountDownTimer;
@@ -22,6 +23,18 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,16 +42,25 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
+
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
@@ -46,6 +68,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String TAG = "PTTButton";
     private static final int READ_PHONE_STATE = 0;
     private static final int REQUEST = 112;
+
+
 
     private Padding mPadding;
     private int mHeight;
@@ -231,6 +255,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     packet = new DatagramPacket(this.message.getBytes(), this.message.getBytes().length, destination, Conf.SERVER_PORT);
                     socket.send(packet);
 
+
+
                     minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
 
@@ -354,6 +380,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 {
                     case MotionEvent.ACTION_DOWN:
                     {
+
                         Log.d("log", "unblockTouch() onTouch: push");
                         status = true;
 
@@ -361,6 +388,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         canTalk = false;
                         buttonName = getText().toString();
                         setText(sendingText);
+
+                        requestToken();
+                        MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                        mp.start();
                         return true;
                     }
 
@@ -370,6 +401,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         status = false;
                         recorder.release();
                         blockTouch();
+                        leaveToken();
+                        MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+                        mp.start();
                         timer = new CountDownTimer(3000, 100) {
                             public void onTick(long millisUntilFinished) {
                                 //here you can have your logic to set text to edittext
@@ -390,7 +424,68 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         });
     }
 
+    private void requestToken(){
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost("http://192.168.0.16:8082/gettoken");
+        // Request parameters and other properties.
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        //params.add(new BasicNameValuePair("user", "Bob"));
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            // writing error to Log
+            e.printStackTrace();
+        }
+        /*
+         * Execute the HTTP Request
+         */
+        try {
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity respEntity = response.getEntity();
 
+            if (respEntity != null) {
+                // EntityUtils to get the response content
+                String content =  EntityUtils.toString(respEntity);
+                Log.e(TAG, content);
+
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    private void leaveToken(){
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost httpPost = new HttpPost("http://192.168.0.16:8082/releasetoken");
+        // Request parameters and other properties.
+        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        //params.add(new BasicNameValuePair("user", "Bob"));
+        try {
+            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            // writing error to Log
+            e.printStackTrace();
+        }
+        /*
+         * Execute the HTTP Request
+         */
+        try {
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity respEntity = response.getEntity();
+
+            if (respEntity != null) {
+                // EntityUtils to get the response content
+                String content =  EntityUtils.toString(respEntity);
+                Log.e(TAG, content);
+
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     private void webSocketConnection(){
         WebSocketListener webSocketListenerCoinPrice;
         OkHttpClient clientCoinPrice = new OkHttpClient();
@@ -408,7 +503,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         "    \"type\": \"subscribe\",\n" +
                         "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
                         "}");*/
-                //Log.e(TAG, "onOpen");
+                Log.e(TAG, "onOpen");
             }
 
             @Override
@@ -478,6 +573,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         canTalk = false;
                         buttonName = getText().toString();
                         setText(sendingText);
+                        requestToken();
+                        MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                        mp.start();
+
                         return true;
                     }
 
@@ -486,6 +585,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                         status = false;
                         recorder.release();
                         blockTouch();
+                        leaveToken();
+                        MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+                        mp.start();
                         timer = new CountDownTimer(3000, 100) {
                             public void onTick(long millisUntilFinished) {
                                 //here you can have your logic to set text to edittext
@@ -494,6 +596,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                                 canTalk = true;
                                 setText(buttonName);
                                 unblockTouch();
+
+
                             }
                         }.start();
 
@@ -659,5 +763,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         public static final int LOW = 3;
 
     }
+
+
 }
 
