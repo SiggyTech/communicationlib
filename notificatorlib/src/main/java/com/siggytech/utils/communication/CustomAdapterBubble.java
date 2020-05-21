@@ -77,17 +77,20 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
             holder.chat_out_text.setText(model.getMessageModel().getMessage());
 
         }
-        if(Utils.MESSAGE_TYPE.AUDIO.equals(model.getMessageModel().getType())) {
+        else if(Utils.MESSAGE_TYPE.AUDIO.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.VISIBLE);
             holder.ivPreviewImage.setVisibility(View.GONE);
             holder.chat_out_text.setVisibility(View.GONE);
             holder.tvAudioDuration.setText(getDurationString(model.getMessageModel().getDuration()));
             holder.tvAudioDuration.setTag(getDurationString(model.getMessageModel().getDuration()));
             try {
-                holder.audioUri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
+                if(model.isMine())
+                    holder.audioUri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
+                else holder.audioUri = Uri.parse(getDownloadUrl(model.getMessageModel().getMessage()));
             } catch(Exception e) { e.printStackTrace(); }
 
-        }else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
+        }
+        else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
             holder.chat_out_text.setVisibility(View.GONE);
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.VISIBLE);
@@ -122,7 +125,8 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
                 }
             } catch (Exception e){e.printStackTrace();}
 
-        } else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
+        }
+        else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
             holder.lnAudio.setVisibility(View.GONE);
             holder.ivPreviewImage.setVisibility(View.VISIBLE);
             holder.chat_out_text.setVisibility(View.GONE);
@@ -160,6 +164,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
                 }
             } catch (Exception e){e.printStackTrace();}
         }
+
         holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
         holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
         holder.chat_text_datetime.setTextColor(Conf.CHAT_COLOR_DATE);
