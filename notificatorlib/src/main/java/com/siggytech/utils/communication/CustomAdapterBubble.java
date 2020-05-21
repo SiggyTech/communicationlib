@@ -22,12 +22,13 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.siggytech.view.MyImage;
 
 import java.util.List;
 
 import static android.provider.MediaStore.Video.Thumbnails.MINI_KIND;
-
 
 public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubble.ViewHolder> {
     private static final String TAG = CustomAdapterBubble.class.getSimpleName();
@@ -102,7 +103,22 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
 
                     holder.ivPreviewImage.setOnClickListener(v -> goVideoView(holder.uri));
                 }else{
-                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage,model.getMessageModel().getType());
+                    String videoUrl = getDownloadUrl(model.getMessageModel().getMessage());
+
+                    long thumb = 5000 * 1000;
+                    RequestOptions options = new RequestOptions().frame(thumb);
+                    Glide.with(context).load(videoUrl).apply(options).into(holder.ivPreviewImage.getImageView());
+
+                    holder.ivPreviewImage.getProgressBar().hide();
+                    holder.ivPreviewImage.setOnClickListener(v -> {
+                        try {
+                            Intent intent = new Intent(context, VideoActivity.class);
+                            intent.putExtra("VideoUri",videoUrl);
+                            context.startActivity(intent);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    });
                 }
             } catch (Exception e){e.printStackTrace();}
 
@@ -125,7 +141,22 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
 
                     holder.ivPreviewImage.setOnClickListener(v -> goImageView(holder.uri));
                 }else{
-                    new DownloadTask(context,getDownloadUrl(model.getMessageModel().getMessage()),holder.ivPreviewImage,model.getMessageModel().getType());
+                    String url = getDownloadUrl(model.getMessageModel().getMessage());
+
+                    long thumb = 5000 * 1000;
+                    RequestOptions options = new RequestOptions().frame(thumb);
+                    Glide.with(context).load(url).apply(options).into(holder.ivPreviewImage.getImageView());
+
+                    holder.ivPreviewImage.getProgressBar().hide();
+                    holder.ivPreviewImage.setOnClickListener(v -> {
+                        try {
+                            Intent intent = new Intent(context, ImageActivity.class);
+                            intent.putExtra("ImageUri",url);
+                            context.startActivity(intent);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    });
                 }
             } catch (Exception e){e.printStackTrace();}
         }
@@ -201,7 +232,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
                 // If media player is not null then try to stop it
                 if (mPlayer != null) {
                     mPlayer.stop();
-                    mPlayer.release();
+                    mPlayer.reset();
                     mPlayer = null;
                 }
             } catch (Exception e) {

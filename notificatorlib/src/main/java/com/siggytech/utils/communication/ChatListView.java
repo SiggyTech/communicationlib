@@ -206,7 +206,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                 name = (String) pmg.getApplicationLabel(app);
 
                 LaunchIntent = new Intent(context, launchClass);
-                //LaunchIntent = pmg.getLaunchIntentForPackage(packageName);
             }
             Log.d("intent.getExtras", "Found!: " + name);
         } catch (PackageManager.NameNotFoundException e) {
@@ -305,6 +304,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                     newMessage = false;
                     lsChat.add(new ChatModel(1L, model, from, dateTime,false));
                     notifyItemInserted();
+                    saveHistory(model);
                 }
                 catch (Exception e){
                     e.printStackTrace();
@@ -323,8 +323,10 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                     "    \"dateTime\": \"" + dateTime +  "\" \n" +
                     "}");
 
-            lsChat.add(new ChatModel(1L, gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class), Conf.LOCAL_USER, dateTime,true));
+            MessageModel model = gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class);
+            lsChat.add(new ChatModel(1L, model, Conf.LOCAL_USER, dateTime,true));
             notifyItemInserted();
+            saveHistory(model);
         } catch(Exception e){
             e.printStackTrace();
         }
@@ -350,5 +352,9 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    private void saveHistory(MessageModel model){
+
     }
 }
