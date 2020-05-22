@@ -23,6 +23,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.core.app.ActivityCompat;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -31,36 +37,22 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
-import androidx.core.app.ActivityCompat;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 import okio.ByteString;
-
 
 import static android.content.Context.TELEPHONY_SERVICE;
 
@@ -183,30 +175,52 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     public void startTalking(){
-        Log.d("log", "startStreming");
-        status = true;
+        bussymark = false;
+        Log.d("log", "unblockTouch() onTouch: push");
+        if(requestToken()) {
+            status = true;
 
-        startStreaming();
-        canTalk = false;
-        buttonName = getText().toString();
-        setText(sendingText);
+            startStreaming();
+            canTalk = false;
+            buttonName = getText().toString();
+            setText(sendingText);
+
+            requestToken();
+            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+            mp.start();
+        }
+        else{
+            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
+            mp.start();
+            bussymark = true;
+        }
     }
 
     public void stopTalking(){
-        Log.d("log", "stopStreming");
-        status = false;
-        recorder.release();
-        blockTouch();
-        timer = new CountDownTimer(3000, 100) {
-            public void onTick(long millisUntilFinished) {
-                //here you can have your logic to set text to edittext
-            }
-            public void onFinish() {
-                canTalk = true;
-                setText(buttonName);
-                unblockTouch();
-            }
-        }.start();
+        if(bussymark) return;
+
+        try {
+            Log.d("log", "unblockTouch() onTouch: release");
+            status = false;
+            recorder.release();
+            blockTouch();
+            leaveToken();
+            MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+            mp.start();
+            timer = new CountDownTimer(3000, 100) {
+                public void onTick(long millisUntilFinished) {
+                    //here you can have your logic to set text to edittext
+                }
+
+                public void onFinish() {
+                    canTalk = true;
+                    setText(buttonName);
+                    unblockTouch();
+                }
+            }.start();
+        }
+        catch (Exception e) {}
+
     }
 
     @Override
@@ -382,56 +396,13 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 {
                     case MotionEvent.ACTION_DOWN:
                     {
-                        bussymark = false;
-                        Log.d("log", "unblockTouch() onTouch: push");
-                        if(requestToken()) {
-                            status = true;
-
-                            startStreaming();
-                            canTalk = false;
-                            buttonName = getText().toString();
-                            setText(sendingText);
-
-                            requestToken();
-                            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
-                            mp.start();
-                        }
-                        else{
-                            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
-                            mp.start();
-                            bussymark = true;
-                        }
-
+                        startTalking();
                         return true;
                     }
 
                     case MotionEvent.ACTION_UP:
                     {
-                        if(bussymark)
-                            break;
-
-                        try {
-                            Log.d("log", "unblockTouch() onTouch: release");
-                            status = false;
-                            recorder.release();
-                            blockTouch();
-                            leaveToken();
-                            MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
-                            mp.start();
-                            timer = new CountDownTimer(3000, 100) {
-                                public void onTick(long millisUntilFinished) {
-                                    //here you can have your logic to set text to edittext
-                                }
-
-                                public void onFinish() {
-                                    canTalk = true;
-                                    setText(buttonName);
-                                    unblockTouch();
-                                }
-                            }.start();
-                        }
-                        catch (Exception e) {}
-
+                        stopTalking();
                         break;
                     }
                 }
@@ -587,46 +558,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
-                        Log.d("log", "this.setOnTouchListener onTouch: push");
-                        bussymark = false;
-                        if(requestToken()){
-                            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
-                            mp.start();
-                            status = true;
-                            startStreaming();
-                            canTalk = false;
-                            buttonName = getText().toString();
-                            setText(sendingText);
-                        }
-                        else{
-                            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
-                            mp.start();
-                            bussymark = true;
-                        }
+                        startTalking();
                         return true;
                     }
                     case MotionEvent.ACTION_UP: {
 
-                        if(bussymark)
-                            break;
-
-                        Log.d("log", "this.setOnTouchListener onTouch: release");
-                        status = false;
-                        recorder.release();
-                        blockTouch();
-                        leaveToken();
-                        MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
-                        mp.start();
-                        timer = new CountDownTimer(3000, 100) {
-                            public void onTick(long millisUntilFinished) {
-                                //here you can have your logic to set text to edittext
-                            }
-                            public void onFinish() {
-                                canTalk = true;
-                                setText(buttonName);
-                                unblockTouch();
-                            }
-                        }.start();
+                       stopTalking();
 
                         break;
                     }

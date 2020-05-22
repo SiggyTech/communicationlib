@@ -432,8 +432,6 @@ public class ChatControl extends RelativeLayout {
                                 String destPath = Conf.ROOT_PATH + GetDateName() + GetFileExt(file.getName());
                                 compressVideo(file.getAbsolutePath(),destPath,messageModel);
                                 deleteFile = false;
-                                //messageModel.setFile(file);
-                                //chatListView.callToBase64(messageModel);
                             } else {
                                 chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), fileType);
                             }
