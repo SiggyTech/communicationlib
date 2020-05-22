@@ -100,6 +100,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int idGroup;
     private Context context;
 
+    private boolean bussymark = false;
+
     public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, int quality) {
         super(context);
         this.context = context;
@@ -380,40 +382,55 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 {
                     case MotionEvent.ACTION_DOWN:
                     {
-
+                        bussymark = false;
                         Log.d("log", "unblockTouch() onTouch: push");
-                        status = true;
+                        if(requestToken()) {
+                            status = true;
 
-                        startStreaming();
-                        canTalk = false;
-                        buttonName = getText().toString();
-                        setText(sendingText);
+                            startStreaming();
+                            canTalk = false;
+                            buttonName = getText().toString();
+                            setText(sendingText);
 
-                        requestToken();
-                        MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
-                        mp.start();
+                            requestToken();
+                            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                            mp.start();
+                        }
+                        else{
+                            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
+                            mp.start();
+                            bussymark = true;
+                        }
+
                         return true;
                     }
 
                     case MotionEvent.ACTION_UP:
                     {
-                        Log.d("log", "unblockTouch() onTouch: release");
-                        status = false;
-                        recorder.release();
-                        blockTouch();
-                        leaveToken();
-                        MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
-                        mp.start();
-                        timer = new CountDownTimer(3000, 100) {
-                            public void onTick(long millisUntilFinished) {
-                                //here you can have your logic to set text to edittext
-                            }
-                            public void onFinish() {
-                                canTalk = true;
-                                setText(buttonName);
-                                unblockTouch();
-                            }
-                        }.start();
+                        if(bussymark)
+                            break;
+
+                        try {
+                            Log.d("log", "unblockTouch() onTouch: release");
+                            status = false;
+                            recorder.release();
+                            blockTouch();
+                            leaveToken();
+                            MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+                            mp.start();
+                            timer = new CountDownTimer(3000, 100) {
+                                public void onTick(long millisUntilFinished) {
+                                    //here you can have your logic to set text to edittext
+                                }
+
+                                public void onFinish() {
+                                    canTalk = true;
+                                    setText(buttonName);
+                                    unblockTouch();
+                                }
+                            }.start();
+                        }
+                        catch (Exception e) {}
 
                         break;
                     }
@@ -424,9 +441,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         });
     }
 
-    private void requestToken(){
+    private boolean requestToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        HttpPost httpPost = new HttpPost("http://192.168.0.16:8082/gettoken");
+        HttpPost httpPost = new HttpPost("http://" + Conf.SERVER_IP +":"+ Conf.TOKEN_PORT +"/gettoken");
         // Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         //params.add(new BasicNameValuePair("user", "Bob"));
@@ -447,17 +464,21 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 // EntityUtils to get the response content
                 String content =  EntityUtils.toString(respEntity);
                 Log.e(TAG, content);
-
+                if(content.equals("taked"))
+                    return true;
+                else
+                    return false;
             }
         } catch (ClientProtocolException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return false;
     }
     private void leaveToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        HttpPost httpPost = new HttpPost("http://192.168.0.16:8082/releasetoken");
+        HttpPost httpPost = new HttpPost("http://" + Conf.SERVER_IP +":"+ Conf.TOKEN_PORT +"/releasetoken");
         // Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         //params.add(new BasicNameValuePair("user", "Bob"));
@@ -567,20 +588,28 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
                         Log.d("log", "this.setOnTouchListener onTouch: push");
-                        status = true;
-
-                        startStreaming();
-                        canTalk = false;
-                        buttonName = getText().toString();
-                        setText(sendingText);
-                        requestToken();
-                        MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
-                        mp.start();
-
+                        bussymark = false;
+                        if(requestToken()){
+                            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                            mp.start();
+                            status = true;
+                            startStreaming();
+                            canTalk = false;
+                            buttonName = getText().toString();
+                            setText(sendingText);
+                        }
+                        else{
+                            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
+                            mp.start();
+                            bussymark = true;
+                        }
                         return true;
                     }
-
                     case MotionEvent.ACTION_UP: {
+
+                        if(bussymark)
+                            break;
+
                         Log.d("log", "this.setOnTouchListener onTouch: release");
                         status = false;
                         recorder.release();
@@ -596,8 +625,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                                 canTalk = true;
                                 setText(buttonName);
                                 unblockTouch();
-
-
                             }
                         }.start();
 

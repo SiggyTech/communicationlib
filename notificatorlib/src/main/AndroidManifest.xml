@@ -21,6 +21,9 @@
         <activity
             android:name=".UtilActivity"
             android:theme="@style/ChooserTheme" />
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
 
     </application>
 

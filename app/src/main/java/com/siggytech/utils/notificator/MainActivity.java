@@ -40,8 +40,8 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = "192.168.0.16";
-        //Conf.SERVER_IP = ""; //Set dedicated IP server.
+        //Conf.SERVER_IP = "192.168.0.15";
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
         //Conf.SERVER_IP = "192.168.1.148"; //Set dedicated IP server.
         name = getIMEINumber();
 
@@ -66,8 +66,8 @@ public class MainActivity extends AppCompatActivity {
                 System.out.println(getResources().getIdentifier("siggy_logo",
                         "drawable", getPackageName()));
                 if(isChat){
-                    //addChatListView();
-                    subscribeForNotifications();
+                    addChatListView();
+                    //subscribeForNotifications();
                 }else {
                     addPTTButton();
                     //subscribeForNotifications();
@@ -80,8 +80,8 @@ public class MainActivity extends AppCompatActivity {
                     "drawable", getPackageName()));
 
             if(isChat){
-                //addChatListView();
-                subscribeForNotifications();
+                addChatListView();
+                //subscribeForNotifications();
             }else {
                 addPTTButton();
                 //subscribeForNotifications();
@@ -118,9 +118,11 @@ public class MainActivity extends AppCompatActivity {
                     "drawable", getPackageName()));
             if(isChat){
                 addChatListView();
-                subscribeForNotifications();
-            }else {addPTTButton();
-                subscribeForNotifications();}
+                //subscribeForNotifications();
+            }else {
+                addPTTButton();
+                //subscribeForNotifications();
+            }
 
         } else {
            //TODO ask permission again          // exit app
