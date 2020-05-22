@@ -2,6 +2,7 @@ package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,12 +33,14 @@ import androidx.core.app.ActivityCompat;
 
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
+import com.siggytech.utils.communication.videocompress.VideoCompress;
 
 import java.io.File;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 import static com.siggytech.utils.communication.Utils.FileToBase64;
 import static com.siggytech.utils.communication.Utils.GetDateName;
+import static com.siggytech.utils.communication.Utils.GetFileExt;
 import static com.siggytech.utils.communication.Utils.GetStringDate;
 
 /**
@@ -426,9 +429,11 @@ public class ChatControl extends RelativeLayout {
                             messageModel.setDate(GetStringDate());
 
                             if (Utils.MESSAGE_TYPE.VIDEO.equals(fileType)) {
+                                String destPath = Conf.ROOT_PATH + GetDateName() + GetFileExt(file.getName());
+                                compressVideo(file.getAbsolutePath(),destPath,messageModel);
                                 deleteFile = false;
-                                messageModel.setFile(file);
-                                chatListView.callToBase64(messageModel);
+                                //messageModel.setFile(file);
+                                //chatListView.callToBase64(messageModel);
                             } else {
                                 chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), fileType);
                             }
@@ -444,6 +449,7 @@ public class ChatControl extends RelativeLayout {
                         }
                     } catch(Exception e) {
                         e.printStackTrace();
+                        //TODO need send message to user
                     }
                 }
                 else
@@ -475,6 +481,39 @@ public class ChatControl extends RelativeLayout {
         }
 
     };
+
+
+    private void compressVideo(String filePath, String destPath, MessageModel messageModel){
+        VideoCompress.compressVideoLow(filePath, destPath, new VideoCompress.CompressListener() {
+            private ProgressDialog progressDialog;
+
+            @Override
+            public void onStart() {
+                progressDialog=new ProgressDialog(context);
+                progressDialog.setMessage("Wait...");
+                progressDialog.setCanceledOnTouchOutside(false);
+                progressDialog.show();
+            }
+
+            @Override
+            public void onSuccess() {
+                File file = new File(destPath);
+                messageModel.setFile(file);
+                chatListView.callToBase64(messageModel);
+                progressDialog.dismiss();
+            }
+
+            @Override
+            public void onFail() {
+                progressDialog.dismiss();
+            }
+
+            @Override
+            public void onProgress(float percent) {
+                Log.d(ChatControl.class.getSimpleName(),"VIDEO COMPRESS: "+String.valueOf(percent));
+            }
+        });
+    }
 
 }
 

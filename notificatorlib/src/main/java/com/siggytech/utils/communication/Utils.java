@@ -24,7 +24,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -155,7 +154,7 @@ public class Utils {
 
 
 
-    public static String getFileExt(String fileName) {
+    public static String GetFileExt(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
     }
 
@@ -389,6 +388,7 @@ public class Utils {
         gsonBuilder.disableHtmlEscaping();
         return gsonBuilder.serializeNulls().create();
     }
+
     public static void writeToFile(String data,Context context) {
         try {
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
