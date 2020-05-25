@@ -33,6 +33,7 @@ android {
         }
         lintOptions {
             disable 'GradleDependency'
+            abortOnError false
         }
     }
 }

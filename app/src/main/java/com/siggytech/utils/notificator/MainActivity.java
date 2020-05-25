@@ -25,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     Boolean keyDown = false;
     LinearLayout linearLayout;
     String API_KEY = "";
+
     String name = "";
     ChatControl ch;
 
@@ -39,7 +40,10 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
+        //Conf.SERVER_IP = "192.168.0.15";
+        //Conf.SERVER_IP = ""; //Set dedicated IP server.
+        Conf.SERVER_IP = "192.168.1.148"; //Set dedicated IP server.
+        name = getIMEINumber();
 
         onNewIntent(getIntent());
 
@@ -63,23 +67,24 @@ public class MainActivity extends AppCompatActivity {
                         "drawable", getPackageName()));
                 if(isChat){
                     addChatListView();
-                    subscribeForNotifications();
+                    //subscribeForNotifications();
                 }else {
                     addPTTButton();
                     //subscribeForNotifications();
                 }
             }
-        } else{
+        }
+        else{
             System.out.println(getApplicationContext().getPackageName());
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
 
             if(isChat){
                 addChatListView();
-                subscribeForNotifications();
+                //subscribeForNotifications();
             }else {
                 addPTTButton();
-                subscribeForNotifications();
+                //subscribeForNotifications();
             }
 
         }
@@ -87,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(!keyDown && keyCode == 25 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
+        if(!keyDown  && keyCode == 25 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
             if(pttButton!=null)
                 pttButton.startTalking();
 
@@ -113,10 +118,10 @@ public class MainActivity extends AppCompatActivity {
                     "drawable", getPackageName()));
             if(isChat){
                 addChatListView();
-                subscribeForNotifications();
+                //subscribeForNotifications();
             }else {
                 addPTTButton();
-                subscribeForNotifications();
+                //subscribeForNotifications();
             }
 
         } else {
@@ -126,10 +131,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addPTTButton(){
-        pttButton = new PTTButton(this, 1, API_KEY, name, PTTButton.AudioQuality.MEDIUM);
+        pttButton = new PTTButton(this, 2, API_KEY, name, PTTButton.AudioQuality.MEDIUM);
         pttButton.setWidth(200);
         pttButton.setHeight(200);
-        pttButton.setText(Conf.SEND_BUTTON_TEXT);
+        pttButton.setText("Hablar!");
         linearLayout.addView(pttButton);
     }
 
