@@ -29,7 +29,7 @@ import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
 import static com.siggytech.utils.communication.Utils.GetDateName;
 
 /**
- * @author Kussess
+ * @author KKusses
  * @since 2020-02-28
  */
 public class UtilActivity extends AppCompatActivity {
@@ -72,11 +72,11 @@ public class UtilActivity extends AppCompatActivity {
             Uri uri = Uri.parse(Environment.getDownloadCacheDirectory().getPath());
             chooser.addCategory(Intent.CATEGORY_OPENABLE);
             chooser.setDataAndType(uri, "*/*");
-            chooser.setType("video/*, image/*");
+            //chooser.setType("video/*, image/*");
             try {
                 startActivityForResult(chooser, SELECT_FILE);
             } catch (ActivityNotFoundException ex) {
-                Toast.makeText(context, "Por favor instale un gestor de archivos (File Manager).",
+                Toast.makeText(context, "Please install app to open it.",
                         Toast.LENGTH_SHORT).show();
             }
         });
@@ -87,24 +87,15 @@ public class UtilActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * Este metodo esta sobreescrito dado que es requerido por uno de los fragments que esta
-     * implementando este activity
-     * */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Log.v(TAG, "Entro al onActivityResult del Main el codigo " + requestCode);
-        if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
-            //File imgFile = new File(mImageFileLocation);
-            setPathToFile(new File(mImageFileLocation).getAbsolutePath(), Utils.MESSAGE_TYPE.PHOTO);
 
+        if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
+            setPathToFile(new File(mImageFileLocation).getAbsolutePath(), Utils.MESSAGE_TYPE.PHOTO);
             finish();
         }else if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_CANCELED){
-            //File imgFile = new File(mImageFileLocation);
             finish();
-
-
         }else if(requestCode == SELECT_FILE && data!=null){
             String selectedImagePath = FilePath.getPath(getApplicationContext(), data.getData());
             if(selectedImagePath!=null) {
@@ -113,7 +104,11 @@ public class UtilActivity extends AppCompatActivity {
 
                 switch (selectedImagePath.substring(selectedImagePath.lastIndexOf(".") + 1).toUpperCase()) {
                     case "JPG":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
+                        break;
                     case "JPEG":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
+                        break;
                     case "BMP":
                     case "TIFF":
                     case "PNG":
@@ -140,8 +135,8 @@ public class UtilActivity extends AppCompatActivity {
     }
 
     /**
-     * Metodo que se encarga de tomar la fotografia
-     * @param view vista
+     * Takes pic
+     * @param view view
      * */
     public void takePhoto(View view){
         Intent callCamaraApplicationIntent = new Intent();
@@ -165,8 +160,8 @@ public class UtilActivity extends AppCompatActivity {
     }
 
     /**
-     * Metodo que se encarga de crear la fotografia en formato jpg en la carpeta SAG_IMAGES
-     * @return fotografia en formato File
+     * Creates image
+     * @return file
      * @throws IOException
      * */
     private File createImageFile() throws IOException{

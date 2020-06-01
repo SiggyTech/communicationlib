@@ -85,7 +85,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
             holder.tvAudioDuration.setTag(getDurationString(model.getMessageModel().getDuration()));
             try {
                 if(model.isMine())
-                    holder.audioUri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
+                    holder.audioUri = Utils.Base64ToUri(model.getMessageModel().getMessage(),Utils.GetDateName()+".3gp");
                 else holder.audioUri = Uri.parse(getDownloadUrl(model.getMessageModel().getMessage()));
             } catch(Exception e) { e.printStackTrace(); }
 
@@ -97,7 +97,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
             try{
                 if(model.isMine()){
                     try {
-                        holder.uri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".mp4");
+                        holder.uri = Utils.Base64ToUri(model.getMessageModel().getMessage(),Utils.GetDateName()+".mp4");
                         Bitmap decodedByte = ThumbnailUtils.createVideoThumbnail(holder.uri.toString(),MINI_KIND);
                         holder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
                                 decodedByte.getHeight(), false));
@@ -140,7 +140,7 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
                             decodedByte.getHeight(), false));
                     holder.ivPreviewImage.getProgressBar().hide();
                     try {
-                        holder.uri = Utils.Base64ToUrl(model.getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
+                        holder.uri = Utils.Base64ToUri(model.getMessageModel().getMessage(),Utils.GetDateName()+".bmp");
                     } catch(Exception e) { e.printStackTrace(); }
 
                     holder.ivPreviewImage.setOnClickListener(v -> goImageView(holder.uri));

@@ -30,7 +30,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -72,6 +71,7 @@ public class MessengerService extends Service {
 
     public MessengerService() {
     }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -83,6 +83,7 @@ public class MessengerService extends Service {
         else
             startForeground(1,new Notification());
     }
+
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void startMyOwnForeground(){
         String NOTIFICATION_CHANNEL_ID = "com.siggy.service";
@@ -114,6 +115,7 @@ public class MessengerService extends Service {
                 .build();
         startForeground(2, notification);
     }
+
     @Override
     public void onStart(Intent intent, int startid) {
         context = getApplicationContext();//probando...
@@ -144,8 +146,7 @@ public class MessengerService extends Service {
                 Utils.writeToFile(imei + ";" + clientname + ";" + api_key + ";" + String.valueOf(idgroup) + ";" + iconName, this.context);
             }
         }
-        catch(Exception ex)
-        {
+        catch(Exception ex) {
             Log.d("intent.getExtras", "Error: " + ex.getMessage());
         }
     }
@@ -168,9 +169,7 @@ public class MessengerService extends Service {
                 iconName = extras.get("iconName").toString();
 
             }
-        }
-        catch(Exception ex)
-        {
+        } catch(Exception ex) {
             Log.d("intent.getExtras", "Error: " + ex.getMessage());
         }
 
@@ -179,11 +178,9 @@ public class MessengerService extends Service {
 
         return START_STICKY;
     }
+
     private void webSocketConnection(){
-
-
         clientCoinPrice = new OkHttpClient();
-
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_MSG_PORT + "?imei=" + imei + "&groupId=" + idgroup + "&API_KEY="+ api_key +"&clientName=" + clientname;
         Log.e(TAG, url);
@@ -206,8 +203,7 @@ public class MessengerService extends Service {
                     JSONObject obj = new JSONObject(text);
 
                     addNotification(obj.getString("messageTittle"), obj.getString("messageText"), obj.getString("packageName"), obj.getString("iconName"), obj.getString("notificationMessage"));
-                }
-                catch(Exception ex){
+                } catch(Exception ex){
                     Log.e(TAG, "Error MESSAGE String: " + ex.getMessage());
                 }
             }
@@ -278,11 +274,9 @@ public class MessengerService extends Service {
         timerTask = new TimerTask() {
             public void run() {
                 //Log.i("in timer", "in timer ++++  "+ (counter++));
-
             }
         };
     }
-
 
     @Nullable
     @Override
@@ -319,8 +313,7 @@ public class MessengerService extends Service {
                 .setContentIntent(pIntent)
                 .setSound(uri)
                 .setSmallIcon(idResIcon)
-                .setAutoCancel(true)
-                ;
+                .setAutoCancel(true);
 
         // Add as notification
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -350,8 +343,8 @@ public class MessengerService extends Service {
             wl_cpu.acquire(10000);
         }
     }
-    public int getResourceId(String pVariableName, String pResourcename, String pPackageName)
-    {
+
+    public int getResourceId(String pVariableName, String pResourcename, String pPackageName) {
         try {
             return getResources().getIdentifier(pVariableName, pResourcename, pPackageName);
         } catch (Exception e) {

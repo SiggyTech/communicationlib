@@ -25,6 +25,7 @@ public class Conf {
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
     public static boolean SEND_AUDIO = true;
     public static boolean SEND_FILES = true;
+    public static boolean PTT_SAVE_AUDIO = true;
     public static String HTTP = "http://";
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE = 8466503;
     public static String FOREGROUND_CHANNEL_ID = "foreground_channel_id_56";

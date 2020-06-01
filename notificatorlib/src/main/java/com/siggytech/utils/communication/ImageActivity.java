@@ -1,5 +1,7 @@
 package com.siggytech.utils.communication;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -22,15 +24,14 @@ public class ImageActivity extends AppCompatActivity {
             try {
                 PhotoView photoView = findViewById(R.id.iv_photo);
 
-                ///long thumb = getLayoutPosition()*1000;
-                long thumb = 5000 * 1000;
-                RequestOptions options = new RequestOptions().frame(thumb);
-                Glide.with(ImageActivity.this).load(url).apply(options).into(photoView);
-
-                //Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-                //Bitmap bitmap = BitmapFactory.decodeFile(imageUri.toString());
-
-                //photoView.setImageBitmap(bitmap);
+                if(getIntent().getStringExtra("ImageUri").startsWith(Conf.HTTP)) {
+                    long thumb = 5000 * 1000;
+                    RequestOptions options = new RequestOptions().frame(thumb);
+                    Glide.with(ImageActivity.this).load(url).apply(options).into(photoView);
+                }else{
+                    Bitmap bitmap = BitmapFactory.decodeFile(getIntent().getStringExtra("ImageUri"));
+                    photoView.setImageBitmap(bitmap);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 finish();
@@ -40,4 +41,5 @@ public class ImageActivity extends AppCompatActivity {
             finish();
         }
     }
+
 }

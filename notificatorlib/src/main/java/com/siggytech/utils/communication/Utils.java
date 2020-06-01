@@ -137,8 +137,19 @@ public class Utils {
      * @param fileName name of file with extension
      * @return file absolute path
      */
-    public static Uri Base64ToUrl(String encoded, String fileName) throws Exception {
+    public static Uri Base64ToUri(String encoded, String fileName) throws Exception {
         byte[] decoded = Base64.decode(encoded, Base64.DEFAULT);
+        return ByteToUri(decoded,fileName);
+    }
+
+
+    /**
+     * Converts byte [] to file and returns file absolute path
+     * @param decoded data
+     * @param fileName name of file with extension
+     * @return file absolute path
+     */
+    public static Uri ByteToUri(byte[] decoded, String fileName) throws Exception {
         String path = Conf.ROOT_PATH +fileName;
         try {
             File file2 = new File(path);
@@ -151,7 +162,6 @@ public class Utils {
         }
         return Uri.parse(path);
     }
-
 
 
     public static String GetFileExt(String fileName) {
