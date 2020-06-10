@@ -1,9 +1,12 @@
 package com.siggytech.utils.communication;
 
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,22 +23,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 
 import java.io.File;
-import java.io.IOException;
 
 import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
 import static com.siggytech.utils.communication.Utils.GetDateName;
 
 /**
- * @author KKusses
+ * @author K.Kusses
  * @since 2020-02-28
  */
 public class UtilActivity extends AppCompatActivity {
     private static final String TAG = UtilActivity.class.getSimpleName();
     private static final int ACTIVITY_START_CAMARA_APP = 0;
-    private String mImageFileLocation = "";
+    Uri outputFileUri;
     Context context = this;
 
     @Override
@@ -65,14 +66,13 @@ public class UtilActivity extends AppCompatActivity {
         LinearLayout lnPhotoVideo = findViewById(R.id.lnPhotoVideo);
         LinearLayout lnCancel = findViewById(R.id.lnCancel);
 
-        lnCamera.setOnClickListener(v -> takePhoto(v));
+        lnCamera.setOnClickListener(this::takePhoto);
 
         lnPhotoVideo.setOnClickListener(v -> {
             Intent chooser = new Intent(Intent.ACTION_GET_CONTENT);
             Uri uri = Uri.parse(Environment.getDownloadCacheDirectory().getPath());
             chooser.addCategory(Intent.CATEGORY_OPENABLE);
             chooser.setDataAndType(uri, "*/*");
-            //chooser.setType("video/*, image/*");
             try {
                 startActivityForResult(chooser, SELECT_FILE);
             } catch (ActivityNotFoundException ex) {
@@ -83,16 +83,20 @@ public class UtilActivity extends AppCompatActivity {
 
         lnCancel.setOnClickListener(v -> finish());
 
-        createFolder();
 
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
-            setPathToFile(new File(mImageFileLocation).getAbsolutePath(), Utils.MESSAGE_TYPE.PHOTO);
+            ContentResolver cr = getContentResolver();
+            getContentResolver().notifyChange(outputFileUri, null);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                setPathToFile(getImageFilePath(outputFileUri), Utils.MESSAGE_TYPE.PHOTO);
+            }else{
+                setPathToFile(outputFileUri.getPath(), Utils.MESSAGE_TYPE.PHOTO);
+            }
             finish();
         }else if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_CANCELED){
             finish();
@@ -110,6 +114,7 @@ public class UtilActivity extends AppCompatActivity {
                         setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
                         break;
                     case "BMP":
+                        setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
                     case "TIFF":
                     case "PNG":
                         setPathToFile(FilePath.getPath(getApplicationContext(), data.getData()), Utils.MESSAGE_TYPE.PHOTO);
@@ -139,60 +144,45 @@ public class UtilActivity extends AppCompatActivity {
      * @param view view
      * */
     public void takePhoto(View view){
-        Intent callCamaraApplicationIntent = new Intent();
-        callCamaraApplicationIntent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        File photoFile = null;
-        try {
-            photoFile = createImageFile();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            callCamaraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", photoFile));
-        }else{
-            callCamaraApplicationIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+            ContentValues values = new ContentValues(1);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpg");
+            outputFileUri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+            Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            captureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(captureIntent, ACTIVITY_START_CAMARA_APP);
+        } else {
+            Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            File file = new File(Environment.getExternalStorageDirectory(), GetDateName()+".jpg");
+            outputFileUri = Uri.fromFile(file);
+            captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
+            startActivityForResult(captureIntent, ACTIVITY_START_CAMARA_APP);
+        }
+    }
+
+
+    public String getImageFilePath(Uri uri) {
+        String path = null, image_id = null;
+
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            image_id = cursor.getString(0);
+            image_id = image_id.substring(image_id.lastIndexOf(":") + 1);
+            cursor.close();
         }
 
-        startActivityForResult(callCamaraApplicationIntent, ACTIVITY_START_CAMARA_APP);
-    }
-
-    /**
-     * Creates image
-     * @return file
-     * @throws IOException
-     * */
-    private File createImageFile() throws IOException{
-        String imageFileName;
-        File storageDirectory = new File(Conf.ROOT_PATH);
-
-        imageFileName = GetDateName();
-
-        File image = File.createTempFile(imageFileName, ".jpg", storageDirectory);
-        mImageFileLocation = image.getAbsolutePath();
-
-        return image;
-    }
-
-
-    /**
-     * Creates a content folder for files.
-     * */
-    private void createFolder(){
-        File directory = new File(Conf.ROOT_PATH);
-        try {
-            if (directory.mkdirs()) {
-                Log.v(TAG, "Directory created");
-            } else {
-                Log.v(TAG, "Directory is not created");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        cursor = getContentResolver().query(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, MediaStore.Images.Media._ID + " = ? ", new String[]{image_id}, null);
+        if (cursor!=null) {
+            cursor.moveToFirst();
+            path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            cursor.close();
         }
-
+        return path;
     }
+
+
     @Override
     protected void onStart() {
         super.onStart();

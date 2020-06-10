@@ -61,8 +61,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private static final int READ_PHONE_STATE = 0;
     private static final int REQUEST = 112;
 
-
-
     private Padding mPadding;
     private int mHeight;
     private int mWidth;
@@ -74,7 +72,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private StrokeGradientDrawable mDrawableNormal;
     private StrokeGradientDrawable mDrawablePressed;
     private String buttonName;
-    private String sendingText = "Sending...";
+    private String sendingText = "";
 
     AudioTrack at;
 
@@ -175,6 +173,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     public void startTalking(){
+        setPressed(true);
         bussymark = false;
         Log.d("log", "unblockTouch() onTouch: push");
         if(requestToken()) {
@@ -193,6 +192,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
             mp.start();
             bussymark = true;
+            setPressed(false);
         }
     }
 
@@ -220,7 +220,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }.start();
         }
         catch (Exception e) {}
-
+        setPressed(false);
     }
 
     @Override
@@ -478,6 +478,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             e.printStackTrace();
         }
     }
+
+
     private void webSocketConnection(){
         WebSocketListener webSocketListenerCoinPrice;
         OkHttpClient clientCoinPrice = new OkHttpClient();
@@ -536,7 +538,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     @SuppressLint("ClickableViewAccessibility")
     private void initView() {
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
@@ -552,19 +553,15 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 audioFormat, intSize, AudioTrack.MODE_STREAM);
 
-        this.setOnTouchListener(new View.OnTouchListener()
-        {
-            public boolean onTouch(View v, MotionEvent event)
-            {
+        this.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
                         startTalking();
                         return true;
                     }
                     case MotionEvent.ACTION_UP: {
-
-                       stopTalking();
-
+                        stopTalking();
                         break;
                     }
                 }
@@ -578,8 +575,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         mPadding.top = getPaddingTop();
         mPadding.bottom = getPaddingBottom();
 
-        setTextColor(getResources().getColor(R.color.bt_white));
-        setBackgroundCompat(getResources().getDrawable(R.drawable.circle_blue_selector));
+        setBackgroundCompat(getResources().getDrawable(R.drawable.ptt_selector));
+        setWidth(100);
+        setHeight(100);
 
     }
 
