@@ -222,7 +222,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             }.start();
         }
         catch (Exception e) {
-            Log.e("log", "stopTalking: " + e.getMessage()); //new line
+            Log.e("log", "stopTalking: " + e.getMessage()); //here new line
         }
         setPressed(false);
     }
