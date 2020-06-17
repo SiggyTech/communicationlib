@@ -37,6 +37,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -89,15 +90,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String name;
     private int idGroup;
     private Context context;
+    private String username;
 
     private boolean bussymark = false;
 
-    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, int quality) {
+    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, String username, int quality) {
         super(context);
         this.context = context;
         this.idGroup = idGroup;
         this.API_KEY = API_KEY;
         this.name = nameClient;
+        this.username = username;
 
         switch (quality){
             case AudioQuality.HIGH:
@@ -175,7 +178,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public void startTalking(){
         setPressed(true);
         bussymark = false;
-        Log.d("log", "unblockTouch() onTouch: push");
+        Log.d("log", "startTalking() onTouch: push");
         if(requestToken()) {
             status = true;
 
@@ -184,7 +187,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             buttonName = getText().toString();
             setText(sendingText);
 
-            requestToken();
             MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
             mp.start();
         }
@@ -219,7 +221,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 }
             }.start();
         }
-        catch (Exception e) {}
+        catch (Exception e) {
+            Log.e("log", "stopTalking: " + e.getMessage());
+        }
         setPressed(false);
     }
 
@@ -414,10 +418,18 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private boolean requestToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        HttpPost httpPost = new HttpPost("http://" + Conf.SERVER_IP +":"+ Conf.TOKEN_PORT +"/gettoken");
-        // Request parameters and other properties.
+        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
+
+        HttpPost httpPost = new HttpPost(url);
+
+        //Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        //params.add(new BasicNameValuePair("user", "Bob"));
+        /*params.add(new BasicNameValuePair("user", this.username));
+        params.add(new BasicNameValuePair("apikey", this.API_KEY));
+        params.add(new BasicNameValuePair("name", this.API_KEY));
+        params.add(new BasicNameValuePair("groupid", String.valueOf(this.idGroup))); //0 for all groups??
+        */
+
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -435,7 +447,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 // EntityUtils to get the response content
                 String content =  EntityUtils.toString(respEntity);
                 Log.e(TAG, content);
-                if(content.equals("taked"))
+                if(content.equals("token taked"))
                     return true;
                 else
                     return false;
@@ -449,7 +461,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
     private void leaveToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        HttpPost httpPost = new HttpPost("http://" + Conf.SERVER_IP +":"+ Conf.TOKEN_PORT +"/releasetoken");
+        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
+
+        HttpPost httpPost = new HttpPost(url);
         // Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         //params.add(new BasicNameValuePair("user", "Bob"));
@@ -502,12 +516,14 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
-                //Log.e(TAG, "MESSAGE String: " + text);
+                Log.e(TAG, "MESSAGE String: " + text);
+                //here receive the message when the token state is changed.
+
             }
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-                Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
+                //Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 try {
                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 } catch(Exception ex){
