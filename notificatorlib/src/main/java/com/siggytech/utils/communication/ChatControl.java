@@ -145,7 +145,11 @@ public class ChatControl extends RelativeLayout {
         mOutEditText.setId(Utils.GenerateViewId());
         mOutEditText.setMaxLines(5);
         mOutEditText.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
-        mOutEditText.setBackgroundResource(R.drawable.gradientbg);
+       if(Conf.CHAT_DARK_MODE){
+           mOutEditText.setBackgroundResource(R.drawable.box_dark_bg);
+           mOutEditText.setTextColor(getResources().getColor(R.color.textColorDark));
+       }else
+            mOutEditText.setBackgroundResource(R.drawable.gradientbg);
 
         mSendButton = new LinearLayout(context);
         mSendButton.setId(Utils.GenerateViewId());
@@ -195,7 +199,11 @@ public class ChatControl extends RelativeLayout {
         LinearLayout lnContent = new LinearLayout(context);
         lnContent.setId(idContent);
         lnContent.setLayoutParams(mContentParams);
-        lnContent.setBackgroundColor(getResources().getColor(R.color.light_grey));
+        if(Conf.CHAT_DARK_MODE){
+            lnContent.setBackgroundColor(getResources().getColor(R.color.primaryColorDark));
+        }else {
+            lnContent.setBackgroundColor(getResources().getColor(R.color.light_grey));
+        }
         lnContent.setPadding(10,10,10,20);
 
         LinearLayout lnSend = getLnContentSum(6);

@@ -9,4 +9,6 @@
     <style name="ChooserTheme" parent="Theme.MaterialComponents.Dialog">
         <item name="android:windowNoTitle">true</item>
     </style>
+
+
 </resources>

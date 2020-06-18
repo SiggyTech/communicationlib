@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 
 import java.io.File;
 
@@ -83,6 +84,16 @@ public class UtilActivity extends AppCompatActivity {
 
         lnCancel.setOnClickListener(v -> finish());
 
+        if(Conf.CHAT_DARK_MODE) {
+            CardView cardOptions = findViewById(R.id.cardOptions);
+            cardOptions.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
+            CardView cardCancel = findViewById(R.id.cardCancel);
+            cardCancel.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
+            TextView tvPhotoVideoTitle = findViewById(R.id.tvPhotoVideoTitle);
+            tvPhotoVideoTitle.setTextColor(getResources().getColor(R.color.textColorDark));
+            TextView tvCameraTitle = findViewById(R.id.tvCameraTitle);
+            tvCameraTitle.setTextColor(getResources().getColor(R.color.textColorDark));
+        }
 
     }
 

@@ -13,6 +13,10 @@
     <color name="yellow_green">#6CDA1E</color>
     <color name="color_transparent">#00000000</color>
 
+    <color name="primaryColorDark">#212121</color>
+    <color name="primaryLightColorDark">#484848</color>
+    <color name="textColorDark">#DEFFFFFF</color> //87% opacity
+
     <color name="speech_bubble">#6CDA1E</color>
     <color name="speech_bubble_agent">#EBE7E7</color>
 

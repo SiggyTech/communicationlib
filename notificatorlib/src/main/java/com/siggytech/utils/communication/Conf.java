@@ -21,6 +21,7 @@ public class Conf {
     public static int CHAT_COLOR_TEXT = Color.BLACK;
     public static int CHAT_COLOR_DATE = Color.DKGRAY;
     public static int CHAT_COLOR_COMPONENTS = Color.parseColor("#2155C0");
+    public static boolean CHAT_DARK_MODE = false;
     public static boolean CHAT_BASIC = false;
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
     public static boolean SEND_AUDIO = true;
