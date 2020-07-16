@@ -18,7 +18,6 @@ import android.os.CountDownTimer;
 import android.os.StrictMode;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +36,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -56,7 +54,12 @@ import okhttp3.WebSocketListener;
 import okio.ByteString;
 
 import static android.content.Context.TELEPHONY_SERVICE;
+import static android.media.AudioRecord.RECORDSTATE_RECORDING;
 
+/**
+ *
+ * @author Siggy Technologies
+ */
 public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String TAG = "PTTButton";
     private static final int READ_PHONE_STATE = 0;
@@ -83,7 +86,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-    private boolean status = true;
     public AudioRecord recorder;
 
     private String API_KEY;
@@ -91,8 +93,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int idGroup;
     private Context context;
     private String username;
-
-    private boolean bussymark = false;
 
     public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, String username, int quality) {
         super(context);
@@ -138,50 +138,25 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
     }
 
+    /**
+     * Releases recorder if you are recording when the button is not pressed
+     */
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(event.getAction() == KeyEvent.ACTION_DOWN) {
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
 
-            System.out.println(keyCode); // 25 is the down volume key
-
-            switch(keyCode) {
-                case 25:
-                    System.out.println("Button pressed");
-                    status = true;
-                    return true;
-
-            }
-        }
-
-        return super.onKeyDown(keyCode, event);
+        for(int x : getBackground().getState())
+            if(x != android.R.attr.state_pressed)
+                if(isRecording())
+                    stopTalking();
     }
 
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if(event.getAction() == KeyEvent.ACTION_DOWN) {
-
-            System.out.println(keyCode); // 25 is the down volume key
-
-            switch(keyCode) {
-                case 25:
-                    System.out.println("Button released");
-                    status = false;
-                    recorder.release();
-                    return true;
-
-            }
-        }
-
-        return super.onKeyDown(keyCode, event);
-    }
-
+    /**
+     * Starts recording
+     */
     public void startTalking(){
         setPressed(true);
-        bussymark = false;
-        Log.d("log", "startTalking() onTouch: push");
         if(requestToken()) {
-            status = true;
-
             startStreaming();
             canTalk = false;
             buttonName = getText().toString();
@@ -189,42 +164,49 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
             mp.start();
-        }
-        else{
+        } else{
             MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
             mp.start();
-            bussymark = true;
             setPressed(false);
         }
     }
 
+    /**
+     * Stops recording
+     */
     public void stopTalking(){
-        if(bussymark) return;
+        if(isRecording()) {
+            try {
+                recorder.release();
+                blockTouch();
+                leaveToken();
+                MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+                mp.start();
+                timer = new CountDownTimer(3000, 100) {
+                    public void onTick(long millisUntilFinished) {
+                        //here you can have your logic to set text to edittext
+                    }
 
-        try {
-            Log.d("log", "unblockTouch() onTouch: release");
-            status = false;
-            recorder.release();
-            blockTouch();
-            leaveToken();
-            MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
-            mp.start();
-            timer = new CountDownTimer(3000, 100) {
-                public void onTick(long millisUntilFinished) {
-                    //here you can have your logic to set text to edittext
-                }
+                    public void onFinish() {
+                        canTalk = true;
+                        setText(buttonName);
+                        unblockTouch();
+                    }
+                }.start();
+            } catch (Exception e) {
+                Log.e("log", "stopTalking: " + e.getMessage()); //here new line
+            }
+            setPressed(false);
+        }
+    }
 
-                public void onFinish() {
-                    canTalk = true;
-                    setText(buttonName);
-                    unblockTouch();
-                }
-            }.start();
-        }
-        catch (Exception e) {
-            Log.e("log", "stopTalking: " + e.getMessage()); //here new line
-        }
-        setPressed(false);
+    /**
+     * Checks recording state.
+     * @return true if recording
+     */
+    public boolean isRecording(){
+        return (recorder!=null && recorder.getState() == AudioRecord.STATE_INITIALIZED &&
+                recorder.getRecordingState() == RECORDSTATE_RECORDING);
     }
 
     @Override
@@ -232,14 +214,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         switch (arg1.getAction()){
             case MotionEvent.ACTION_DOWN:
                 System.out.println("Button pressed");
-                status = true;
-                //subscribeThread.stop();
                 return true;
             case MotionEvent.ACTION_UP:
                 System.out.println("Button released");
-                status = false;
                 recorder.release();
-                //subscribeThread.resume();
                 break;
         }
         return true;
@@ -262,10 +240,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             @Override
             public void run() {
                 try {
-
                     DatagramSocket socket = new DatagramSocket();
-                    Log.d("VS", "Socket Created");
-
                     Log.d("VS", "Socket Created");
 
                     DatagramPacket packet;
@@ -274,8 +249,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     packet = new DatagramPacket(this.message.getBytes(), this.message.getBytes().length, destination, Conf.SERVER_PORT);
                     socket.send(packet);
-
-
 
                     minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
@@ -287,7 +260,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
                     recorder.startRecording();
 
-                    while(status) {
+                    while(isRecording()) {
                         minBufSize = recorder.read(buffer, 0, buffer.length);
                         packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                         socket.send(packet);
@@ -392,30 +365,28 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     @SuppressLint("ClickableViewAccessibility")
     public void unblockTouch() {
         this.getBackground().setColorFilter(null);
-        this.setOnTouchListener(new View.OnTouchListener()
-        {
-            public boolean onTouch(View v, MotionEvent event)
-            {
-                switch (event.getAction())
-                {
-                    case MotionEvent.ACTION_DOWN:
-                    {
+        this.setOnTouchListener(new View.OnTouchListener() {
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN: {
                         startTalking();
                         return true;
                     }
 
-                    case MotionEvent.ACTION_UP:
-                    {
+                    case MotionEvent.ACTION_UP: {
                         stopTalking();
                         break;
                     }
                 }
-
                 return false;
             }
         });
     }
 
+    /**
+     * Request token for talking
+     * @return true if granted otherwise false.
+     */
     private boolean requestToken(){
         HttpClient httpClient = new DefaultHttpClient();
         String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
@@ -459,6 +430,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
         return false;
     }
+
+    /**
+     * release token
+     */
     private void leaveToken(){
         HttpClient httpClient = new DefaultHttpClient();
         String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
@@ -523,7 +498,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
             @Override
             public void onMessage(WebSocket webSocket, ByteString bytes) {
-                //Log.e(TAG, "MESSAGE bytes: " + bytes.hex());
                 try {
                     PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
                 } catch(Exception ex){
