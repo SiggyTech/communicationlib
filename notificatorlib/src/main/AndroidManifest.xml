@@ -14,17 +14,25 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:usesCleartextTraffic="true">
-        <activity android:name=".ImageActivity"
-            android:theme="@style/BlackTheme"/>
-        <activity android:name=".VideoActivity"
-            android:theme="@style/BlackTheme"/>
+
+        <service
+            android:name=".WebSocketService"
+            android:enabled="true"
+            android:exported="true"/>
+
+        <activity
+            android:name=".ImageActivity"
+            android:theme="@style/BlackTheme" />
+        <activity
+            android:name=".VideoActivity"
+            android:theme="@style/BlackTheme" />
         <activity
             android:name=".UtilActivity"
             android:theme="@style/ChooserTheme" />
+
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
-
     </application>
 
 </manifest>

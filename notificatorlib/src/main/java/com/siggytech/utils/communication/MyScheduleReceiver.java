@@ -5,13 +5,12 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.util.Log;
 
 import java.util.Calendar;
 
 /**
- * Created by fsoto on 9/13/19.
+ * Created by on 9/13/19.
  */
 
 public class MyScheduleReceiver  extends BroadcastReceiver {

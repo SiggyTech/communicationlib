@@ -2,6 +2,7 @@ package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -474,19 +475,13 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         OkHttpClient clientCoinPrice = new OkHttpClient();
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
-
         Request requestCoinPrice = new Request.Builder().url(url).build();
-
-        //OLD: Request requestCoinPrice = new Request.Builder().url("ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT).build();
 
         webSocketListenerCoinPrice = new WebSocketListener() {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
-                /*webSocket.send("{\n" +
-                        "    \"type\": \"subscribe\",\n" +
-                        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
-                        "}");*/
                 Log.e(TAG, "onOpen");
+                Log.d(TAG, "Abrio el socket del ptt");
             }
 
             @Override
@@ -505,20 +500,36 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 }
             }
 
+            /**
+             * Invoked when the remote peer has indicated that no more incoming messages will be transmitted
+             */
             @Override
             public void onClosing(WebSocket webSocket, int code, String reason) {
                 webSocket.close(1000, null);
                 webSocket.cancel();
+                Log.d(TAG, "onClosing socket del ptt");
             }
 
+            /**
+             * Invoked when both peers have indicated that no more messages will be transmitted and
+             * the connection has been successfully released. No further calls to this listener will
+             * be made
+             */
             @Override
             public void onClosed(WebSocket webSocket, int code, String reason) {
                 //TODO: stuff
+                Log.d(TAG, "onClosed SE CERRO socket del ptt");
             }
 
+            /**
+             * Invoked when a web socket has been closed due to an error reading from or writing to
+             * the network. Both outgoing and incoming messages may have been lost. No further calls
+             * to this listener will be made
+             */
             @Override
             public void onFailure(WebSocket webSocket, Throwable t, Response response) {
                 //TODO: stuff
+                Log.d(TAG, "onFailure FALLO socket del ptt");
             }
         };
 
@@ -532,7 +543,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         StrictMode.setThreadPolicy(policy);
 
         try {
-            webSocketConnection();
+            //TODO TESTING HERE ***************************************************************
+            if(false) {
+                webSocketConnection();
+            }else{
+                Intent i = new Intent(context, WebSocketService.class);
+                i.putExtra("name",name);
+                i.putExtra("idGroup",idGroup);
+                i.putExtra("imei",getIMEINumber());
+                i.putExtra("apiKey",API_KEY);
+                context.startService(i);
+            }
         } catch(Exception ex){
             Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
         }
@@ -543,7 +564,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         at = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 audioFormat, intSize, AudioTrack.MODE_STREAM);
 
-        this.setOnTouchListener(new View.OnTouchListener() {
+       this.setOnTouchListener(new View.OnTouchListener() {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
@@ -586,7 +607,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
 
-    private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException {
+   private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException {
         if (at!=null) {
             at.write(byteData, 0, byteData.length);
             at.play();

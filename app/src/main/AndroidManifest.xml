@@ -41,6 +41,7 @@
             </intent-filter>
         </activity>
 
+        <service android:name="com.siggytech.utils.communication.WebSocketService"/>
         <service android:name="com.siggytech.utils.communication.MessengerService"/>
         <receiver
             android:name="com.siggytech.utils.communication.MessengerBroadcastReceiver"
