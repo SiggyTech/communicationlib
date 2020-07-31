@@ -28,7 +28,7 @@ import androidx.cardview.widget.CardView;
 import java.io.File;
 
 import static com.siggytech.utils.communication.ChatControl.SELECT_FILE;
-import static com.siggytech.utils.communication.Utils.GetDateName;
+import static com.siggytech.utils.communication.Utils.getDateName;
 
 /**
  * @author K.Kusses
@@ -165,7 +165,7 @@ public class UtilActivity extends AppCompatActivity {
             startActivityForResult(captureIntent, ACTIVITY_START_CAMARA_APP);
         } else {
             Intent captureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            File file = new File(Environment.getExternalStorageDirectory(), GetDateName()+".jpg");
+            File file = new File(Environment.getExternalStorageDirectory(), getDateName()+".jpg");
             outputFileUri = Uri.fromFile(file);
             captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, outputFileUri);
             startActivityForResult(captureIntent, ACTIVITY_START_CAMARA_APP);

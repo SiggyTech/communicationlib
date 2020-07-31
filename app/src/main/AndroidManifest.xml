@@ -41,12 +41,19 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.siggytech.utils.communication.WebSocketService"/>
-        <service android:name="com.siggytech.utils.communication.MessengerService"/>
+        <service android:name="com.siggytech.utils.communication.WebSocketPTTService"/>
+        <service android:name="com.siggytech.utils.communication.WebSocketChatService"/>
+        <service android:name="com.siggytech.utils.communication.NotificationService"/>
         <receiver
-            android:name="com.siggytech.utils.communication.MessengerBroadcastReceiver"
+            android:name="com.siggytech.utils.communication.NotificationReceiver"
             android:enabled="true"
             android:exported="true">
+        </receiver>
+        <receiver android:name="com.siggytech.utils.communication.MessengerReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="com.siggytech.utils.communication.message.receiver" />
+            </intent-filter>
         </receiver>
     </application>
 

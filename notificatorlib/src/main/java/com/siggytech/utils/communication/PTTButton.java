@@ -47,13 +47,6 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
-
 import static android.content.Context.TELEPHONY_SERVICE;
 import static android.media.AudioRecord.RECORDSTATE_RECORDING;
 
@@ -125,6 +118,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
 
         initView();
+
+        MessengerHelper.setPttButton(this);
     }
 
     CountDownTimer timer;
@@ -470,92 +465,20 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
 
-    private void webSocketConnection(){
-        WebSocketListener webSocketListenerCoinPrice;
-        OkHttpClient clientCoinPrice = new OkHttpClient();
-
-        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
-        Request requestCoinPrice = new Request.Builder().url(url).build();
-
-        webSocketListenerCoinPrice = new WebSocketListener() {
-            @Override
-            public void onOpen(WebSocket webSocket, Response response) {
-                Log.e(TAG, "onOpen");
-                Log.d(TAG, "Abrio el socket del ptt");
-            }
-
-            @Override
-            public void onMessage(WebSocket webSocket, String text) {
-                Log.e(TAG, "MESSAGE String: " + text);
-                //here receive the message when the token state is changed.
-
-            }
-
-            @Override
-            public void onMessage(WebSocket webSocket, ByteString bytes) {
-                try {
-                    PlayShortAudioFileViaAudioTrack(bytes.toByteArray());
-                } catch(Exception ex){
-                    System.out.print(ex.getMessage());
-                }
-            }
-
-            /**
-             * Invoked when the remote peer has indicated that no more incoming messages will be transmitted
-             */
-            @Override
-            public void onClosing(WebSocket webSocket, int code, String reason) {
-                webSocket.close(1000, null);
-                webSocket.cancel();
-                Log.d(TAG, "onClosing socket del ptt");
-            }
-
-            /**
-             * Invoked when both peers have indicated that no more messages will be transmitted and
-             * the connection has been successfully released. No further calls to this listener will
-             * be made
-             */
-            @Override
-            public void onClosed(WebSocket webSocket, int code, String reason) {
-                //TODO: stuff
-                Log.d(TAG, "onClosed SE CERRO socket del ptt");
-            }
-
-            /**
-             * Invoked when a web socket has been closed due to an error reading from or writing to
-             * the network. Both outgoing and incoming messages may have been lost. No further calls
-             * to this listener will be made
-             */
-            @Override
-            public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-                //TODO: stuff
-                Log.d(TAG, "onFailure FALLO socket del ptt");
-            }
-        };
-
-        clientCoinPrice.newWebSocket(requestCoinPrice, webSocketListenerCoinPrice);
-        clientCoinPrice.dispatcher().executorService().shutdown();
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     private void initView() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        try {
-            //TODO TESTING HERE ***************************************************************
-            if(false) {
-                webSocketConnection();
-            }else{
-                Intent i = new Intent(context, WebSocketService.class);
-                i.putExtra("name",name);
-                i.putExtra("idGroup",idGroup);
-                i.putExtra("imei",getIMEINumber());
-                i.putExtra("apiKey",API_KEY);
-                context.startService(i);
-            }
-        } catch(Exception ex){
-            Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
+        if(!Utils.isMyServiceRunning(WebSocketPTTService.class,context)){
+            Intent i = new Intent(context, WebSocketPTTService.class);
+            i.putExtra("name",name);
+            i.putExtra("idGroup",idGroup);
+            i.putExtra("imei",getIMEINumber());
+            i.putExtra("apiKey",API_KEY);
+            context.startService(i);
+        }else{
+            Utils.traces("PTTButton WebSocketPTTService already exists");
         }
 
         int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
@@ -607,7 +530,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
 
-   private void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException {
+   public void PlayShortAudioFileViaAudioTrack(byte[] byteData) throws IOException {
         if (at!=null) {
             at.write(byteData, 0, byteData.length);
             at.play();

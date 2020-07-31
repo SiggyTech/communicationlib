@@ -41,14 +41,9 @@ import okhttp3.WebSocketListener;
 import okio.ByteString;
 
 
-public class MessengerService extends Service {
-
-    public static final int MESSAGE_READ = 1;
-    public static final int MESSAGE_WRITE = 2;
-    public int LocalPort = 1984;
+public class NotificationService extends Service {
+    public String TAG = NotificationService.class.getSimpleName();
     public Context context;
-    public String TAG = "MessengerService";
-
     public static String packageName;
     public static String messageTittle;
     public static String imei;
@@ -63,13 +58,13 @@ public class MessengerService extends Service {
     Response responseObj;
 
 
-    public MessengerService(Context applicationContext) {
+    public NotificationService(Context applicationContext) {
         super();
         context = applicationContext;
         Log.i("HERE", "here I am!");
     }
 
-    public MessengerService() {
+    public NotificationService() {
     }
 
     @Override
@@ -81,14 +76,12 @@ public class MessengerService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             startMyOwnForeground();
         else
-            startForeground(1,new Notification());
+            startForeground(Conf.COMM_NOTIFICATION_FOREGROUND_ID,new Notification());
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void startMyOwnForeground(){
-        String NOTIFICATION_CHANNEL_ID = "com.siggy.service";
-        String channelName = "My Background Service";
-        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        NotificationChannel chan = new NotificationChannel(Conf.COMM_NOTIFICATION_CHANNEL_ID, Conf.COMM_NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_NONE);
         chan.setLightColor(Color.BLUE);
         chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -106,14 +99,14 @@ public class MessengerService extends Service {
 
         int idResIcon = getResourceId(iconName, "drawable", packageName);
 
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, Conf.COMM_NOTIFICATION_CHANNEL_ID);
         Notification notification = notificationBuilder.setOngoing(true)
                 .setSmallIcon(idResIcon)
-                .setContentTitle("App is running in background")
+                .setContentTitle(Conf.COMM_NOTIFICATION_CONTENT_TITLE)
                 .setPriority(NotificationManager.IMPORTANCE_MIN)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build();
-        startForeground(2, notification);
+        startForeground(Conf.COMM_NOTIFICATION_FOREGROUND_ID, notification);
     }
 
     @Override
@@ -191,13 +184,11 @@ public class MessengerService extends Service {
             @Override
             public void onOpen(WebSocket webSocket, Response response) {
                 responseObj = response;
-                //webSocket.send("{ \"packageName\": \"packageName\", \"messageText\": \"messageText\", \"messageTittle\": \"messageTittle\", \"from\": \"BLUEBIRD1\" }");
                 Log.e(TAG, "onOpen");
             }
 
             @Override
             public void onMessage(WebSocket webSocket, String text) {
-
                 try {
                     Log.e(TAG, "MESSAGE String: " + text);
                     JSONObject obj = new JSONObject(text);
@@ -238,16 +229,15 @@ public class MessengerService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.e("EXIT", "ondestroy!");
 
         try {
-            responseObj.body().close();
+            if(responseObj!=null && responseObj.body()!=null)
+                responseObj.body().close();
+        } catch(Exception ex) {
+            Log.e("EXIT", ex.getMessage());
         }
-        catch(Exception ex){Log.e("EXIT", ex.getMessage());}
 
-
-        Intent broadcastIntent = new Intent(this, MessengerBroadcastReceiver.class);
-
+        Intent broadcastIntent = new Intent(this, NotificationReceiver.class);
         sendBroadcast(broadcastIntent);
     }
 
@@ -285,7 +275,6 @@ public class MessengerService extends Service {
     }
 
     public void addNotification(String title, String text, String packageName, String iconName, String notificationMessage) {
-
         PackageManager pmg = context.getPackageManager();
         String name = "";
         Intent LaunchIntent = null;
@@ -300,7 +289,7 @@ public class MessengerService extends Service {
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        Intent intent = LaunchIntent; // new Intent();
+        Intent intent = LaunchIntent;
         intent.putExtra("notificationMessage", notificationMessage);
         intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
@@ -334,8 +323,7 @@ public class MessengerService extends Service {
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         boolean isScreenOn = pm.isScreenOn();
         Log.e("screen on.........", ""+isScreenOn);
-        if(isScreenOn==false)
-        {
+        if(!isScreenOn) {
             @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,"MyLock");
             wl.acquire(10000);
             @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");

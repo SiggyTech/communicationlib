@@ -1,6 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -25,16 +26,20 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.siggytech.utils.communication.Conf.ENABLE_LOG_TRACE;
 
 public class Utils {
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
@@ -49,7 +54,7 @@ public class Utils {
     }
 
     @SuppressLint("NewApi")
-    public static int GenerateViewId() {
+    public static int generateViewId() {
 
         if (Build.VERSION.SDK_INT < 17) {
             for (;;) {
@@ -71,12 +76,12 @@ public class Utils {
      * Method that gets a name for a picture
      * @return name of picture
      */
-    public static String GetDateName(){
+    public static String getDateName(){
         Calendar calendar = Calendar.getInstance();
         return String.valueOf(calendar.getTimeInMillis());
     }
 
-    public static String GetStringDate(){
+    public static String getStringDate(){
         String strDate = "";
         try {
             SimpleDateFormat sdf;
@@ -105,7 +110,7 @@ public class Utils {
      * @param file file
      * @return base64
      */
-    public static String FileToBase64(File file){
+    public static String fileToBase64(File file){
         String base64="";
         int size = (int) file.length();
         byte[] bytes = new byte[size];
@@ -114,7 +119,7 @@ public class Utils {
             buf.read(bytes, 0, bytes.length);
             buf.close();
 
-            base64 = ToBase64(bytes);
+            base64 = toBase64(bytes);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -127,7 +132,7 @@ public class Utils {
      * @param byteArray data
      * @return base64
      */
-    public static String ToBase64(byte[] byteArray){
+    public static String toBase64(byte[] byteArray){
         return Base64.encodeToString(byteArray,Base64.DEFAULT);
     }
 
@@ -137,9 +142,9 @@ public class Utils {
      * @param fileName name of file with extension
      * @return file absolute path
      */
-    public static Uri Base64ToUri(String encoded, String fileName) throws Exception {
+    public static Uri base64ToUri(String encoded, String fileName) throws Exception {
         byte[] decoded = Base64.decode(encoded, Base64.DEFAULT);
-        return ByteToUri(decoded,fileName);
+        return byteToUri(decoded,fileName);
     }
 
 
@@ -149,7 +154,7 @@ public class Utils {
      * @param fileName name of file with extension
      * @return file absolute path
      */
-    public static Uri ByteToUri(byte[] decoded, String fileName) throws Exception {
+    public static Uri byteToUri(byte[] decoded, String fileName) throws Exception {
         String path = Conf.ROOT_PATH +fileName;
         try {
             File file2 = new File(path);
@@ -164,7 +169,7 @@ public class Utils {
     }
 
 
-    public static String GetFileExt(String fileName) {
+    public static String getFileExt(String fileName) {
         return fileName.substring(fileName.lastIndexOf(".") + 1, fileName.length());
     }
 
@@ -182,8 +187,8 @@ public class Utils {
      * @param uri file's uri
      * @return File
      */
-    public static File CompressImage(Context context, Uri uri){
-        return CompressImage(getRealPathFromURI(context, uri));
+    public static File compressImage(Context context, Uri uri){
+        return compressImage(getRealPathFromURI(context, uri));
     }
 
     /**
@@ -191,7 +196,7 @@ public class Utils {
      * @param filePath file path
      * @return File
      */
-    public static File CompressImage(String filePath) {
+    public static File compressImage(String filePath) {
         Bitmap scaledBitmap = null;
         BitmapFactory.Options options = new BitmapFactory.Options();
 
@@ -382,7 +387,7 @@ public class Utils {
         return inSampleSize;
     }
 
-    public static Gson GetGson(){
+    public static Gson getGson(){
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.setExclusionStrategies(new ExclusionStrategy() {
             @Override
@@ -408,6 +413,90 @@ public class Utils {
         catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
         }
+    }
+
+    public static String exceptionToString(Exception e){
+        if(e!=null) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Excepción: ");
+            sb.append(e.getMessage());
+            sb.append("\n");
+            StackTraceElement[] array = e.getStackTrace();
+            if (array != null) {
+                for (int i = 0; i < array.length; i++) {
+                    StackTraceElement element = array[i];
+                    if (element.getClassName() != null) {
+                        sb.append("Class name: ");
+                        sb.append(element.getClassName());
+                        sb.append("\n");
+                    }
+                    if (element.getFileName() != null) {
+                        sb.append("File name: ");
+                        sb.append(element.getFileName());
+                        sb.append("\n");
+                    }
+                    if (element.getMethodName() != null) {
+                        sb.append("Method name: ");
+                        sb.append(element.getMethodName());
+                        sb.append("\n");
+                    }
+                    sb.append("Line number: ");
+                    sb.append(element.getLineNumber());
+                    sb.append("\n");
+                }
+            }
+            return sb.toString();
+        }else return "Exception is null";
+    }
+
+
+    public static String getCurrentDate(){
+        String strDate = "";
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.US);
+
+            Calendar cal = Calendar.getInstance();
+            strDate = sdf.format(cal.getTime());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return strDate;
+    }
+
+    public static void traces(String text){
+       if(ENABLE_LOG_TRACE)
+            appendLog(Utils.getCurrentDate()+": "+text,"notificatorTrace");
+    }
+
+    private static void appendLog(String text, String name) {
+        File logFile = new File("sdcard/"+name+".txt");
+        if (!logFile.exists()) {
+            try {
+                logFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            //BufferedWriter for performance, true to set append to file flag
+            BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+            buf.append(text);
+            buf.newLine();
+            buf.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+
+            }
+        }
+        return false;
     }
 
 }

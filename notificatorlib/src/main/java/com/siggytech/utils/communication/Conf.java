@@ -16,7 +16,6 @@ public class Conf {
     public static int SERVER_IMAGE_PORT = 3002;
     public static int DATE_FORMAT = 0; //1: "yyyy-MM-dd HH:mm:ss" 2:"dd-MM-yyyy HH:mm:ss"
     public static String LOCAL_USER = "Me";
-    public static String SEND_BUTTON_TEXT = "Send";
     public static int CHAT_COLOR_FROM = Color.BLACK;
     public static int CHAT_COLOR_TEXT = Color.BLACK;
     public static int CHAT_COLOR_DATE = Color.DKGRAY;
@@ -24,12 +23,15 @@ public class Conf {
     public static boolean CHAT_DARK_MODE = false;
     public static boolean CHAT_BASIC = false;
     public static String ROOT_PATH = Environment.getExternalStorageDirectory()+"/SIGGI/";
-    public static boolean SEND_AUDIO = true;
     public static boolean SEND_FILES = true;
-    public static boolean PTT_SAVE_AUDIO = true;
     public static String HTTP = "http://";
     public static int NOTIFICATION_ID_FOREGROUND_SERVICE = 8466503;
     public static String FOREGROUND_CHANNEL_ID = "foreground_channel_id_56";
+    public static int COMM_NOTIFICATION_FOREGROUND_ID = 8577309;
+    public static String COMM_NOTIFICATION_CHANNEL_ID = "com.siggy.websocketservice";
+    public static String COMM_NOTIFICATION_CHANNEL_NAME = "Communication Background Service";
+    public static String COMM_NOTIFICATION_CONTENT_TITLE = "App is running in background";
+    public static boolean ENABLE_LOG_TRACE = false;
 
 
 }

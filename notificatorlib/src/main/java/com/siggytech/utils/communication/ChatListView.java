@@ -18,7 +18,6 @@ import android.os.Handler;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -36,13 +35,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.WebSocket;
-import okhttp3.WebSocketListener;
-import okio.ByteString;
-
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.Context.TELEPHONY_SERVICE;
 
@@ -51,10 +43,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
     List<ChatModel> lsChat = new ArrayList<>();
     Handler timerHandler = new Handler();
     Context context;
-    private int idGroup;
-    private String API_KEY;
-    private String imei;
-    private String name;
     private boolean newMessage = false;
     private String messageText;
     private String from;
@@ -69,15 +57,9 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         super(context);
         this.context = context;
         this.mActivity = activity;
-        this.idGroup = idGroup;
-        this.API_KEY = API_KEY;
-        this.name = nameClient;
-
-        imei = getIMEINumber();
-
         this.packageName = packageName;
         this.resIcon = resIcon;
-        this.gson = Utils.GetGson();
+        this.gson = Utils.getGson();
 
         timerHandler.postDelayed(timerRunnable,0);
 
@@ -86,14 +68,25 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
 
             StrictMode.setThreadPolicy(policy);
 
-            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?imei=" + imei + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name;
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + nameClient;
 
             socket = Socket.Builder.with(url).build().connect();
 
-            webSocketConnection();
-        }
-        catch(Exception ex){
-            Log.e(TAG, "error en webSocketConnection: " + ex.getMessage());
+            if(!Utils.isMyServiceRunning(WebSocketChatService.class,context)){
+                Intent i = new Intent(context, WebSocketChatService.class);
+                i.putExtra("name", nameClient);
+                i.putExtra("idGroup",idGroup);
+                i.putExtra("imei",getIMEINumber());
+                i.putExtra("apiKey",API_KEY);
+                context.startService(i);
+            }else{
+                Utils.traces("ChatListView WebSocketChatService already exists");
+            }
+
+
+
+        } catch(Exception ex){
+            Utils.traces("On new ChatListView : "+Utils.exceptionToString(ex));
         }
         setAdapter();
     }
@@ -110,75 +103,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
     private void notifyItemInserted(){
         this.getAdapter().notifyItemInserted(lsChat.size() - 1);
         this.getLayoutManager().scrollToPosition(this.getAdapter().getItemCount()-1);
-    }
-
-    private void webSocketConnection(){
-        WebSocketListener webSocketListenerCoinPrice;
-        OkHttpClient clientCoinPrice = new OkHttpClient();
-
-        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?imei=" + this.getIMEINumber() + "&groupId=" + this.idGroup + "&API_KEY="+ this.API_KEY +"&clientName=" + this.name;
-        Log.e(TAG, url);
-
-        Request requestCoinPrice = new Request.Builder().url(url).build();
-
-        webSocketListenerCoinPrice = new WebSocketListener() {
-            @Override
-            public void onOpen(WebSocket webSocket, Response response) {
-                //webSocket.send("{\n" +
-                //        "    \"type\": \"subscribe\",\n" +
-                //        "    \"channels\": [{ \"name\": \"ticker\", \"product_ids\": [\"product\"] }]\n" +
-                //        "}");
-                Log.e(TAG, "onOpen");
-            }
-
-            @Override
-            public void onMessage(WebSocket webSocket, String text) {
-                Log.e(TAG, "MESSAGE String: " + text); //here comes the message
-                try {
-                    notificationMessage = text; //message for activity passed through notification
-                    JSONObject jObject = new JSONObject(text);
-
-                    from = new JSONObject(jObject.getString("data")).getString("from");
-                    messageText = new JSONObject(jObject.getString("data")).getString("text");
-                    //newMessageType = jObject.getString("event");
-                    dateTime = Utils.GetStringDate();
-
-                    newMessage = true;
-
-                } catch(Exception ex){
-                    Log.e(TAG, ex.getMessage());
-                }
-            }
-
-            @Override
-            public void onMessage(WebSocket webSocket, ByteString bytes) {
-                try {
-                    Log.e(TAG, "MESSAGE bytes: " + bytes.hex()); //
-                } catch(Exception ex){
-                    System.out.print(ex.getMessage());
-                }
-            }
-
-            @Override
-            public void onClosing(WebSocket webSocket, int code, String reason) {
-                webSocket.close(1000, null);
-                webSocket.cancel();
-                 Log.e(TAG, "CLOSE: " + code + " " + reason);
-            }
-
-            @Override
-            public void onClosed(WebSocket webSocket, int code, String reason) {
-                //TODO: stuff
-            }
-
-            @Override
-            public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-                //TODO: stuff
-            }
-        };
-
-        clientCoinPrice.newWebSocket(requestCoinPrice, webSocketListenerCoinPrice);
-        clientCoinPrice.dispatcher().executorService().shutdown();
     }
 
     @SuppressWarnings("deprecation")
@@ -207,7 +131,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
 
                 LaunchIntent = new Intent(context, launchClass);
             }
-            Log.d("intent.getExtras", "Found!: " + name);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -224,7 +147,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
 
 
         Intent intent = LaunchIntent; // new Intent();
-        intent.putExtra("notificationMessage", notificationMessage);
+        intent.putExtra(ChatControl.NOTIFICATION_MESSAGE, notificationMessage);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
@@ -240,7 +163,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         Uri uri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
         notificationBuilder
-                .setSmallIcon(R.drawable.ic_launcher_round)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
@@ -262,12 +184,10 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
 
         PowerManager pm = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
         boolean isScreenOn = pm.isScreenOn();
-        Log.e("screen on.........", ""+isScreenOn);
         if(!isScreenOn) {
             PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK |PowerManager.ACQUIRE_CAUSES_WAKEUP |PowerManager.ON_AFTER_RELEASE,TAG);
             wl.acquire(10000);
             @SuppressLint("InvalidWakeLockTag") PowerManager.WakeLock wl_cpu = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"MyCpuLock");
-
             wl_cpu.acquire(10000);
         }
     }
@@ -328,7 +248,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             notifyItemInserted();
             saveHistory(model);
         } catch(Exception e){
-            e.printStackTrace();
+            Utils.traces("ChatListView sendMessage : "+Utils.exceptionToString(e));
         }
     }
 
@@ -350,11 +270,27 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                         ,result.getMessageModel().getType());
             }
         }catch (Exception e){
-            e.printStackTrace();
+            Utils.traces("ChatListView onTaskCompleted : "+Utils.exceptionToString(e));
         }
     }
 
     private void saveHistory(MessageModel model){
-
+        //TODO
     }
+
+
+    public void onMessageReceiver(String text){
+        try {
+            notificationMessage = text; //message for activity passed through notification
+            JSONObject jObject = new JSONObject(text);
+            from = new JSONObject(jObject.getString("data")).getString("from");
+            messageText = new JSONObject(jObject.getString("data")).getString("text");
+            dateTime = Utils.getStringDate();
+
+            newMessage = true;
+        } catch(Exception ex){
+            Utils.traces("ChatListView onMessageReceiver : "+Utils.exceptionToString(ex));
+        }
+    }
+
 }

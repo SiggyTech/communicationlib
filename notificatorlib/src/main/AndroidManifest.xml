@@ -16,7 +16,7 @@
         android:usesCleartextTraffic="true">
 
         <service
-            android:name=".WebSocketService"
+            android:name=".WebSocketPTTService"
             android:enabled="true"
             android:exported="true"/>
 

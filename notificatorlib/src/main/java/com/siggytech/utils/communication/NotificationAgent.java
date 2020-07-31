@@ -16,7 +16,8 @@ import static android.content.Context.TELEPHONY_SERVICE;
 public class NotificationAgent {
 
     public void register(Context context, int idGroup, String API_KEY, String nameClient, String iconName){
-        Intent intent = new Intent(context, MessengerService.class);
+
+        Intent intent = new Intent(context, NotificationService.class);
 
         intent.putExtra("imei", getIMEINumber(context).toString());
         intent.putExtra("clientname", nameClient);

@@ -6,7 +6,7 @@ import android.os.AsyncTask;
 
 import com.siggytech.utils.communication.MessageModel;
 
-import static com.siggytech.utils.communication.Utils.FileToBase64;
+import static com.siggytech.utils.communication.Utils.fileToBase64;
 
 /**
  * @author Kusses.
@@ -39,7 +39,7 @@ public class CallTask extends AsyncTask<Object, Void,TaskMessage> {
         TaskMessage message = new TaskMessage();
         try {
             MessageModel messageModel = (MessageModel) objects[0];
-            messageModel.setMessage(FileToBase64(messageModel.getFile()));
+            messageModel.setMessage(fileToBase64(messageModel.getFile()));
             message.setMessage("OK");
             message.setMessageModel(messageModel);
             return message;

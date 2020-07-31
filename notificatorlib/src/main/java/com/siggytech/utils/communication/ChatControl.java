@@ -38,16 +38,17 @@ import com.siggytech.utils.communication.videocompress.VideoCompress;
 import java.io.File;
 
 import static android.content.Context.TELEPHONY_SERVICE;
-import static com.siggytech.utils.communication.Utils.FileToBase64;
-import static com.siggytech.utils.communication.Utils.GetDateName;
-import static com.siggytech.utils.communication.Utils.GetFileExt;
-import static com.siggytech.utils.communication.Utils.GetStringDate;
+import static com.siggytech.utils.communication.Utils.fileToBase64;
+import static com.siggytech.utils.communication.Utils.getDateName;
+import static com.siggytech.utils.communication.Utils.getFileExt;
+import static com.siggytech.utils.communication.Utils.getStringDate;
 
 /**
  * @author SIGGI Tech
  */
 public class ChatControl extends RelativeLayout {
     private static final String TAG = ChatControl.class.getSimpleName();
+    public static final String NOTIFICATION_MESSAGE = "notificationMessage";
     public static final int MESSAGE_READ = 1;
     public static final int MESSAGE_WRITE = 2;
     public static final int SELECT_FILE = 100;
@@ -69,7 +70,6 @@ public class ChatControl extends RelativeLayout {
     public String userName;
     public int idGroup;
     private final Context context;
-    private ChatListView chatListView;
 
     private String packageName;
     private int resIcon;
@@ -110,7 +110,7 @@ public class ChatControl extends RelativeLayout {
 
     @SuppressLint("ClickableViewAccessibility")
     public void initLayout(final Context context) {
-        int idContent = Utils.GenerateViewId();
+        int idContent = Utils.generateViewId();
 
         ViewGroup.LayoutParams root_LayoutParams =
                 new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -120,29 +120,29 @@ public class ChatControl extends RelativeLayout {
 
         RelativeLayout rl = new RelativeLayout(context);
 
-        chatListView = new ChatListView(
+        MessengerHelper.setChatListView(new ChatListView(
                 context,
                 mActivity,
                 idGroup,
                 api_key,
                 name,
                 packageName,
-                resIcon);
+                resIcon));
 
-        chatListView.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        MessengerHelper.getChatListView().setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         RelativeLayout.LayoutParams abc_LayoutParams =
                 new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
         abc_LayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         abc_LayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
         abc_LayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE);
         abc_LayoutParams.addRule(ABOVE,idContent);
-        rl.addView(chatListView);
+        rl.addView(MessengerHelper.getChatListView());
         this.addView(rl);
         rl.setLayoutParams(abc_LayoutParams);
-        rl.setId(Utils.GenerateViewId());
+        rl.setId(Utils.generateViewId());
 
         mOutEditText = new EditText(context);
-        mOutEditText.setId(Utils.GenerateViewId());
+        mOutEditText.setId(Utils.generateViewId());
         mOutEditText.setMaxLines(5);
         mOutEditText.setLayoutParams(new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT));
        if(Conf.CHAT_DARK_MODE){
@@ -152,7 +152,7 @@ public class ChatControl extends RelativeLayout {
             mOutEditText.setBackgroundResource(R.drawable.gradientbg);
 
         mSendButton = new LinearLayout(context);
-        mSendButton.setId(Utils.GenerateViewId());
+        mSendButton.setId(Utils.generateViewId());
         mSendButton.setGravity(Gravity.CENTER);
         mSendButton.setPadding(10,10,10,15);
         if(!Conf.CHAT_BASIC) mSendButton.setVisibility(GONE);
@@ -164,7 +164,7 @@ public class ChatControl extends RelativeLayout {
 
         mAudio = new LinearLayout(context);
         mAudio.setPadding(10,10,10,15);
-        mAudio.setId(Utils.GenerateViewId());
+        mAudio.setId(Utils.generateViewId());
         mAudio.setGravity(Gravity.CENTER);
 
         ImageView ivMic = new ImageView(context);
@@ -181,7 +181,7 @@ public class ChatControl extends RelativeLayout {
 
         mAddFile = new LinearLayout(context);
         mAddFile.setPadding(20,10,10,15);
-        mAddFile.setId(Utils.GenerateViewId());
+        mAddFile.setId(Utils.generateViewId());
         mAddFile.setGravity(Gravity.CENTER);
 
         final ImageView ivAdd = new ImageView(context);
@@ -266,7 +266,7 @@ public class ChatControl extends RelativeLayout {
                         mOutEditText.setVisibility(GONE);
                         mAudioText.setVisibility(VISIBLE);
 
-                        filePath = Conf.ROOT_PATH + GetDateName() + ".3gp";
+                        filePath = Conf.ROOT_PATH + getDateName() + ".3gp";
                         ar = new AudioRecorder(filePath);
 
                         audioRecording(true);
@@ -282,11 +282,11 @@ public class ChatControl extends RelativeLayout {
                             if(ar.getDuration() > 1) {
                                 MessageModel messageModel = new MessageModel();
                                 messageModel.setType(Utils.MESSAGE_TYPE.AUDIO);
-                                messageModel.setMessage(FileToBase64(audioFile));
+                                messageModel.setMessage(fileToBase64(audioFile));
                                 messageModel.setDuration(ar.getDuration());
 
                                 if (audioFile != null && audioFile.length() > 0)
-                                    chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+                                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.AUDIO);
 
                             }
                             ar.setDuration(0);
@@ -318,7 +318,7 @@ public class ChatControl extends RelativeLayout {
                     MessageModel messageModel = new MessageModel();
                     messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
                     messageModel.setMessage(mOutEditText.getText().toString());
-                    chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
+                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
                     mOutEditText.setText("");
                 }
             } catch(Exception e){e.printStackTrace();}
@@ -430,18 +430,18 @@ public class ChatControl extends RelativeLayout {
                         if(file.exists()) {
                             MessageModel messageModel = new MessageModel();
                             if (Utils.MESSAGE_TYPE.PHOTO.equals(fileType)) {
-                                messageModel.setMessage(FileToBase64(Utils.CompressImage(pathToFile)));
+                                messageModel.setMessage(fileToBase64(Utils.compressImage(pathToFile)));
                             }
                             messageModel.setType(fileType);
                             messageModel.setFrom(userName);
-                            messageModel.setDate(GetStringDate());
+                            messageModel.setDate(getStringDate());
 
                             if (Utils.MESSAGE_TYPE.VIDEO.equals(fileType)) {
-                                String destPath = Conf.ROOT_PATH + GetDateName() + GetFileExt(file.getName());
+                                String destPath = Conf.ROOT_PATH + getDateName() + getFileExt(file.getName());
                                 compressVideo(file.getAbsolutePath(),destPath,messageModel);
                                 deleteFile = false;
                             } else {
-                                chatListView.sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), GetStringDate(), fileType);
+                                MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), fileType);
                             }
 
                             isPickingFile = false;
@@ -505,7 +505,7 @@ public class ChatControl extends RelativeLayout {
             public void onSuccess() {
                 File file = new File(destPath);
                 messageModel.setFile(file);
-                chatListView.callToBase64(messageModel);
+                MessengerHelper.getChatListView().callToBase64(messageModel);
                 progressDialog.dismiss();
             }
 
