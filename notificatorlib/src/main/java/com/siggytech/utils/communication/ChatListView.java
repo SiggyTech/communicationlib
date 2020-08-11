@@ -72,7 +72,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
 
             socket = Socket.Builder.with(url).build().connect();
 
-            if(!Utils.isMyServiceRunning(WebSocketChatService.class,context)){
+            if(!Utils.isServiceRunning(WebSocketChatService.class,context)){
                 Intent i = new Intent(context, WebSocketChatService.class);
                 i.putExtra("name", nameClient);
                 i.putExtra("idGroup",idGroup);
@@ -82,9 +82,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             }else{
                 Utils.traces("ChatListView WebSocketChatService already exists");
             }
-
-
-
         } catch(Exception ex){
             Utils.traces("On new ChatListView : "+Utils.exceptionToString(ex));
         }

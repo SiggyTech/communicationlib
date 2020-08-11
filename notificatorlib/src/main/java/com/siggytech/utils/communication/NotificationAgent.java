@@ -19,7 +19,7 @@ public class NotificationAgent {
 
         Intent intent = new Intent(context, NotificationService.class);
 
-        intent.putExtra("imei", getIMEINumber(context).toString());
+        intent.putExtra("imei", getIMEINumber(context));
         intent.putExtra("clientname", nameClient);
         intent.putExtra("groupid", idGroup);
         intent.putExtra("api_key", API_KEY);
@@ -27,7 +27,7 @@ public class NotificationAgent {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("imei", getIMEINumber(context).toString());
+        editor.putString("imei", getIMEINumber(context));
         editor.putString("clientname", nameClient);
         editor.putString("groupid", String.valueOf(idGroup));
         editor.putString("api_key", API_KEY);

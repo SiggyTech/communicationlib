@@ -3,6 +3,7 @@ package com.siggytech.utils.communication;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -17,6 +18,7 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.StrictMode;
+import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -55,9 +57,10 @@ import static android.media.AudioRecord.RECORDSTATE_RECORDING;
  * @author Siggy Technologies
  */
 public class PTTButton extends AppCompatButton implements View.OnTouchListener {
+    public static final String TOKEN_RELEASED_ERROR = "tokenReleasedError";
     private String TAG = "PTTButton";
-    private static final int READ_PHONE_STATE = 0;
-    private static final int REQUEST = 112;
+    private static final String TOKEN_TAKEN = "token taked";
+    public static final String TOKEN_RELEASED = "token released";
 
     private Padding mPadding;
     private int mHeight;
@@ -123,7 +126,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     CountDownTimer timer;
-    boolean canTalk = true;
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -154,7 +156,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         setPressed(true);
         if(requestToken()) {
             startStreaming();
-            canTalk = false;
             buttonName = getText().toString();
             setText(sendingText);
 
@@ -164,6 +165,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
             mp.start();
             setPressed(false);
+            //checks if token is taken
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+            if(preferences.getBoolean(TOKEN_RELEASED_ERROR, false)){
+                leaveToken();
+            }
         }
     }
 
@@ -182,9 +188,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     public void onTick(long millisUntilFinished) {
                         //here you can have your logic to set text to edittext
                     }
-
                     public void onFinish() {
-                        canTalk = true;
                         setText(buttonName);
                         unblockTouch();
                     }
@@ -206,17 +210,19 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     @Override
-    public boolean onTouch(View arg0, MotionEvent arg1) {
-        switch (arg1.getAction()){
-            case MotionEvent.ACTION_DOWN:
-                System.out.println("Button pressed");
+    public boolean onTouch(View v, MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN: {
+                startTalking();
                 return true;
-            case MotionEvent.ACTION_UP:
-                System.out.println("Button released");
-                recorder.release();
+            }
+
+            case MotionEvent.ACTION_UP: {
+                stopTalking();
                 break;
+            }
         }
-        return true;
+        return false;
     }
 
     public class MyRunnable implements Runnable {
@@ -414,7 +420,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 // EntityUtils to get the response content
                 String content =  EntityUtils.toString(respEntity);
                 Log.e(TAG, content);
-                if(content.equals("token taked"))
+                if(TOKEN_TAKEN.equals(content))
                     return true;
                 else
                     return false;
@@ -431,36 +437,41 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
      * release token
      */
     private void leaveToken(){
-        HttpClient httpClient = new DefaultHttpClient();
-        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
+        boolean isOK = false;
+        try {
+            HttpClient httpClient = new DefaultHttpClient();
+            String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
 
-        HttpPost httpPost = new HttpPost(url);
-        // Request parameters and other properties.
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        //params.add(new BasicNameValuePair("user", "Bob"));
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            // writing error to Log
-            e.printStackTrace();
-        }
-        /*
-         * Execute the HTTP Request
-         */
-        try {
+            HttpPost httpPost = new HttpPost(url);
+            // Request parameters and other properties.
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+                Utils.traces("leaveToken ex: "+Utils.exceptionToString(e));
+            }
+            /*
+             * Execute the HTTP Request
+             */
+
             HttpResponse response = httpClient.execute(httpPost);
             HttpEntity respEntity = response.getEntity();
 
             if (respEntity != null) {
                 // EntityUtils to get the response content
-                String content =  EntityUtils.toString(respEntity);
-                Log.e(TAG, content);
-
+                if(TOKEN_RELEASED.equals(EntityUtils.toString(respEntity))) {
+                    isOK = true;
+                }
             }
-        } catch (ClientProtocolException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            Utils.traces("leaveToken ex: "+Utils.exceptionToString(e));
+        }finally {
+            PreferenceManager.getDefaultSharedPreferences(context)
+                    .edit().putBoolean(TOKEN_RELEASED_ERROR, isOK).apply();
+
         }
     }
 
@@ -470,7 +481,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        if(!Utils.isMyServiceRunning(WebSocketPTTService.class,context)){
+        if(!Utils.isServiceRunning(WebSocketPTTService.class,context)){
             Intent i = new Intent(context, WebSocketPTTService.class);
             i.putExtra("name",name);
             i.putExtra("idGroup",idGroup);
