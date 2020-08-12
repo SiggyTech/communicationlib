@@ -1,8 +1,10 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -51,6 +53,7 @@ import java.util.List;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 import static android.media.AudioRecord.RECORDSTATE_RECORDING;
+import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
 
 /**
  *
@@ -84,6 +87,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
     int minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
     public AudioRecord recorder;
+    CountDownTimer timer;
 
     private String API_KEY;
     private String name;
@@ -119,64 +123,62 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                 break;
         }
-
         initView();
-
         MessengerHelper.setPttButton(this);
     }
 
-    CountDownTimer timer;
-
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-        if (mHeight == 0 && mWidth == 0 && w != 0 && h != 0) {
-            mHeight = getHeight();
-            mWidth = getWidth();
+    private BroadcastReceiver mNetworkReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            releaseTokenState();
         }
+    };
+
+    /**
+     * You must override onResume() at you activity and call this method.
+     */
+    public void onResume(){
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(CONNECTIVITY_ACTION);
+        context.registerReceiver(mNetworkReceiver, filter);
     }
 
     /**
-     * Releases recorder if you are recording when the button is not pressed
+     * You must override onPause() at you activity and call this method.
      */
-    @Override
-    protected void drawableStateChanged() {
-        super.drawableStateChanged();
-
-        for(int x : getBackground().getState())
-            if(x != android.R.attr.state_pressed)
-                if(isRecording())
-                    stopTalking();
+    public void onPause(){
+        if(mNetworkReceiver!=null)
+            context.unregisterReceiver(mNetworkReceiver);
     }
 
     /**
      * Starts recording
+     * @return returns true if has internet connection.
      */
-    public void startTalking(){
-        setPressed(true);
-        if(requestToken()) {
-            startStreaming();
-            buttonName = getText().toString();
-            setText(sendingText);
+    public boolean startTalking(){
+        if(Utils.isConnect(context)) {
+            setPressed(true);
+            if (requestToken()) {
+                startStreaming();
+                buttonName = getText().toString();
+                setText(sendingText);
 
-            MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
-            mp.start();
-        } else{
-            MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
-            mp.start();
-            setPressed(false);
-            //checks if token is taken
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            if(preferences.getBoolean(TOKEN_RELEASED_ERROR, false)){
-                leaveToken();
+                MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                mp.start();
+            } else {
+                MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
+                mp.start();
+                setPressed(false);
+                releaseTokenState();
             }
-        }
+        }else return false;
+        return true;
     }
 
     /**
      * Stops recording
      */
-    public void stopTalking(){
+    public boolean stopTalking(){
         if(isRecording()) {
             try {
                 recorder.release();
@@ -197,7 +199,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 Log.e("log", "stopTalking: " + e.getMessage()); //here new line
             }
             setPressed(false);
-        }
+            return true;
+        }else return false;
     }
 
     /**
@@ -207,6 +210,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public boolean isRecording(){
         return (recorder!=null && recorder.getState() == AudioRecord.STATE_INITIALIZED &&
                 recorder.getRecordingState() == RECORDSTATE_RECORDING);
+    }
+
+    /**
+     * Checks release token state
+     */
+    private void releaseTokenState() {
+        //checks if token is taken
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        if (preferences!=null && preferences.getBoolean(TOKEN_RELEASED_ERROR, false)) {
+            leaveToken();
+        }
     }
 
     @Override
@@ -224,6 +238,29 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         }
         return false;
     }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (mHeight == 0 && mWidth == 0 && w != 0 && h != 0) {
+            mHeight = getHeight();
+            mWidth = getWidth();
+        }
+    }
+
+    /**
+     * Releases the recorder if it is recording when the button is not pressed
+     */
+    @Override
+    protected void drawableStateChanged() {
+        super.drawableStateChanged();
+
+        for(int x : getBackground().getState())
+            if(x != android.R.attr.state_pressed)
+                if(isRecording())
+                    stopTalking();
+    }
+
 
     public class MyRunnable implements Runnable {
         public String message;
@@ -394,21 +431,14 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
 
         HttpPost httpPost = new HttpPost(url);
-
-        //Request parameters and other properties.
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        /*params.add(new BasicNameValuePair("user", this.username));
-        params.add(new BasicNameValuePair("apikey", this.API_KEY));
-        params.add(new BasicNameValuePair("name", this.API_KEY));
-        params.add(new BasicNameValuePair("groupid", String.valueOf(this.idGroup))); //0 for all groups??
-        */
 
         try {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            // writing error to Log
             e.printStackTrace();
         }
+
         /*
          * Execute the HTTP Request
          */
@@ -420,10 +450,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 // EntityUtils to get the response content
                 String content =  EntityUtils.toString(respEntity);
                 Log.e(TAG, content);
-                if(TOKEN_TAKEN.equals(content))
-                    return true;
-                else
-                    return false;
+                return TOKEN_TAKEN.equals(content);
             }
         } catch (ClientProtocolException e) {
             e.printStackTrace();
@@ -437,41 +464,41 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
      * release token
      */
     private void leaveToken(){
-        boolean isOK = false;
-        try {
-            HttpClient httpClient = new DefaultHttpClient();
-            String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
-
-            HttpPost httpPost = new HttpPost(url);
-            // Request parameters and other properties.
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-
+        if(Utils.isConnect(context)) {
             try {
-                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-                Utils.traces("leaveToken ex: "+Utils.exceptionToString(e));
-            }
-            /*
-             * Execute the HTTP Request
-             */
+                HttpClient httpClient = new DefaultHttpClient();
+                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY=" + API_KEY + "&clientName=" + name + "&username=" + username;
 
-            HttpResponse response = httpClient.execute(httpPost);
-            HttpEntity respEntity = response.getEntity();
+                HttpPost httpPost = new HttpPost(url);
+                List<NameValuePair> params = new ArrayList<NameValuePair>();
 
-            if (respEntity != null) {
-                // EntityUtils to get the response content
-                if(TOKEN_RELEASED.equals(EntityUtils.toString(respEntity))) {
-                    isOK = true;
+                try {
+                    httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
                 }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Utils.traces("leaveToken ex: "+Utils.exceptionToString(e));
-        }finally {
-            PreferenceManager.getDefaultSharedPreferences(context)
-                    .edit().putBoolean(TOKEN_RELEASED_ERROR, isOK).apply();
 
+                /*
+                 * Execute the HTTP Request
+                 */
+                HttpResponse response = httpClient.execute(httpPost);
+                HttpEntity respEntity = response.getEntity();
+
+                if (respEntity != null) {
+                    // EntityUtils to get the response content
+                    if (TOKEN_RELEASED.equals(EntityUtils.toString(respEntity))) {
+                        PreferenceManager.getDefaultSharedPreferences(context)
+                                .edit().putBoolean(TOKEN_RELEASED_ERROR, false).apply();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                PreferenceManager.getDefaultSharedPreferences(context)
+                        .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
+            }
+        }else{
+            PreferenceManager.getDefaultSharedPreferences(context)
+                    .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
         }
     }
 

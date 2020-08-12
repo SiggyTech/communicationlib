@@ -80,7 +80,6 @@ public class WebSocketChatService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Utils.traces("WebSocketChatService onTaskRemoved stopSelf()");
         stopSelf();
     }
 
@@ -155,7 +154,6 @@ public class WebSocketChatService extends Service {
 
                 @Override
                 public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-                    Utils.traces("messengerWebSocketConnection onFailure: "+t.getMessage());
                     messengerWebSocketConnection();
                 }
             };

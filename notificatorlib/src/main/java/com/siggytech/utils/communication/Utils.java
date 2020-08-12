@@ -10,6 +10,8 @@ import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.media.ExifInterface;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -47,6 +49,8 @@ import static com.siggytech.utils.communication.Conf.ENABLE_LOG_TRACE;
 public class Utils {
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
     private static final String TAG = "Utils";
+
+
 
     public class MESSAGE_TYPE{
         public static final String MESSAGE = "Message";
@@ -526,6 +530,12 @@ public class Utils {
         }
 
         return ret;
+    }
+
+    public static boolean isConnect(Context context) {
+        ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
     }
 
 }

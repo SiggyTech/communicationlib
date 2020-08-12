@@ -35,7 +35,6 @@ public class WebSocketPTTService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Utils.traces("WebSocketPTTService onCreate");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startMyOwnForeground();
         else startForeground(Conf.COMM_NOTIFICATION_FOREGROUND_ID,new Notification());
     }
@@ -81,7 +80,6 @@ public class WebSocketPTTService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        Utils.traces("WebSocketPTTService onTaskRemoved stopSelf()");
         stopSelf();
     }
 
@@ -165,7 +163,6 @@ public class WebSocketPTTService extends Service {
                  */
                 @Override
                 public void onFailure(WebSocket webSocket, Throwable t, Response response) {
-                    Utils.traces("PttWebSocketConnection onFailure: "+t.getMessage());
                     pttWebSocketConnection();
                 }
             };

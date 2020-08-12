@@ -11,6 +11,7 @@ import android.view.KeyEvent;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
@@ -19,13 +20,14 @@ import com.siggytech.utils.communication.Conf;
 import com.siggytech.utils.communication.NotificationAgent;
 import com.siggytech.utils.communication.PTTButton;
 
+import static com.siggytech.utils.communication.ChatControl.NOTIFICATION_MESSAGE;
+
 public class MainActivity extends AppCompatActivity {
 
     PTTButton pttButton;
     Boolean keyDown = false;
     LinearLayout linearLayout;
     String API_KEY = "";
-
     String name = "";
     ChatControl ch;
 
@@ -37,19 +39,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         linearLayout = findViewById(R.id.linear1);
 
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
-
-        //Conf.SERVER_IP = "192.168.0.15";
-        //Conf.SERVER_IP = ""; //Set dedicated IP server.
-        Conf.SERVER_IP = "192.168.1.148"; //Set dedicated IP server.
-        name = getIMEINumber();
+        Conf.ENABLE_LOG_TRACE = false;  //Only for debug
 
         onNewIntent(getIntent());
 
+        name = getIMEINumber();
+
         //check permissions
         if (Build.VERSION.SDK_INT >= 23) {
-
             String[] PERMISSIONS = {android.Manifest.permission.READ_EXTERNAL_STORAGE,
                     android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     android.Manifest.permission.READ_PHONE_STATE,
@@ -73,8 +73,7 @@ public class MainActivity extends AppCompatActivity {
                     //subscribeForNotifications();
                 }
             }
-        }
-        else{
+        } else{
             System.out.println(getApplicationContext().getPackageName());
             System.out.println(getResources().getIdentifier("siggy_logo",
                     "drawable", getPackageName()));
@@ -84,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
                 //subscribeForNotifications();
             }else {
                 addPTTButton();
-                //subscribeForNotifications();
+               // subscribeForNotifications();
             }
 
         }
@@ -92,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(!keyDown  && keyCode == 25 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
+        if(!keyDown && keyCode == 142 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
             if(pttButton!=null)
                 pttButton.startTalking();
 
@@ -102,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if(keyCode == 25 && event.getAction() == KeyEvent.ACTION_UP ) {
+        if(keyCode == 142 && event.getAction() == KeyEvent.ACTION_UP ) {
             keyDown = false;
             if(pttButton!=null)
                 pttButton.stopTalking();
@@ -111,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, int[] grantResults) {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             System.out.println(getApplicationContext().getPackageName());
             System.out.println(getResources().getIdentifier("siggy_logo",
@@ -123,18 +122,14 @@ public class MainActivity extends AppCompatActivity {
                 addPTTButton();
                 //subscribeForNotifications();
             }
-
         } else {
-           //TODO ask permission again          // exit app
+           //TODO ask permission again or exit app
             Toast.makeText(MainActivity.this,"Missing implement.",Toast.LENGTH_LONG).show();
         }
     }
 
     private void addPTTButton(){
-        pttButton = new PTTButton(this, 2, API_KEY, name, PTTButton.AudioQuality.MEDIUM);
-        pttButton.setWidth(200);
-        pttButton.setHeight(200);
-        pttButton.setText("Hablar!");
+        pttButton = new PTTButton(this, 99, API_KEY, name,name, PTTButton.AudioQuality.MEDIUM);
         linearLayout.addView(pttButton);
     }
 
@@ -156,8 +151,9 @@ public class MainActivity extends AppCompatActivity {
     public void onNewIntent(Intent intent){
         Bundle extras = intent.getExtras();
         if(extras != null){
-            if(extras.containsKey("notificationMessage")) {
-                System.out.println("Message from notification: " + extras.getString("notificationMessage").toString());
+            if(extras.containsKey(NOTIFICATION_MESSAGE)) {
+                System.out.println("Message from notification: " + extras.getString(NOTIFICATION_MESSAGE));
+                //Do your staff like open chat view
             }
         }
         super.onNewIntent(intent);
@@ -177,7 +173,8 @@ public class MainActivity extends AppCompatActivity {
     public void addChatListView() {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
-        ch = new ChatControl(this, 1, API_KEY, getIMEINumber(), "Felipe",
+        Conf.CHAT_DARK_MODE = false;
+        ch = new ChatControl(this, 99, API_KEY, getIMEINumber(), "Felipe",
                 getApplicationContext().getPackageName(),
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
                 this);//user name to show to others
@@ -186,10 +183,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void subscribeForNotifications() {
         NotificationAgent na = new NotificationAgent();
-        na.register(this, 1, API_KEY, getIMEINumber(), "siggy_logo");
+        na.register(this, 99, API_KEY, getIMEINumber(), "siggy_logo");
     }
+
     @Override
     protected void onResume() {
         super.onResume();
+        if(pttButton!=null) pttButton.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(pttButton!=null) pttButton.onPause();
     }
 }
