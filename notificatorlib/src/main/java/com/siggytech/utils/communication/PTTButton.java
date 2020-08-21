@@ -27,9 +27,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.gson.JsonObject;
+
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
 
@@ -42,6 +45,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -78,6 +83,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private String buttonName;
     private String sendingText = "";
 
+    //for groups management
+    private List<Group> groupList = new ArrayList<>();
+    private int groupIndex = 0;
+
+
     AudioTrack at;
 
     public static final int MESSAGE_READ = 1;
@@ -91,17 +101,20 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     private String API_KEY;
     private String name;
-    private int idGroup;
+
     private Context context;
     private String username;
 
-    public PTTButton(Context context, int idGroup, String API_KEY, String nameClient, String username, int quality) {
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public PTTButton(Context context, String API_KEY, String nameClient, String username, int quality) {
         super(context);
         this.context = context;
-        this.idGroup = idGroup;
         this.API_KEY = API_KEY;
         this.name = nameClient;
         this.username = username;
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         switch (quality){
             case AudioQuality.HIGH:
@@ -123,10 +136,56 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                 break;
         }
+
+        getGroups();
         initView();
         MessengerHelper.setPttButton(this);
+
+
+
     }
 
+    public void setGroupIndex(int groupIndex) {
+        this.groupIndex = groupIndex;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    private void getGroups(){
+
+        groupList.add(new Group(9999, "Every Group"));
+
+        try {
+
+
+            HttpClient httpClient = new DefaultHttpClient();
+            String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/getgroupsfordevice?imei=" + getIMEINumber() + "&API_KEY=" + API_KEY;
+
+            HttpPost httpPost = new HttpPost(url);
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+
+            /*
+             * Execute the HTTP Request
+             */
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity respEntity = response.getEntity();
+
+            if (respEntity != null) {
+                JSONArray jsonArray = new JSONArray(EntityUtils.toString(respEntity));
+
+                for(int i=0; i<jsonArray.length();i++){
+                    groupList.add(new Group((jsonArray.getJSONObject(i)).getInt("idgroup"), (jsonArray.getJSONObject(i)).getString("name")));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     private BroadcastReceiver mNetworkReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -272,7 +331,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     private void startStreaming() {
-        String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ this.idGroup +" }";
+        String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ groupList.get(groupIndex).idGroup +" }";
 
         Thread streamThread = new Thread(new MyRunnable(message) {
 
@@ -428,7 +487,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
      */
     private boolean requestToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
+        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + getIMEINumber() + "&groupId=" + groupList.get(groupIndex).idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
 
         HttpPost httpPost = new HttpPost(url);
         List<NameValuePair> params = new ArrayList<NameValuePair>();
@@ -443,6 +502,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
          * Execute the HTTP Request
          */
         try {
+
+
+
+
             HttpResponse response = httpClient.execute(httpPost);
             HttpEntity respEntity = response.getEntity();
 
@@ -467,7 +530,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         if(Utils.isConnect(context)) {
             try {
                 HttpClient httpClient = new DefaultHttpClient();
-                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + idGroup + "&API_KEY=" + API_KEY + "&clientName=" + name + "&username=" + username;
+                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + getIMEINumber() + "&groupId=" + groupList.get(groupIndex).idGroup + "&API_KEY=" + API_KEY + "&clientName=" + name + "&username=" + username;
 
                 HttpPost httpPost = new HttpPost(url);
                 List<NameValuePair> params = new ArrayList<NameValuePair>();
@@ -505,13 +568,12 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
 
     @SuppressLint("ClickableViewAccessibility")
     private void initView() {
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
+
 
         if(!Utils.isServiceRunning(WebSocketPTTService.class,context)){
             Intent i = new Intent(context, WebSocketPTTService.class);
             i.putExtra("name",name);
-            i.putExtra("idGroup",idGroup);
+            i.putExtra("idGroup",groupList.get(groupIndex).idGroup); //TODO pasar todos los grupos????
             i.putExtra("imei",getIMEINumber());
             i.putExtra("apiKey",API_KEY);
             context.startService(i);
