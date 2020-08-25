@@ -25,10 +25,10 @@ public class MainActivity extends AppCompatActivity {
     PTTButton pttButton;
     Boolean keyDown = false;
     LinearLayout linearLayout;
-    String API_KEY = "JZW7GZ2NDU";
+    String API_KEY = "";
 
     String name = "";
-    String username = "CAT";
+    String username = "";
 
     ChatControl ch;
 
@@ -43,9 +43,8 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = "192.168.1.148";
-        //Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
-        //Conf.SERVER_IP = "192.168.0.11"; //Set dedicated IP server.
+        Conf.SERVER_IP = "";
+
         name = getIMEINumber();
 
         onNewIntent(getIntent());
