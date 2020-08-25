@@ -6,11 +6,13 @@
       <module fileurl="file://$PROJECT_DIR$/StudioProjects-communicationlib.iml" filepath="$PROJECT_DIR$/StudioProjects-communicationlib.iml" group="communicationlib" />
       <module fileurl="file://$PROJECT_DIR$/app/StudioProjects-communicationlib-app.iml" filepath="$PROJECT_DIR$/app/StudioProjects-communicationlib-app.iml" group="communicationlib/app" />
       <module fileurl="file://$PROJECT_DIR$/notificatorlib/StudioProjects-communicationlib-notificatorlib.iml" filepath="$PROJECT_DIR$/notificatorlib/StudioProjects-communicationlib-notificatorlib.iml" group="communicationlib/notificatorlib" />
+      <module fileurl="file://$PROJECT_DIR$/android-vad-v1.0.0-release/android-vad-v1.0.0-release.iml" filepath="$PROJECT_DIR$/android-vad-v1.0.0-release/android-vad-v1.0.0-release.iml" group="communicationlib/android-vad-v1.0.0-release" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/communicationlib.iml" filepath="$PROJECT_DIR$/communicationlib.iml" group="communicationlib" />
       <module fileurl="file://$PROJECT_DIR$/app/communicationlib-app.iml" filepath="$PROJECT_DIR$/app/communicationlib-app.iml" group="communicationlib/app" />
       <module fileurl="file://$PROJECT_DIR$/notificatorlib/communicationlib-notificatorlib.iml" filepath="$PROJECT_DIR$/notificatorlib/communicationlib-notificatorlib.iml" group="communicationlib/notificatorlib" />
       <module fileurl="file://$PROJECT_DIR$/notificatorlib/notificatorlib.iml" filepath="$PROJECT_DIR$/notificatorlib/notificatorlib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vad/vad.iml" filepath="$PROJECT_DIR$/.idea/modules/vad/vad.iml" group="communicationlib/vad" />
     </modules>
   </component>
 </project>

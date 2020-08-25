@@ -1,6 +1,7 @@
 package com.siggytech.utils.communication;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -19,6 +20,7 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
@@ -28,6 +30,9 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.google.gson.JsonObject;
+import com.konovalov.vad.Vad;
+import com.konovalov.vad.VadConfig;
+import com.siggytech.utils.communication.vad.VoiceRecorder;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
@@ -56,6 +61,7 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
+
 import static android.content.Context.TELEPHONY_SERVICE;
 import static android.media.AudioRecord.RECORDSTATE_RECORDING;
 import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
@@ -64,7 +70,7 @@ import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
  *
  * @author Siggy Technologies
  */
-public class PTTButton extends AppCompatButton implements View.OnTouchListener {
+public class PTTButton extends AppCompatButton implements View.OnTouchListener, VoiceRecorder.Listener {
     public static final String TOKEN_RELEASED_ERROR = "tokenReleasedError";
     private String TAG = "PTTButton";
     private static final String TOKEN_TAKEN = "token taked";
@@ -105,13 +111,25 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     private Context context;
     private String username;
 
+    private VadConfig.SampleRate DEFAULT_SAMPLE_RATE = VadConfig.SampleRate.SAMPLE_RATE_16K;
+    private VadConfig.FrameSize DEFAULT_FRAME_SIZE = VadConfig.FrameSize.FRAME_SIZE_160;
+    private VadConfig.Mode DEFAULT_MODE = VadConfig.Mode.VERY_AGGRESSIVE;
+    private int DEFAULT_SILENCE_DURATION = 500;
+    private int DEFAULT_VOICE_DURATION = 500;
+
+    private VoiceRecorder vadRecorder;
+    private VadConfig config;
+    private boolean isTalking = false;
+    private boolean isVoiceDetectionActivated = false;
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public PTTButton(Context context, String API_KEY, String nameClient, String username, int quality) {
+    public PTTButton(Context context, String API_KEY, String nameClient, String username, int quality, boolean voiceDetection) {
         super(context);
         this.context = context;
         this.API_KEY = API_KEY;
         this.name = nameClient;
         this.username = username;
+        this.isVoiceDetectionActivated = voiceDetection;
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -141,10 +159,32 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
         initView();
         MessengerHelper.setPttButton(this);
 
+        if(voiceDetection){
+            setVadRecorder();
+            vadRecorder.start();
+        }
+
 
 
     }
+    public void startVoiceActivation(){
+        setVadRecorder();
+        vadRecorder.start();
+    }
+    public void stopVoiceActivation(){
+        vadRecorder.stop();
+    }
 
+    public void setVadRecorder(){
+        config = VadConfig.newBuilder()
+                .setSampleRate(DEFAULT_SAMPLE_RATE)
+                .setFrameSize(DEFAULT_FRAME_SIZE)
+                .setMode(DEFAULT_MODE)
+                .setSilenceDurationMillis(DEFAULT_SILENCE_DURATION)
+                .setVoiceDurationMillis(DEFAULT_VOICE_DURATION)
+                .build();
+        vadRecorder = new VoiceRecorder(this, config);
+    }
     public void setGroupIndex(int groupIndex) {
         this.groupIndex = groupIndex;
     }
@@ -215,6 +255,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
      * @return returns true if has internet connection.
      */
     public boolean startTalking(){
+
         if(Utils.isConnect(context)) {
             setPressed(true);
             if (requestToken()) {
@@ -229,6 +270,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                 mp.start();
                 setPressed(false);
                 releaseTokenState();
+                isTalking = false;
             }
         }else return false;
         return true;
@@ -240,9 +282,13 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public boolean stopTalking(){
         if(isRecording()) {
             try {
+                isTalking = false;
                 recorder.release();
                 blockTouch();
                 leaveToken();
+
+
+
                 MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
                 mp.start();
                 timer = new CountDownTimer(3000, 100) {
@@ -252,6 +298,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     public void onFinish() {
                         setText(buttonName);
                         unblockTouch();
+                        if(isVoiceDetectionActivated){
+                            startVoiceActivation();
+                        }
                     }
                 }.start();
             } catch (Exception e) {
@@ -331,6 +380,16 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     }
 
     private void startStreaming() {
+
+
+        byte totalByteBuffer[]  = new byte[60 * 44100 * 2];
+
+        float tempFloatBuffer[] = new float[3];
+
+        if(isVoiceDetectionActivated){
+            stopVoiceActivation();
+        }
+
         String message = "{ \"name\": \"" + this.name + "\",\"imei\": "+ this.getIMEINumber() +", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": "+ groupList.get(groupIndex).idGroup +" }";
 
         Thread streamThread = new Thread(new MyRunnable(message) {
@@ -338,6 +397,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
             @Override
             public void run() {
                 try {
+
+                    int noiseAux = 0;
                     DatagramSocket socket = new DatagramSocket();
                     Log.d("VS", "Socket Created");
 
@@ -359,10 +420,53 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
                     recorder.startRecording();
 
                     while(isRecording()) {
+
+                        int tempIndex           = 0;
                         minBufSize = recorder.read(buffer, 0, buffer.length);
                         packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                         socket.send(packet);
-                        System.out.println("MinBufferSize: " +minBufSize);
+                        //System.out.println("MinBufferSize: " +minBufSize);
+                        float totalAbsValue = 0.0f;
+                        short sample        = 0;
+
+                        // Analyze Sound.
+                        for( int i=0; i<buffer.length; i+=2 )
+                        {
+                            sample = (short)( (buffer[i]) | buffer[i + 1] << 8 );
+                            totalAbsValue += Math.abs( sample ) / (minBufSize/2);
+                        }
+
+                        // Analyze temp buffer.
+                        tempFloatBuffer[tempIndex%3] = totalAbsValue;
+                        float temp                   = 0.0f;
+                        for( int i=0; i<3; ++i )
+                            temp += tempFloatBuffer[i];
+
+                        if( (temp >=0 && temp <= 350))
+                        {
+                            tempIndex++;
+                            noiseAux++;
+                            if(noiseAux > 50){//number of packages of noise to stop communication
+                                Log.i("TAG", "no voice detected");
+                                //call stop talking
+                                ((Activity) context).runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        stopTalking();
+                                    }
+                                });
+                                return;
+                            }
+
+                            continue;
+                        }
+
+                        if( temp > 350 )
+                        {
+                            noiseAux = 0;
+                        }
+
+
+
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -502,9 +606,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
          * Execute the HTTP Request
          */
         try {
-
-
-
 
             HttpResponse response = httpClient.execute(httpPost);
             HttpEntity respEntity = response.getEntity();
@@ -681,7 +782,34 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener {
     public void setSendingText(String sendingText) {
         this.sendingText = sendingText;
     }
+    @Override
+    public void onSpeechDetected() {
+        System.out.println("Speech detected");
+        if(!isTalking){
+            isTalking = true;
+            ((Activity)context).runOnUiThread(new Runnable()
+            {
+                public void run()
+                {
+                    startTalking();
+                }
+            });
+        }
+    }
 
+    @Override
+    public void onNoiseDetected() {
+
+        //System.out.println("noise detected");
+        if(isTalking) {
+            isTalking = false;
+            ((Activity) context).runOnUiThread(new Runnable() {
+                public void run() {
+                    stopTalking();
+                }
+            });
+        }
+    }
     private class Padding {
         public int left;
         public int right;
