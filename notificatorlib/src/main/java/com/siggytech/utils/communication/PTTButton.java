@@ -429,40 +429,39 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                         float totalAbsValue = 0.0f;
                         short sample        = 0;
 
-                        // Analyze Sound.
-                        for( int i=0; i<buffer.length; i+=2 )
-                        {
-                            sample = (short)( (buffer[i]) | buffer[i + 1] << 8 );
-                            totalAbsValue += Math.abs( sample ) / (minBufSize/2);
-                        }
-
-                        // Analyze temp buffer.
-                        tempFloatBuffer[tempIndex%3] = totalAbsValue;
-                        float temp                   = 0.0f;
-                        for( int i=0; i<3; ++i )
-                            temp += tempFloatBuffer[i];
-
-                        if( (temp >=0 && temp <= 350))
-                        {
-                            tempIndex++;
-                            noiseAux++;
-                            if(noiseAux > 50){//number of packages of noise to stop communication
-                                Log.i("TAG", "no voice detected");
-                                //call stop talking
-                                ((Activity) context).runOnUiThread(new Runnable() {
-                                    public void run() {
-                                        stopTalking();
-                                    }
-                                });
-                                return;
+                        if(isVoiceDetectionActivated) {
+                            // Analyze Sound.
+                            for (int i = 0; i < buffer.length; i += 2) {
+                                sample = (short) ((buffer[i]) | buffer[i + 1] << 8);
+                                totalAbsValue += Math.abs(sample) / (minBufSize / 2);
                             }
 
-                            continue;
-                        }
+                            // Analyze temp buffer.
+                            tempFloatBuffer[tempIndex % 3] = totalAbsValue;
+                            float temp = 0.0f;
+                            for (int i = 0; i < 3; ++i)
+                                temp += tempFloatBuffer[i];
 
-                        if( temp > 350 )
-                        {
-                            noiseAux = 0;
+                            if ((temp >= 0 && temp <= 350)) {
+                                tempIndex++;
+                                noiseAux++;
+                                if (noiseAux > 50) {//number of packages of noise to stop communication
+                                    Log.i("TAG", "no voice detected");
+                                    //call stop talking
+                                    ((Activity) context).runOnUiThread(new Runnable() {
+                                        public void run() {
+                                            stopTalking();
+                                        }
+                                    });
+                                    return;
+                                }
+
+                                continue;
+                            }
+
+                            if (temp > 350) {
+                                noiseAux = 0;
+                            }
                         }
 
 
