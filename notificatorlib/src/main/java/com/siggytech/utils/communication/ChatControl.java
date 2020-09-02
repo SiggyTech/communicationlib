@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
@@ -29,13 +30,27 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.audio.AudioRecorder;
 import com.siggytech.utils.communication.videocompress.VideoCompress;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.content.Context.TELEPHONY_SERVICE;
 import static com.siggytech.utils.communication.Utils.fileToBase64;
@@ -46,13 +61,11 @@ import static com.siggytech.utils.communication.Utils.getStringDate;
 /**
  * @author SIGGI Tech
  */
+@SuppressLint("ViewConstructor")
 public class ChatControl extends RelativeLayout {
     private static final String TAG = ChatControl.class.getSimpleName();
     public static final String NOTIFICATION_MESSAGE = "notificationMessage";
-    public static final int MESSAGE_READ = 1;
-    public static final int MESSAGE_WRITE = 2;
     public static final int SELECT_FILE = 100;
-    private ListView mConversationView;
     private EditText mOutEditText;
     private EditText mServerAddress;
     private LinearLayout mSendButton;
@@ -68,7 +81,6 @@ public class ChatControl extends RelativeLayout {
     public String name;
     public String api_key;
     public String userName;
-    public int idGroup;
     private final Context context;
 
     private String packageName;
@@ -76,12 +88,19 @@ public class ChatControl extends RelativeLayout {
     private Activity mActivity;
     private Gson gson;
 
+    private List<Group> groupList = new ArrayList<>();
+    private int groupIndex = 0;
 
-    public ChatControl(Context context, int idGroup, String API_KEY, String nameClient, String userName,
-                        String packageName, int resIcon, Activity activity){
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public ChatControl(Context context, String API_KEY, String nameClient, String userName,
+                       String packageName, int resIcon, Activity activity){
         super(context);
         this.context = context;
-        this.idGroup = idGroup;
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
+
         this.api_key = API_KEY;
         this.name = nameClient;
         this.imei = getIMEINumber();
@@ -91,9 +110,47 @@ public class ChatControl extends RelativeLayout {
         this.resIcon = resIcon;
         this.mActivity = activity;
         this.gson = new Gson();
+
+        getGroups();
         initLayout(context);
+
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    private void getGroups(){
+
+        groupList.add(new Group(9999, "Every Group"));
+
+        try {
+
+            HttpClient httpClient = new DefaultHttpClient();
+            String url = "http://" + Conf.SERVER_IP + ":" + Conf.SERVER_IMAGE_PORT + "/getgroupsfordevice?imei=" + getIMEINumber() + "&API_KEY=" + api_key;
+
+            HttpPost httpPost = new HttpPost(url);
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+            try {
+                httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            /*
+             * Execute the HTTP Request
+             */
+            HttpResponse response = httpClient.execute(httpPost);
+            HttpEntity respEntity = response.getEntity();
+
+            if (respEntity != null) {
+                JSONArray jsonArray = new JSONArray(EntityUtils.toString(respEntity));
+
+                for(int i=0; i<jsonArray.length();i++){
+                    groupList.add(new Group((jsonArray.getJSONObject(i)).getInt("idgroup"), (jsonArray.getJSONObject(i)).getString("name")));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     @SuppressWarnings("deprecation")
     private String getIMEINumber() {
         String IMEINumber = "";
@@ -123,7 +180,7 @@ public class ChatControl extends RelativeLayout {
         MessengerHelper.setChatListView(new ChatListView(
                 context,
                 mActivity,
-                idGroup,
+                groupList.get(groupIndex).idGroup,
                 api_key,
                 name,
                 packageName,
@@ -173,7 +230,7 @@ public class ChatControl extends RelativeLayout {
         mAudio.addView(ivMic);
 
         mAudioText = new TextView(context);
-        mAudioText.setText("00:00");
+        mAudioText.setText(R.string.time_zero);
         mAudioText.setTextColor(getResources().getColor(R.color.bt_dark_gray));
         mAudioText.setTextSize(TypedValue.COMPLEX_UNIT_SP,17);
         mAudioText.setPadding(20,0,0,0);
@@ -276,7 +333,7 @@ public class ChatControl extends RelativeLayout {
                     case MotionEvent.ACTION_UP: {
                         try {
                             audioRecording(false);
-                            mAudioText.setText("00:00");
+                            mAudioText.setText(R.string.time_zero);
 
                             File audioFile = new File(filePath);
                             if(ar.getDuration() > 1) {
@@ -286,7 +343,7 @@ public class ChatControl extends RelativeLayout {
                                 messageModel.setDuration(ar.getDuration());
 
                                 if (audioFile != null && audioFile.length() > 0)
-                                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.AUDIO);
+                                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.AUDIO, groupList.get(groupIndex).idGroup);
 
                             }
                             ar.setDuration(0);
@@ -318,7 +375,7 @@ public class ChatControl extends RelativeLayout {
                     MessageModel messageModel = new MessageModel();
                     messageModel.setType(Utils.MESSAGE_TYPE.MESSAGE);
                     messageModel.setMessage(mOutEditText.getText().toString());
-                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.MESSAGE);
+                    MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), Utils.MESSAGE_TYPE.MESSAGE, groupList.get(groupIndex).idGroup);
                     mOutEditText.setText("");
                 }
             } catch(Exception e){e.printStackTrace();}
@@ -441,7 +498,7 @@ public class ChatControl extends RelativeLayout {
                                 compressVideo(file.getAbsolutePath(),destPath,messageModel);
                                 deleteFile = false;
                             } else {
-                                MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), fileType);
+                                MessengerHelper.getChatListView().sendMessage(userName, AESUtils.encText(gson.toJson(messageModel)), getStringDate(), fileType, groupList.get(groupIndex).idGroup);
                             }
 
                             isPickingFile = false;
@@ -520,6 +577,10 @@ public class ChatControl extends RelativeLayout {
             }
         });
     }
+    public void setGroupIndex(int groupIndex) {
+        this.groupIndex = groupIndex;
+    }
+
 
 }
 

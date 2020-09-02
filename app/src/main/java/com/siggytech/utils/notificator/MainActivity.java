@@ -27,12 +27,14 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout linearLayout;
     String API_KEY = "";
 
+
+
     String name = "";
-    String username = "";
+    String username = "MIO";
 
     ChatControl ch;
 
-    boolean isChat = false;
+    boolean isChat = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +45,9 @@ public class MainActivity extends AppCompatActivity {
         Conf.SEND_FILES = true;
         Conf.CHAT_BASIC = false;
 
-        Conf.SERVER_IP = "";
+        //Conf.SERVER_IP = "192.168.1.148";
 
+        //Conf.SERVER_IP = "192.168.0.11"; //Set dedicated IP server.
         name = getIMEINumber();
 
         onNewIntent(getIntent());
@@ -134,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void addPTTButton(){
-        pttButton = new PTTButton(this, API_KEY, name, username, PTTButton.AudioQuality.MEDIUM, true);
+        pttButton = new PTTButton(this, API_KEY, name, username, PTTButton.AudioQuality.MEDIUM, false);
         pttButton.setWidth(200);
         pttButton.setHeight(200);
         pttButton.setText("Hablar!");
@@ -180,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
     public void addChatListView() {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
-        ch = new ChatControl(this, 1, API_KEY, getIMEINumber(), "Felipe",
+        ch = new ChatControl(this,  API_KEY, getIMEINumber(), "Felipe",
                 getApplicationContext().getPackageName(),
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
                 this);//user name to show to others

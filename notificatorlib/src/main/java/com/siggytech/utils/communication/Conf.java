@@ -5,15 +5,25 @@ import android.os.Environment;
 
 public class Conf {
 
-    public static String SERVER_IP = "192.168.1.148";//cloud
+    public static String SERVER_IP;
 
-    public static int SERVER_PORT = 7778;
-    public static int SERVER_WS_PORT = 8080;
+    public static int SERVER_PORT = 9006;
+    //public static int SERVER_PORT = 7778;
+    //public static int SERVER_WS_PORT = 8080;
+    public static int SERVER_WS_PORT = 9005;
     public static int SERVER_MSG_PORT = 8081;
-    public static int TOKEN_PORT = 8082;
-    public static int SERVER_CHAT_PORT = 3000;
-    public static int SERVER_CHAT_PORT_IN = 3001;
-    public static int SERVER_IMAGE_PORT = 3002;
+    public static int TOKEN_PORT = 9004;
+    //public static int TOKEN_PORT = 8082;
+
+//    public static int SERVER_CHAT_PORT = 3000;//UDP
+    public static int SERVER_CHAT_PORT = 9002;//UDP
+
+    //    public static int SERVER_CHAT_PORT_IN = 3001;//UDP
+    public static int SERVER_CHAT_PORT_IN = 9001;//UDP
+
+    //public static int SERVER_IMAGE_PORT = 3002;//TCP
+    public static int SERVER_IMAGE_PORT = 9008;//TCP
+
     public static int DATE_FORMAT = 0; //1: "yyyy-MM-dd HH:mm:ss" 2:"dd-MM-yyyy HH:mm:ss"
     public static String LOCAL_USER = "Me";
     public static int CHAT_COLOR_FROM = Color.BLACK;

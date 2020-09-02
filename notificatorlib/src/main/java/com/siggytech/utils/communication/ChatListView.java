@@ -52,6 +52,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
     private Socket socket;
     private Gson gson;
     private Activity mActivity;
+    private int idGroup;
 
     public ChatListView (Context context, Activity activity, int idGroup, String API_KEY, String nameClient, String packageName, int resIcon){
         super(context);
@@ -60,7 +61,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         this.packageName = packageName;
         this.resIcon = resIcon;
         this.gson = Utils.getGson();
-
+        this.idGroup = idGroup;
         timerHandler.postDelayed(timerRunnable,0);
 
         try {
@@ -86,6 +87,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             Utils.traces("On new ChatListView : "+Utils.exceptionToString(ex));
         }
         setAdapter();
+
     }
 
     private void setAdapter(){
@@ -232,12 +234,13 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         }
     };
 
-    public void sendMessage(String from, String encryptedData, String dateTime, String type){
+    public void sendMessage(String from, String encryptedData, String dateTime, String type, int idGroup){
         try{
             socket.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
                     "    \"text\": \"" + encryptedData +  "\", \n" +
-                    "    \"dateTime\": \"" + dateTime +  "\" \n" +
+                    "    \"dateTime\": \"" + dateTime +  "\", \n" +
+                    "    \"idGroup\": \"" + idGroup +  "\" \n" +
                     "}");
 
             MessageModel model = gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class);
@@ -264,7 +267,8 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                 sendMessage(result.getMessageModel().getFrom()
                         ,AESUtils.encText(gson.toJson(result.getMessageModel()))
                         ,result.getMessageModel().getDate()
-                        ,result.getMessageModel().getType());
+                        ,result.getMessageModel().getType(),
+                        idGroup);
             }
         }catch (Exception e){
             Utils.traces("ChatListView onTaskCompleted : "+Utils.exceptionToString(e));
