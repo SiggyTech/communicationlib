@@ -20,6 +20,7 @@ import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -30,12 +31,16 @@ import java.util.List;
 
 import static android.provider.MediaStore.Video.Thumbnails.MINI_KIND;
 
-public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubble.ViewHolder> {
+public class CustomAdapterBubble extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = CustomAdapterBubble.class.getSimpleName();
     private List<ChatModel> lstChat;
     private Context context;
     private MediaPlayer mPlayer;
     private Activity mActivity;
+
+    private static final int ITEM = 0;
+    private static final int LOADING = 1;
+    private boolean isLoadingAdded = false;
 
     public CustomAdapterBubble(List<ChatModel> lstChat, Context context, Activity activity) {
         this.lstChat = lstChat;
@@ -43,176 +48,221 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         this.mActivity = activity;
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.chat_cell_out,parent,false);
-        return new ViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        RecyclerView.ViewHolder viewHolder = null;
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+
+        switch (viewType) {
+            case ITEM:
+                viewHolder = getViewHolder(parent, inflater);
+                break;
+            case LOADING:
+                View v2 = inflater.inflate(R.layout.item_progress, parent, false);
+                viewHolder = new LoadingViewHolder(v2);
+                break;
+        }
+
+        assert viewHolder != null;
+        return viewHolder;
+    }
+
+    @NonNull
+    private RecyclerView.ViewHolder getViewHolder(ViewGroup parent, LayoutInflater inflater) {
+        RecyclerView.ViewHolder viewHolder;
+        View v1 = inflater.inflate(R.layout.chat_cell_out, parent, false);
+        viewHolder = new MessageViewHolder(v1);
+        return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final RecyclerView.ViewHolder holder, int position) {
         ChatModel model = lstChat.get(position);
 
-        if(model.isMine()){
-            if (Build.VERSION.SDK_INT > 23){
-                holder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach);
-            }else holder.lnMessage.setBackgroundResource(R.drawable.mine_bubble);
+        switch (getItemViewType(position)) {
+            case ITEM:
+                MessageViewHolder messageViewHolder = (MessageViewHolder) holder;
 
-            holder.lnLayout.setGravity(Gravity.END);
-        }else{
-            if (Build.VERSION.SDK_INT > 23){
-                holder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach_agent);
-            }else holder.lnMessage.setBackgroundResource(R.drawable.other_bubble);
-
-            holder.lnLayout.setGravity(Gravity.START);
-        }
-
-        holder.chat_out_from.setText(model.getFromMessage());
-        holder.chat_text_datetime.setText(model.getDateTimeMessage());
-
-        if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getMessageModel().getType())) {
-            holder.lnAudio.setVisibility(View.GONE);
-            holder.ivPreviewImage.setVisibility(View.GONE);
-            holder.chat_out_text.setVisibility(View.VISIBLE);
-            holder.chat_out_text.setText(model.getMessageModel().getMessage());
-
-        }
-        else if(Utils.MESSAGE_TYPE.AUDIO.equals(model.getMessageModel().getType())) {
-            holder.lnAudio.setVisibility(View.VISIBLE);
-            holder.ivPreviewImage.setVisibility(View.GONE);
-            holder.chat_out_text.setVisibility(View.GONE);
-            holder.tvAudioDuration.setText(getDurationString(model.getMessageModel().getDuration()));
-            holder.tvAudioDuration.setTag(getDurationString(model.getMessageModel().getDuration()));
-            try {
-                if(model.isMine())
-                    holder.audioUri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".3gp");
-                else holder.audioUri = Uri.parse(getDownloadUrl(model.getMessageModel().getMessage()));
-            } catch(Exception e) { e.printStackTrace(); }
-
-        }
-        else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
-            holder.chat_out_text.setVisibility(View.GONE);
-            holder.lnAudio.setVisibility(View.GONE);
-            holder.ivPreviewImage.setVisibility(View.VISIBLE);
-            try{
                 if(model.isMine()){
+                    if (Build.VERSION.SDK_INT > 23){
+                        messageViewHolder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach);
+                    }else messageViewHolder.lnMessage.setBackgroundResource(R.drawable.mine_bubble);
+
+                    messageViewHolder.lnLayout.setGravity(Gravity.END);
+                }else{
+                    if (Build.VERSION.SDK_INT > 23){
+                        messageViewHolder.lnMessage.setBackgroundResource(R.drawable.bubble_nine_pach_agent);
+                    }else messageViewHolder.lnMessage.setBackgroundResource(R.drawable.other_bubble);
+
+                    messageViewHolder.lnLayout.setGravity(Gravity.START);
+                }
+
+                messageViewHolder.chat_out_from.setText(model.getFromMessage());
+                messageViewHolder.chat_text_datetime.setText(model.getDateTimeMessage());
+
+                if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getMessageModel().getType())) {
+                    messageViewHolder.lnAudio.setVisibility(View.GONE);
+                    messageViewHolder.ivPreviewImage.setVisibility(View.GONE);
+                    messageViewHolder.chat_out_text.setVisibility(View.VISIBLE);
+                    messageViewHolder.chat_out_text.setText(model.getMessageModel().getMessage());
+
+                }
+                else if(Utils.MESSAGE_TYPE.AUDIO.equals(model.getMessageModel().getType())) {
+                    messageViewHolder.lnAudio.setVisibility(View.VISIBLE);
+                    messageViewHolder.ivPreviewImage.setVisibility(View.GONE);
+                    messageViewHolder.chat_out_text.setVisibility(View.GONE);
+                    messageViewHolder.tvAudioDuration.setText(getDurationString(model.getMessageModel().getDuration()));
+                    messageViewHolder.tvAudioDuration.setTag(getDurationString(model.getMessageModel().getDuration()));
                     try {
-                        holder.uri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".mp4");
-                        Bitmap decodedByte = ThumbnailUtils.createVideoThumbnail(holder.uri.toString(),MINI_KIND);
-                        holder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
-                                decodedByte.getHeight(), false));
-                        holder.ivPreviewImage.getProgressBar().hide();
+                        if(model.isMine())
+                            messageViewHolder.audioUri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".3gp");
+                        else messageViewHolder.audioUri = Uri.parse(getDownloadUrl(model.getMessageModel().getMessage()));
                     } catch(Exception e) { e.printStackTrace(); }
 
-                    holder.ivPreviewImage.setOnClickListener(v -> goVideoView(holder.uri));
-                }else{
-                    String videoUrl = getDownloadUrl(model.getMessageModel().getMessage());
+                }
+                else if(Utils.MESSAGE_TYPE.VIDEO.equals(model.getMessageModel().getType())) {
+                    messageViewHolder.chat_out_text.setVisibility(View.GONE);
+                    messageViewHolder.lnAudio.setVisibility(View.GONE);
+                    messageViewHolder.ivPreviewImage.setVisibility(View.VISIBLE);
+                    try{
+                        if(model.isMine()){
+                            try {
+                                messageViewHolder.uri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".mp4");
+                                Bitmap decodedByte = ThumbnailUtils.createVideoThumbnail(messageViewHolder.uri.toString(),MINI_KIND);
+                                messageViewHolder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                                        decodedByte.getHeight(), false));
+                                messageViewHolder.ivPreviewImage.getProgressBar().hide();
+                            } catch(Exception e) { e.printStackTrace(); }
 
-                    long thumb = 5000 * 1000;
-                    RequestOptions options = new RequestOptions().frame(thumb);
-                    Glide.with(context).load(videoUrl).apply(options).into(holder.ivPreviewImage.getImageView());
+                            messageViewHolder.ivPreviewImage.setOnClickListener(v -> goVideoView(messageViewHolder.uri));
+                        }else{
+                            String videoUrl = getDownloadUrl(model.getMessageModel().getMessage());
 
-                    holder.ivPreviewImage.getProgressBar().hide();
-                    holder.ivPreviewImage.setOnClickListener(v -> {
+                            long thumb = 5000 * 1000;
+                            RequestOptions options = new RequestOptions().frame(thumb);
+                            Glide.with(context).load(videoUrl).apply(options).into(messageViewHolder.ivPreviewImage.getImageView());
+
+                            messageViewHolder.ivPreviewImage.getProgressBar().hide();
+                            messageViewHolder.ivPreviewImage.setOnClickListener(v -> {
+                                try {
+                                    Intent intent = new Intent(context, VideoActivity.class);
+                                    intent.putExtra("VideoUri",videoUrl);
+                                    context.startActivity(intent);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    } catch (Exception e){e.printStackTrace();}
+
+                }
+                else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
+                    messageViewHolder.lnAudio.setVisibility(View.GONE);
+                    messageViewHolder.ivPreviewImage.setVisibility(View.VISIBLE);
+                    messageViewHolder.chat_out_text.setVisibility(View.GONE);
+
+                    try{
+                        if(model.isMine()){
+                            byte[] decodedString = Base64.decode(model.getMessageModel().getMessage(), Base64.DEFAULT);
+                            final Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+
+                            messageViewHolder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
+                                    decodedByte.getHeight(), false));
+                            messageViewHolder.ivPreviewImage.getProgressBar().hide();
+                            try {
+                                messageViewHolder.uri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".bmp");
+                            } catch(Exception e) { e.printStackTrace(); }
+
+                            messageViewHolder.ivPreviewImage.setOnClickListener(v -> goImageView(messageViewHolder.uri));
+                        }else{
+                            String url = getDownloadUrl(model.getMessageModel().getMessage());
+
+                            long thumb = 5000 * 1000;
+                            RequestOptions options = new RequestOptions().frame(thumb);
+                            Glide.with(context).load(url).apply(options).into(messageViewHolder.ivPreviewImage.getImageView());
+
+                            messageViewHolder.ivPreviewImage.getProgressBar().hide();
+                            messageViewHolder.ivPreviewImage.setOnClickListener(v -> {
+                                try {
+                                    Intent intent = new Intent(context, ImageActivity.class);
+                                    intent.putExtra("ImageUri",url);
+                                    context.startActivity(intent);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                }
+                            });
+                        }
+                    } catch (Exception e){e.printStackTrace();}
+                }
+
+                messageViewHolder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
+                messageViewHolder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
+                messageViewHolder.chat_text_datetime.setTextColor(Conf.CHAT_COLOR_DATE);
+                messageViewHolder.tvAudioDuration.setTextColor(Conf.CHAT_COLOR_DATE);
+                //messageViewHolder.image.setImageResource(R.drawable.ic_launcher_round);
+
+                messageViewHolder.ivPlay.setTag(false);
+                messageViewHolder.ivPlay.setOnClickListener(v -> {
+                    try {
+                        if (!((boolean) v.getTag())) {
+                            // If media player another instance already running then stop it first
+                            stopPlaying(messageViewHolder.sbPlay,messageViewHolder.ivPlay);
+
+                            v.setTag(true);
+                            ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
+
+                            // Initialize media player
+                            mPlayer = MediaPlayer.create(context, messageViewHolder.audioUri);
+
+                            // Start the media player
+                            mPlayer.start();
+
+                            // Initialize the seek bar
+                            initializeSeekBar(messageViewHolder.sbPlay
+                                    ,messageViewHolder.tvAudioDuration
+                                    ,messageViewHolder.ivPlay
+                                    ,messageViewHolder.factor);
+                        } else {
+                            stopPlaying(messageViewHolder.sbPlay
+                                    ,messageViewHolder.ivPlay);
+                        }
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                });
+
+                messageViewHolder.sbPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) { }
+
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
                         try {
-                            Intent intent = new Intent(context, VideoActivity.class);
-                            intent.putExtra("VideoUri",videoUrl);
-                            context.startActivity(intent);
+                            if(fromTouch) mPlayer.seekTo(progress * messageViewHolder.factor);
                         }catch (Exception e){
                             e.printStackTrace();
                         }
-                    });
-                }
-            } catch (Exception e){e.printStackTrace();}
+                    }
 
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) { }
+                });
+                break;
+            case LOADING:
+//                Do nothing
+                break;
         }
-        else if(Utils.MESSAGE_TYPE.PHOTO.equals(model.getMessageModel().getType())) {
-            holder.lnAudio.setVisibility(View.GONE);
-            holder.ivPreviewImage.setVisibility(View.VISIBLE);
-            holder.chat_out_text.setVisibility(View.GONE);
+    }
 
-            try{
-                if(model.isMine()){
-                    byte[] decodedString = Base64.decode(model.getMessageModel().getMessage(), Base64.DEFAULT);
-                    final Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+    @Override
+    public int getItemCount() {
+        return lstChat == null ? 0 : lstChat.size();
+    }
 
-                    holder.ivPreviewImage.setRoundImage(Bitmap.createScaledBitmap(decodedByte, decodedByte.getWidth(),
-                            decodedByte.getHeight(), false));
-                    holder.ivPreviewImage.getProgressBar().hide();
-                    try {
-                        holder.uri = Utils.base64ToUri(model.getMessageModel().getMessage(),Utils.getDateName()+".bmp");
-                    } catch(Exception e) { e.printStackTrace(); }
-
-                    holder.ivPreviewImage.setOnClickListener(v -> goImageView(holder.uri));
-                }else{
-                    String url = getDownloadUrl(model.getMessageModel().getMessage());
-
-                    long thumb = 5000 * 1000;
-                    RequestOptions options = new RequestOptions().frame(thumb);
-                    Glide.with(context).load(url).apply(options).into(holder.ivPreviewImage.getImageView());
-
-                    holder.ivPreviewImage.getProgressBar().hide();
-                    holder.ivPreviewImage.setOnClickListener(v -> {
-                        try {
-                            Intent intent = new Intent(context, ImageActivity.class);
-                            intent.putExtra("ImageUri",url);
-                            context.startActivity(intent);
-                        }catch (Exception e){
-                            e.printStackTrace();
-                        }
-                    });
-                }
-            } catch (Exception e){e.printStackTrace();}
-        }
-
-        holder.chat_out_from.setTextColor(Conf.CHAT_COLOR_FROM);
-        holder.chat_out_text.setTextColor(Conf.CHAT_COLOR_TEXT);
-        holder.chat_text_datetime.setTextColor(Conf.CHAT_COLOR_DATE);
-        holder.tvAudioDuration.setTextColor(Conf.CHAT_COLOR_DATE);
-        //holder.image.setImageResource(R.drawable.ic_launcher_round);
-
-        holder.ivPlay.setTag(false);
-        holder.ivPlay.setOnClickListener(v -> {
-            try {
-                if (!((boolean) v.getTag())) {
-                    // If media player another instance already running then stop it first
-                    stopPlaying(holder.sbPlay,holder.ivPlay);
-
-                    v.setTag(true);
-                    ((ImageView) v).setImageDrawable(context.getResources().getDrawable(R.drawable.ic_pause));
-
-                    // Initialize media player
-                    mPlayer = MediaPlayer.create(context, holder.audioUri);
-
-                    // Start the media player
-                    mPlayer.start();
-
-                    // Initialize the seek bar
-                    initializeSeekBar(holder.sbPlay,holder.tvAudioDuration,holder.ivPlay,holder.factor);
-                } else {
-                    stopPlaying(holder.sbPlay,holder.ivPlay);
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        });
-
-        holder.sbPlay.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) { }
-
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromTouch) {
-                try {
-                    if(fromTouch) mPlayer.seekTo(progress * holder.factor);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) { }
-        });
+    @Override
+    public int getItemViewType(int position) {
+        return (position == 0 && isLoadingAdded) ? LOADING : ITEM;
     }
 
     @Override
@@ -220,11 +270,70 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         return position;
     }
 
-    @Override
-    public int getItemCount() {
-        return lstChat.size();
+/*
+   Helpers
+   _________________________________________________________________________________________________
+    */
+
+    //for pagination add items only
+    public void add(ChatModel chatModel) {
+        lstChat.add(0,chatModel);
+        notifyItemInserted(0);
+
     }
 
+    public void addAll(List<ChatModel> mcList) {
+        for (ChatModel mc : mcList) {
+            add(mc);
+        }
+    }
+
+    public void remove(ChatModel chatModel) {
+        int position = lstChat.indexOf(chatModel);
+        if (position > -1) {
+            lstChat.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public void clear() {
+        isLoadingAdded = false;
+        while (getItemCount() > 0) {
+            remove(getItem(0));
+        }
+    }
+
+    public boolean isEmpty() {
+        return getItemCount() == 0;
+    }
+
+
+    public void addLoadingHeader() {
+        isLoadingAdded = true;
+        lstChat.add(0,new ChatModel());
+        notifyItemInserted(0);
+    }
+
+    public void removeLoadingHeader() {
+        isLoadingAdded = false;
+
+        int position = 0;
+        ChatModel item = getItem(position);
+
+        if (item != null) {
+            lstChat.remove(position);
+            notifyItemRemoved(position);
+        }
+    }
+
+    public ChatModel getItem(int position) {
+        return lstChat.get(position);
+    }
+
+/*
+    Functions
+    ________________________________________________________________________________________________
+ */
 
     private void stopPlaying(final SeekBar mSeekBar, final ImageView mImage){
         try {
@@ -313,8 +422,20 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
     }
 
 
+/*
+   View Holders
+   _________________________________________________________________________________________________
+    */
 
-    class ViewHolder extends RecyclerView.ViewHolder{
+
+    protected static class LoadingViewHolder extends RecyclerView.ViewHolder {
+
+        public LoadingViewHolder(View itemView) {
+            super(itemView);
+        }
+    }
+
+    protected static class MessageViewHolder extends RecyclerView.ViewHolder{
         LinearLayout lnLayout;
         LinearLayout lnMessage;
         LinearLayout lnDate;
@@ -328,11 +449,11 @@ public class CustomAdapterBubble extends RecyclerView.Adapter<CustomAdapterBubbl
         SeekBar sbPlay;
         Uri audioUri;
         Uri uri;
-        int factor = 1; //Esto es por si es necesario dividir el factor de duracion
+        int factor = 1; //This is in case it is necessary to divide the duration factor
         MyImage ivPreviewImage;
 
 
-        public ViewHolder(View itemView) {
+        public MessageViewHolder(View itemView) {
             super(itemView);
 
             lnLayout = itemView.findViewById(R.id.lnLayout);

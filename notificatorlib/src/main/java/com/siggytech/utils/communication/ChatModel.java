@@ -9,6 +9,9 @@ public class ChatModel {
     private String dateTime;
     private boolean isMine;
 
+    public ChatModel() {
+    }
+
     public ChatModel(Long id, MessageModel messageModel, String from, String dateTime, boolean isMine) {
         this.id = id;
         this.messageModel = messageModel;

@@ -25,7 +25,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,7 +66,6 @@ public class ChatControl extends RelativeLayout {
     public static final String NOTIFICATION_MESSAGE = "notificationMessage";
     public static final int SELECT_FILE = 100;
     private EditText mOutEditText;
-    private EditText mServerAddress;
     private LinearLayout mSendButton;
     private LinearLayout mAddFile;
     private LinearLayout mAudio;
@@ -91,6 +89,8 @@ public class ChatControl extends RelativeLayout {
     private List<Group> groupList = new ArrayList<>();
     private int groupIndex = 0;
 
+
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public ChatControl(Context context, String API_KEY, String nameClient, String userName,
                        String packageName, int resIcon, Activity activity){
@@ -99,7 +99,6 @@ public class ChatControl extends RelativeLayout {
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
-
 
         this.api_key = API_KEY;
         this.name = nameClient;
@@ -393,6 +392,11 @@ public class ChatControl extends RelativeLayout {
             }
         });
     }
+
+    public List<Group> getGroupList(){
+        return groupList;
+    }
+
     private void clearPersistentVariables(){
         isPickingFile  = true; //to start timer looking for a file to send.
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -511,8 +515,7 @@ public class ChatControl extends RelativeLayout {
                             Toast.makeText(context,"CAN'T FIND FILE: "+pathToFile,Toast.LENGTH_LONG).show();
                         }
                     } catch(Exception e) {
-                        e.printStackTrace();
-                        //TODO need send message to user
+                        Utils.traces("Pick file ex: "+(e!=null?e.getMessage():"null"));
                     }
                 }
                 else
@@ -577,10 +580,51 @@ public class ChatControl extends RelativeLayout {
             }
         });
     }
-    public void setGroupIndex(int groupIndex) {
-        this.groupIndex = groupIndex;
+
+    /**
+     * Set this for changing the group chat
+     * @param idGroup id group
+     * @param limit limit message rescue
+     */
+    public void setGroupView(long idGroup, int limit){
+        try{
+            int pos = 0;
+            for(Group g : groupList){
+                if(g.idGroup == idGroup){
+                    break;
+                }
+                pos++;
+            }
+
+            this.groupIndex = pos;
+            MessengerHelper.getChatListView().setGroupView(idGroup,limit);
+
+            //TODO
+            //MessengerHelper.getChatListView().closeSocket();
+            //MessengerHelper.setChatListView(null);
+        }catch (Exception e){
+            Log.e("KUSSES", "setGroupView ChatControl ex: "+(e!=null?e.getMessage():"null"));
+            Utils.traces("setGroupView ChatControl ex: "+(e!=null?e.getMessage():"null"));
+        }
     }
 
+    public void deleteHistory(){
+        MessengerHelper.getChatListView().deleteHistory();
+    }
+
+    /**
+     * You need override onDestroy method and call it.
+     */
+    public void onDestroy(){
+        try{
+            // TODO TRABAJANDO
+            MessengerHelper.getChatListView().onDestroy();
+            //MessengerHelper.getChatListView().closeSocket();
+            //MessengerHelper.setChatListView(null);
+        }catch (Exception e){
+            Utils.traces("onDestroy ChatControl ex: "+(e!=null?e.getMessage():"null"));
+        }
+    }
 
 }
 

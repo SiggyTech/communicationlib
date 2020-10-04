@@ -386,14 +386,14 @@ public class Socket {
 
         @Override
         public void onClosing(WebSocket webSocket, int code, String reason) {
-            Log.v(TAG,"Close request from server with reason '"+reason+"'");
+            Utils.traces("Close request from server with reason '"+reason+"'");
             changeState(State.CLOSING);
             webSocket.close(1000,reason);
         }
 
         @Override
         public void onClosed(WebSocket webSocket, int code, String reason) {
-            Log.v(TAG,"Socket connection closed with reason '"+reason+"'");
+            Utils.traces("Socket connection closed with reason '"+reason+"'");
             changeState(State.CLOSED);
             if (eventListener.get(EVENT_CLOSED) != null) {
                 eventListener.get(EVENT_CLOSED).onMessage(Socket.this, EVENT_CLOSED);

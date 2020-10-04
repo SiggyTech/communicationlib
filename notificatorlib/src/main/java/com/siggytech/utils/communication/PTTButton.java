@@ -20,7 +20,6 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.CountDownTimer;
-import android.os.Handler;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
@@ -29,17 +28,14 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.gson.JsonObject;
-import com.konovalov.vad.Vad;
-import com.konovalov.vad.VadConfig;
-import com.siggytech.utils.communication.vad.VoiceRecorder;
-
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.app.ActivityCompat;
+
+import com.konovalov.vad.VadConfig;
+import com.siggytech.utils.communication.vad.VoiceRecorder;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -51,7 +47,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -60,7 +55,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-
 
 import static android.content.Context.TELEPHONY_SERVICE;
 import static android.media.AudioRecord.RECORDSTATE_RECORDING;
@@ -120,16 +114,15 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
     private VoiceRecorder vadRecorder;
     private VadConfig config;
     private boolean isTalking = false;
-    private boolean isVoiceDetectionActivated = false;
+    private boolean voiceDetectionActivated;
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public PTTButton(Context context, String API_KEY, String nameClient, String username, int quality, boolean voiceDetection) {
         super(context);
         this.context = context;
         this.API_KEY = API_KEY;
         this.name = nameClient;
         this.username = username;
-        this.isVoiceDetectionActivated = voiceDetection;
+        this.voiceDetectionActivated = voiceDetection;
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -163,10 +156,9 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
             setVadRecorder();
             vadRecorder.start();
         }
-
-
-
     }
+
+
     public void startVoiceActivation(){
         setVadRecorder();
         vadRecorder.start();
@@ -189,13 +181,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         this.groupIndex = groupIndex;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private void getGroups(){
-
         groupList.add(new Group(9999, "Every Group"));
 
         try {
-
 
             HttpClient httpClient = new DefaultHttpClient();
             String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/getgroupsfordevice?imei=" + getIMEINumber() + "&API_KEY=" + API_KEY;
@@ -298,7 +287,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                     public void onFinish() {
                         setText(buttonName);
                         unblockTouch();
-                        if(isVoiceDetectionActivated){
+                        if(isVoiceDetectionActivated()){
                             startVoiceActivation();
                         }
                     }
@@ -381,12 +370,11 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private void startStreaming() {
 
-
         byte totalByteBuffer[]  = new byte[60 * 44100 * 2];
 
         float tempFloatBuffer[] = new float[3];
 
-        if(isVoiceDetectionActivated){
+        if(isVoiceDetectionActivated()){
             stopVoiceActivation();
         }
 
@@ -429,7 +417,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                         float totalAbsValue = 0.0f;
                         short sample        = 0;
 
-                        if(isVoiceDetectionActivated) {
+                        if(isVoiceDetectionActivated()) {
                             // Analyze Sound.
                             for (int i = 0; i < buffer.length; i += 2) {
                                 sample = (short) ((buffer[i]) | buffer[i + 1] << 8);
@@ -442,6 +430,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                             for (int i = 0; i < 3; ++i)
                                 temp += tempFloatBuffer[i];
 
+                            //TODO research for low quality
                             if ((temp >= 0 && temp <= 350)) {
                                 tempIndex++;
                                 noiseAux++;
@@ -463,9 +452,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                                 noiseAux = 0;
                             }
                         }
-
-
-
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -477,6 +463,26 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
         });
         streamThread.start();
+    }
+
+    /**
+     * This is to know if voice detected is enabled or not
+     * @return voice detection state
+     */
+    public boolean isVoiceDetectionActivated() {
+        return voiceDetectionActivated;
+    }
+
+    /**
+     * This is to enable or disable voice detection
+     * @param voiceDetectionActivated voice detection
+     */
+    public void setVoiceDetectionActivated(boolean voiceDetectionActivated) {
+        this.voiceDetectionActivated = voiceDetectionActivated;
+    }
+
+    public List<Group> getGroupList(){
+        return groupList;
     }
 
     public StrokeGradientDrawable getDrawableNormal() {
@@ -877,16 +883,14 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
             this.animationListener = animationListener;
             return this;
         }
-
-
     }
+
     public final class AudioQuality {
         public static final int HIGH = 1;
         public static final int MEDIUM = 2;
         public static final int LOW = 3;
 
     }
-
 
 }
 

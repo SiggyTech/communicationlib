@@ -12,7 +12,7 @@ public class MessengerHelper {
         return MessengerHelper.instance;
     }
 
-    private static ChatListView chatListView;
+   private static ChatListView chatListView;
 
     public static ChatListView getChatListView() {
         return chatListView;

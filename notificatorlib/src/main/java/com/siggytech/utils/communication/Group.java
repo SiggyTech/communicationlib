@@ -1,11 +1,16 @@
 package com.siggytech.utils.communication;
 
 public class Group {
-    int idGroup;
-    String name;
+    public long idGroup;
+    public String name;
 
-    public Group(int idGroup, String name){
+    public Group(long idGroup, String name){
         this.idGroup = idGroup;
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "idGroup=" + idGroup;
     }
 }

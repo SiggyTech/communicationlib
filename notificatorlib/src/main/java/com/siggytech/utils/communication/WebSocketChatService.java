@@ -15,6 +15,11 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
+import com.siggytech.utils.communication.repo.DbHelper;
+import com.siggytech.utils.communication.repo.MessageRaw;
+
+import org.json.JSONObject;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -29,6 +34,8 @@ public class WebSocketChatService extends Service {
     private WebSocket webSocket;
     private String name,imei,idGroup, apiKey;
 
+    private DbHelper dbHelper;
+
     public WebSocketChatService() {
     }
 
@@ -36,6 +43,9 @@ public class WebSocketChatService extends Service {
     public void onCreate() {
         super.onCreate();
         Utils.traces("WebSocketChatService onCreate");
+
+        dbHelper = new DbHelper(WebSocketChatService.this);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startMyOwnForeground();
         else startForeground(Conf.COMM_NOTIFICATION_FOREGROUND_ID,new Notification());
     }
@@ -47,15 +57,10 @@ public class WebSocketChatService extends Service {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 name = extras.getString("name");
-                idGroup = String.valueOf(extras.getInt("idGroup"));
+                idGroup = String.valueOf(extras.getLong("idGroup"));
                 imei = extras.getString("imei");
                 apiKey = extras.getString("apiKey");
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        messengerWebSocketConnection();
-                    }
-                }).start();
+                new Thread(this::messengerWebSocketConnection).start();
             }
         } catch(Exception ex) {
             Log.d("intent.getExtras", "Error: " + ex.getMessage());
@@ -71,6 +76,11 @@ public class WebSocketChatService extends Service {
         super.onDestroy();
         try {
             if (webSocket != null) webSocket.close(1000,"onDestroy");
+        }catch (Exception e){
+            Utils.traces("WebSocketChatService onDestroy Ex: "+Utils.exceptionToString(e));
+        }
+        try {
+            if (dbHelper!=null) dbHelper.close();
         }catch (Exception e){
             Utils.traces("WebSocketChatService onDestroy Ex: "+Utils.exceptionToString(e));
         }
@@ -123,6 +133,24 @@ public class WebSocketChatService extends Service {
                 @Override
                 public void onMessage(WebSocket webSocket, String text) {
                     try {
+                        Utils.traces("messengerWebSocketConnection onMessage");
+                        MessageRaw messageRaw = new MessageRaw();
+                        JSONObject jObject = new JSONObject(text);
+                        messageRaw.setIdGroup(new JSONObject(jObject.getString("data")).getString("idGroupFrom"));
+                        messageRaw.setFrom(new JSONObject(jObject.getString("data")).getString("from"));
+                        messageRaw.setMessage(new JSONObject(jObject.getString("data")).getString("text"));
+                        messageRaw.setDate(Utils.getStringDate());
+                        messageRaw.setMine(0);
+                        messageRaw.setUserKey(apiKey);
+
+                        if(dbHelper==null) dbHelper = new DbHelper(WebSocketChatService.this);
+
+                        long id = dbHelper.insertMessage(messageRaw);
+
+                        if(id==-1){
+                            Utils.traces("messengerWebSocketConnection onMessage error on bd insert");
+                        }
+
                         Intent intent = new Intent(WebSocketChatService.this,MessengerReceiver.class);
                         intent.putExtra(MESSAGE_CHAT, text);
                         sendBroadcast(intent);

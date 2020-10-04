@@ -14,10 +14,10 @@ import android.content.pm.PackageManager;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.PowerManager;
 import android.os.StrictMode;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -29,11 +29,15 @@ import com.google.gson.Gson;
 import com.siggytech.utils.communication.async.AsyncTaskCompleteListener;
 import com.siggytech.utils.communication.async.CallTask;
 import com.siggytech.utils.communication.async.TaskMessage;
+import com.siggytech.utils.communication.repo.DbHelper;
+import com.siggytech.utils.communication.repo.MessageRaw;
 
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.Context.TELEPHONY_SERVICE;
@@ -41,20 +45,26 @@ import static android.content.Context.TELEPHONY_SERVICE;
 public class ChatListView extends RecyclerView implements AsyncTaskCompleteListener<TaskMessage> {
     private String TAG = ChatListView.class.getSimpleName();
     List<ChatModel> lsChat = new ArrayList<>();
-    Handler timerHandler = new Handler();
     Context context;
-    private boolean newMessage = false;
-    private String messageText;
-    private String from;
-    private String dateTime;
-    private String packageName, notificationMessage;
+    private String packageName;
     int resIcon;
     private Socket socket;
     private Gson gson;
     private Activity mActivity;
-    private int idGroup;
+    private long idGroup;
+    private DbHelper dbHelper;
+    private String apiKey;
+    private int limitCount = 10;
 
-    public ChatListView (Context context, Activity activity, int idGroup, String API_KEY, String nameClient, String packageName, int resIcon){
+    //helpers pagination
+    private static final int PAGE_START = 0;
+    private boolean isLoading = false;
+    private boolean isLastPage = false;
+    private int currentPage = PAGE_START;
+    private long TOTAL_PAGES = 1;
+
+
+    public ChatListView (Context context, Activity activity, long idGroup, String API_KEY, String nameClient, String packageName, int resIcon){
         super(context);
         this.context = context;
         this.mActivity = activity;
@@ -62,7 +72,8 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         this.resIcon = resIcon;
         this.gson = Utils.getGson();
         this.idGroup = idGroup;
-        timerHandler.postDelayed(timerRunnable,0);
+        this.dbHelper = new DbHelper(activity);
+        this.apiKey = API_KEY;
 
         try {
             StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -76,7 +87,7 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             if(!Utils.isServiceRunning(WebSocketChatService.class,context)){
                 Intent i = new Intent(context, WebSocketChatService.class);
                 i.putExtra("name", nameClient);
-                i.putExtra("idGroup",idGroup);
+                i.putExtra("idGroup",idGroup); //TODO must remove
                 i.putExtra("imei",getIMEINumber());
                 i.putExtra("apiKey",API_KEY);
                 context.startService(i);
@@ -86,8 +97,24 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         } catch(Exception ex){
             Utils.traces("On new ChatListView : "+Utils.exceptionToString(ex));
         }
-        setAdapter();
 
+        getTotalPagesCount();
+        setAdapter();
+    }
+
+    /**
+     * To gets total pages count
+     */
+    private void getTotalPagesCount() {
+        try {
+            long rowCount = dbHelper.getMessageCount(idGroup, apiKey);
+            if(rowCount>0)
+                TOTAL_PAGES = (int) Math.ceil((double)rowCount / limitCount);
+
+            if(TOTAL_PAGES==0) TOTAL_PAGES++;
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void setAdapter(){
@@ -96,12 +123,37 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         this.setLayoutManager(linearLayoutManager);
         this.setHasFixedSize(true);
         this.setAdapter(new CustomAdapterBubble(lsChat, context,mActivity));
-        this.getLayoutManager().scrollToPosition(this.getAdapter().getItemCount()-1);
+        this.addOnScrollListener(new PaginationScrollListener(linearLayoutManager) {
+            @Override
+            protected void loadMoreItems() {
+                isLoading = true;
+                currentPage += 1;
+
+                ChatListView.this.post(() -> loadNextPage());
+            }
+
+            @Override
+            public long getTotalPageCount() {
+                return TOTAL_PAGES;
+            }
+
+            @Override
+            public boolean isLastPage() {
+                return isLastPage;
+            }
+
+            @Override
+            public boolean isLoading() {
+                return isLoading;
+            }
+        });
+
+        Objects.requireNonNull(this.getLayoutManager()).scrollToPosition(Objects.requireNonNull(this.getAdapter()).getItemCount()-1);
     }
 
     private void notifyItemInserted(){
-        this.getAdapter().notifyItemInserted(lsChat.size() - 1);
-        this.getLayoutManager().scrollToPosition(this.getAdapter().getItemCount()-1);
+        Objects.requireNonNull(this.getAdapter()).notifyItemInserted(lsChat.size() - 1);
+        Objects.requireNonNull(this.getLayoutManager()).scrollToPosition(this.getAdapter().getItemCount()-1);
     }
 
     @SuppressWarnings("deprecation")
@@ -142,8 +194,6 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             channel.enableVibration(false);
             mNotificationManager.createNotificationChannel(channel);
         }
-
-
 
         Intent intent = LaunchIntent; // new Intent();
         intent.putExtra(ChatControl.NOTIFICATION_MESSAGE, notificationMessage);
@@ -207,34 +257,8 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         return false;
     }
 
-    Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if(newMessage) {
-                try{
-                    MessageModel model = gson.fromJson(AESUtils.decText(messageText),MessageModel.class);
-                    if(!appInForeground(context)){
-                        String messageText = context.getString(R.string.new_message);
-                        if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getType())){
-                            messageText = model.getMessage();
-                        }
-                        addNotification(from, messageText, packageName,mActivity.getClass(), resIcon, notificationMessage);
-                    }
-                    newMessage = false;
-                    lsChat.add(new ChatModel(1L, model, from, dateTime,false));
-                    notifyItemInserted();
-                    saveHistory(model);
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
 
-            timerHandler.postDelayed(timerRunnable,100);
-        }
-    };
-
-    public void sendMessage(String from, String encryptedData, String dateTime, String type, int idGroup){
+    public void sendMessage(String from, String encryptedData, String dateTime, String type, long idGroup){
         try{
             socket.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from +  "\",\n" +
@@ -243,10 +267,20 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                     "    \"idGroup\": \"" + idGroup +  "\" \n" +
                     "}");
 
+            MessageRaw messageRaw = new MessageRaw();
+            messageRaw.setUserKey(apiKey);
+            messageRaw.setIdGroup(String.valueOf(idGroup));
+            messageRaw.setFrom(from);
+            messageRaw.setMessage(encryptedData);
+            messageRaw.setDate(dateTime);
+            messageRaw.setMine(1);
+
+            long id = dbHelper.insertMessage(messageRaw);
+            Log.e("KUSSES", "INSERT: "+id+"; ID GROUP:"+idGroup);
+
             MessageModel model = gson.fromJson(AESUtils.decText(encryptedData),MessageModel.class);
             lsChat.add(new ChatModel(1L, model, Conf.LOCAL_USER, dateTime,true));
             notifyItemInserted();
-            saveHistory(model);
         } catch(Exception e){
             Utils.traces("ChatListView sendMessage : "+Utils.exceptionToString(e));
         }
@@ -275,23 +309,121 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
         }
     }
 
-    private void saveHistory(MessageModel model){
-        //TODO
-    }
-
 
     public void onMessageReceiver(String text){
         try {
-            notificationMessage = text; //message for activity passed through notification
+            Utils.traces("1.- ChatListView onMessageReceiver");
             JSONObject jObject = new JSONObject(text);
-            from = new JSONObject(jObject.getString("data")).getString("from");
-            messageText = new JSONObject(jObject.getString("data")).getString("text");
-            dateTime = Utils.getStringDate();
+            String idGroupFrom = new JSONObject(jObject.getString("data")).getString("idGroupFrom");
 
-            newMessage = true;
+            String from = new JSONObject(jObject.getString("data")).getString("from");
+            String messageText1 = new JSONObject(jObject.getString("data")).getString("text");
+            String dateTime = Utils.getStringDate();
+
+            MessageModel model = null;
+            if(!appInForeground(context)){
+                model = gson.fromJson(AESUtils.decText(messageText1),MessageModel.class);
+
+                String messageText = context.getString(R.string.new_message);
+                if(Utils.MESSAGE_TYPE.MESSAGE.equals(model.getType())){
+                    messageText = model.getMessage();
+                }
+                addNotification(from, messageText, packageName, mActivity.getClass(), resIcon, text);
+            }
+
+            Utils.traces("1.- ChatListView onMessageReceiver idGroup: "+idGroup+"; al que llega: "+idGroupFrom);
+            //if message is for the current group info
+            if(idGroup == Long.parseLong(idGroupFrom)){
+                if(model==null)
+                    model = gson.fromJson(AESUtils.decText(messageText1),MessageModel.class);
+
+                Utils.traces("1.- ChatListView onMessageReceiver entro a agregar al chat");
+                lsChat.add(new ChatModel(1L, model, from, dateTime,false));
+                notifyItemInserted();
+            }
         } catch(Exception ex){
             Utils.traces("ChatListView onMessageReceiver : "+Utils.exceptionToString(ex));
         }
+
     }
 
+    /**
+     * closes socket
+     */
+    public void onDestroy(){
+        try{
+            if (dbHelper!=null) dbHelper.close();
+            //TODO if (socket != null) socket.close(1000,"onDestroy");
+        }catch (Exception e){
+            Utils.traces("onDestroy ChatListView ex: "+(e!=null?e.getMessage():null));
+        }
+    }
+
+    /**
+     * Call this to change chat group
+     * @param idGroup id group to see
+     * @param limit limit records to retrieve
+     */
+    public void setGroupView(long idGroup, int limit){
+        limitCount = limit;
+        getTotalPagesCount(); //TODO
+        if(this.idGroup != idGroup){
+            this.idGroup = idGroup;
+            addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limit));
+        }
+    }
+
+    private void addRawList(List<MessageRaw> list){
+        try{
+            lsChat.clear();
+            for(MessageRaw raw : list) {
+                lsChat.add(new ChatModel(1L
+                        , gson.fromJson(AESUtils.decText(raw.getMessage()), MessageModel.class)
+                        , raw.getFrom()
+                        , raw.getDate()
+                        , raw.getMine() != 0));
+            }
+            this.setAdapter(new CustomAdapterBubble(lsChat, context,mActivity));
+            Objects.requireNonNull(this.getLayoutManager()).scrollToPosition(Objects.requireNonNull(this.getAdapter()).getItemCount()-1);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void loadNextPage() {
+        Log.d(TAG, "loadNextPage: " + currentPage+ "; TOTAL_PAGES: "+TOTAL_PAGES);
+
+        List<MessageRaw> list = dbHelper.getMessage(
+                idGroup
+                ,apiKey
+                , lsChat.size()-1
+                , limitCount);
+
+        Collections.reverse(list);
+
+        ((CustomAdapterBubble) Objects.requireNonNull(this.getAdapter())).removeLoadingHeader();
+        isLoading = false;
+
+        try{
+            for(MessageRaw raw : list) {
+                ((CustomAdapterBubble) Objects.requireNonNull(getAdapter()))
+                        .add(new ChatModel(1L
+                                , gson.fromJson(AESUtils.decText(raw.getMessage()), MessageModel.class)
+                                , raw.getFrom()
+                                , raw.getDate()
+                                , raw.getMine() != 0));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        if (currentPage != TOTAL_PAGES)
+            ((CustomAdapterBubble) Objects.requireNonNull(this.getAdapter())).addLoadingHeader();
+        else isLastPage = true;
+    }
+
+    public void deleteHistory() {
+        dbHelper.deleteHistory();
+    }
 }
