@@ -98,8 +98,13 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
             Utils.traces("On new ChatListView : "+Utils.exceptionToString(ex));
         }
 
-        getTotalPagesCount();
+        addLastMessages();
         setAdapter();
+    }
+
+    private void addLastMessages() {
+        getTotalPagesCount();
+        addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limitCount),false);
     }
 
     /**
@@ -366,14 +371,14 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
      */
     public void setGroupView(long idGroup, int limit){
         limitCount = limit;
-        getTotalPagesCount(); //TODO
+        getTotalPagesCount();
         if(this.idGroup != idGroup){
             this.idGroup = idGroup;
-            addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limit));
+            addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limit),true);
         }
     }
 
-    private void addRawList(List<MessageRaw> list){
+    private void addRawList(List<MessageRaw> list, boolean notify){
         try{
             lsChat.clear();
             for(MessageRaw raw : list) {
@@ -383,8 +388,10 @@ public class ChatListView extends RecyclerView implements AsyncTaskCompleteListe
                         , raw.getDate()
                         , raw.getMine() != 0));
             }
-            this.setAdapter(new CustomAdapterBubble(lsChat, context,mActivity));
-            Objects.requireNonNull(this.getLayoutManager()).scrollToPosition(Objects.requireNonNull(this.getAdapter()).getItemCount()-1);
+            if(notify) {
+                this.setAdapter(new CustomAdapterBubble(lsChat, context, mActivity));
+                Objects.requireNonNull(this.getLayoutManager()).scrollToPosition(Objects.requireNonNull(this.getAdapter()).getItemCount() - 1);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
