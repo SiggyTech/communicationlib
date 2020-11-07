@@ -50,9 +50,7 @@ public class Utils {
     private static final AtomicInteger sNextGeneratedId = new AtomicInteger(1);
     private static final String TAG = "Utils";
 
-
-
-    public class MESSAGE_TYPE{
+    public static class MESSAGE_TYPE{
         public static final String MESSAGE = "Message";
         public static final String AUDIO = "audio";
         public static final String PHOTO = "photo";

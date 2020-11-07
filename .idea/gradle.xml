@@ -13,8 +13,9 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/android-vad-v1.0.0-release" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/libs" />
+            <option value="$PROJECT_DIR$/libs/vad" />
             <option value="$PROJECT_DIR$/notificatorlib" />
-            <option value="$PROJECT_DIR$/vad" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

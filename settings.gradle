@@ -1,2 +1,2 @@
-include ':vad'
+include ':libs:vad'
 include ':app', ':notificatorlib', ':android-vad-v1.0.0-release'

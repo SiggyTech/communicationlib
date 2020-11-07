@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
         Conf.CHAT_DARK_MODE = false;
-        ch = new ChatControl(this, API_KEY, getIMEINumber(), "Kusses",
+        ch = new ChatControl(this, API_KEY, getIMEINumber(), Build.MODEL,
                 getApplicationContext().getPackageName(),
                 getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
                 this);//user name to show to others

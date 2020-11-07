@@ -12,7 +12,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/android-vad-v1.0.0-release/communicationlib-android-vad-v1.0.0-release.iml" filepath="$PROJECT_DIR$/.idea/modules/android-vad-v1.0.0-release/communicationlib-android-vad-v1.0.0-release.iml" group="communicationlib/android-vad-v1.0.0-release" />
       <module fileurl="file://$PROJECT_DIR$/app/communicationlib-app.iml" filepath="$PROJECT_DIR$/app/communicationlib-app.iml" group="communicationlib/app" />
       <module fileurl="file://$PROJECT_DIR$/notificatorlib/communicationlib-notificatorlib.iml" filepath="$PROJECT_DIR$/notificatorlib/communicationlib-notificatorlib.iml" group="communicationlib/notificatorlib" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/vad/communicationlib-vad.iml" filepath="$PROJECT_DIR$/.idea/modules/vad/communicationlib-vad.iml" group="communicationlib/vad" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libs/libs.iml" filepath="$PROJECT_DIR$/.idea/modules/libs/libs.iml" group="communicationlib/libs" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/libs/vad/libs-vad.iml" filepath="$PROJECT_DIR$/.idea/modules/libs/vad/libs-vad.iml" group="communicationlib/libs/vad" />
       <module fileurl="file://$PROJECT_DIR$/notificatorlib/notificatorlib.iml" filepath="$PROJECT_DIR$/notificatorlib/notificatorlib.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/vad/vad.iml" filepath="$PROJECT_DIR$/.idea/modules/vad/vad.iml" group="communicationlib/vad" />
     </modules>
