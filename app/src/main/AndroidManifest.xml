@@ -33,6 +33,21 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <!-- Set custom default icon. This is used when no icon is set for incoming notification messages.
+      See README(https://goo.gl/l4GJaQ) for more. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_message_notification" />
+        <!-- Set color used with incoming notification messages. This is used when no color is set for the incoming
+             notification message. See README(https://goo.gl/6BKBk7) for more. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/bt_red" />
+
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="@string/default_notification_channel_id" />
+
         <activity android:name=".MainActivity"
             android:screenOrientation="portrait"
             tools:ignore="LockedOrientationActivity">
@@ -43,15 +58,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.siggytech.utils.communication.WebSocketPTTService"/>
-        <service android:name="com.siggytech.utils.communication.WebSocketChatService"/>
-        <service android:name="com.siggytech.utils.communication.NotificationService"/>
-        <receiver
-            android:name="com.siggytech.utils.communication.NotificationReceiver"
-            android:enabled="true"
-            android:exported="true">
-        </receiver>
-        <receiver android:name="com.siggytech.utils.communication.MessengerReceiver"
+        <service android:name="com.siggytech.utils.communication.presentation.service.WebSocketPTTService"/>
+        <receiver android:name="com.siggytech.utils.communication.presentation.service.MessengerReceiver"
             android:enabled="true">
             <intent-filter>
                 <action android:name="com.siggytech.utils.communication.message.receiver" />

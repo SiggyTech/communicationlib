@@ -5,5 +5,5 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
-    tools:context=".VideoActivity"
+    tools:context=".presentation.VideoActivity"
     android:id="@+id/videoView"/>

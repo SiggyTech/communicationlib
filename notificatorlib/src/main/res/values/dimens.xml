@@ -4,4 +4,22 @@
     <dimen name="speech_bubble_corners_plus_tail">15dp</dimen>
     <dimen name="speech_bubble_spacing">5dp</dimen>
     <dimen name="speech_bubble_tail">25dp</dimen>
+
+    <dimen name="bt_corner_radius_2">2dp</dimen>
+    <dimen name="bt_corner_radius_4">4dp</dimen>
+    <dimen name="bt_width_100">100dp</dimen>
+    <dimen name="bt_width_120">120dp</dimen>
+    <dimen name="bt_width_200">200dp</dimen>
+    <dimen name="bt_height_56">56dp</dimen>
+    <dimen name="bt_height_8">8dp</dimen>
+    <dimen name="bt_height_4">4dp</dimen>
+
+    <dimen name="text_size_small">12sp</dimen>
+    <dimen name="text_size_medium">16sp</dimen>
+    <dimen name="text_size_default">18sp</dimen>
+    <dimen name="text_size_large">20sp</dimen>
+
+    <dimen name="margin_small">4dp</dimen>
+    <dimen name="margin_medium">8dp</dimen>
+    <dimen name="margin_default">16dp</dimen>
 </resources>

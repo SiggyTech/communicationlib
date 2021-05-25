@@ -1,106 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="10dp"
-    android:gravity="end"
-    android:minWidth="150dp"
-    android:id="@+id/lnLayout">
-
-    <LinearLayout
-        android:id="@+id/lnDate"
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:visibility="gone">
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/bt_white"
-            android:background="@drawable/date_item_bg"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/lnMessage"
         android:orientation="vertical"
-        android:padding="10dp">
-        <TextView
-            android:id="@+id/chat_out_name"
+        android:padding="10dp"
+        android:id="@+id/lnLayout">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|start"
-            android:textStyle="bold"/>
-        <TextView
-            android:id="@+id/chat_out_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|start" />
-
-        <com.siggytech.view.MyImage
-            android:id="@+id/ivPreviewImage"
-            android:layout_width="100sp"
-            android:layout_height="100sp"
-            android:focusable="true"
-            android:clickable="true"/>
-
-        <LinearLayout
-            android:id="@+id/lnAudio"
-            android:layout_width="250dp"
-            android:layout_height="wrap_content"
+            android:id="@+id/lnMessage"
             android:orientation="vertical"
-            android:gravity="center_vertical"
-            android:layout_gravity="center_vertical">
-            <LinearLayout
-                android:id="@+id/lnPlay"
-                android:layout_width="match_parent"
+            android:padding="10dp"
+            android:minWidth="150dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <TextView
+                android:id="@+id/chat_out_name"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_gravity="center_vertical"
-                android:gravity="center_vertical">
-                <ImageView
-                    android:id="@+id/ivPlay"
-                    android:layout_width="34dp"
-                    android:layout_height="34dp"
-                    android:layout_marginLeft="10dp"
-                    android:layout_marginStart="10dp"
-                    android:focusable="true"
-                    android:clickable="true"
-                    android:src="@drawable/ic_play_arrow"/>
-                <SeekBar
-                    android:id="@+id/sbPlay"
-                    android:layout_width="200dp"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="match_parent"
+                android:gravity="start"
+                android:textStyle="bold"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+
+            <com.siggytech.view.MyImage
+                android:id="@+id/ivPreviewImage"
+                android:layout_width="100sp"
+                android:layout_height="100sp"
+                android:focusable="true"
+                android:clickable="true"
+                app:layout_constraintTop_toBottomOf="@+id/chat_out_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/chat_out_text"/>
+
+            <TextView
+                android:id="@+id/chat_out_text"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/tvAudioDuration"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="53dp"
-                    android:layout_marginStart="53dp"
-                    android:textColor="@color/bt_dark_gray"
-                    android:textSize="13sp"/>
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/chat_text_datetime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|end"
-            android:textSize="13sp"
-            android:textColor="@color/bt_dark_gray"
-            android:textStyle="normal"/>
-    </LinearLayout>
+                android:layout_gravity="center_vertical|start"
+                android:gravity="start"
+                app:layout_constraintTop_toBottomOf="@+id/ivPreviewImage"
+                app:layout_constraintBottom_toTopOf="@+id/chat_text_datetime"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
 
 
-</LinearLayout>
+            <ImageView
+                android:id="@+id/ivPlay"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginStart="10dp"
+                android:focusable="true"
+                android:clickable="true"
+                android:src="@drawable/ic_play_arrow"
+                app:layout_constraintTop_toBottomOf="@+id/chat_out_name"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/sbPlay"
+                app:layout_constraintBottom_toTopOf="@id/chat_text_datetime" />
+
+            <SeekBar
+                android:id="@+id/sbPlay"
+                android:layout_width="@dimen/bt_width_200"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/chat_out_name"
+                app:layout_constraintStart_toEndOf="@+id/ivPlay"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toTopOf="@id/chat_text_datetime"/>
+
+            <TextView
+                android:id="@+id/tvAudioDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="53dp"
+                android:layout_marginStart="53dp"
+                android:textColor="@color/bt_dark_gray"
+                android:textSize="13sp"
+                app:layout_constraintTop_toBottomOf="@id/sbPlay"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/chat_text_datetime"/>
+
+
+            <TextView
+                android:id="@+id/chat_text_datetime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:textSize="13sp"
+                android:textColor="@color/bt_dark_gray"
+                android:textStyle="normal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </RelativeLayout>
+</layout>

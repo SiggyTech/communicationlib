@@ -5,5 +5,5 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
-    tools:context=".ImageActivity"
+    tools:context=".presentation.ImageActivity"
     android:id="@+id/iv_photo"/>

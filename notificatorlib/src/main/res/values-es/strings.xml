@@ -14,4 +14,14 @@
     <string name="frame_size">Frame Size:</string>
     <string name="mode">Mode:</string>
     <string name="time_zero">00:00</string>
+    <string name="audio_message">Te envió un audio</string>
+    <string name="video_message">Te envió un video</string>
+    <string name="image_message">Te envió una imagen</string>
+    <string name="file_message">Te envió un archivo</string>
+    <string name="username">Nombre usuario</string>
+    <string name="connecting">Conectando…</string>
+    <string name="wait">Espere…</string>
+    <string name="connected">Conectado</string>
+    <string name="closing">Cerrando conexión</string>
+    <string name="closed">Conexión Cerrada</string>
 </resources>

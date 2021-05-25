@@ -14,4 +14,24 @@
     <string name="frame_size">Frame Size:</string>
     <string name="mode">Mode:</string>
     <string name="time_zero">00:00</string>
+
+    <string name="default_web_client_id" translatable="false">801493658004-12blmt5ea84bj1nbjhfvou9go70599ks.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">801493658004</string>
+    <string name="google_api_key" translatable="false">AIzaSyCI4lhffXkFu8G1xg7fvMqSK3jXl4E9_o8</string>
+    <string name="google_app_id" translatable="false">1:801493658004:android:a895b6ff87adf09a0ec781</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCI4lhffXkFu8G1xg7fvMqSK3jXl4E9_o8</string>
+    <string name="google_storage_bucket" translatable="false">siggy-dispatcher.appspot.com</string>
+    <string name="project_id" translatable="false">siggy-dispatcher</string>
+
+    <string name="default_notification_channel_id" translatable="false">com.siggytech.utils.communication</string>
+    <string name="audio_message">Sent you an audio</string>
+    <string name="video_message">Sent you a video</string>
+    <string name="image_message">Sent you an image</string>
+    <string name="file_message">Sent you a file</string>
+    <string name="username">User name</string>
+    <string name="connecting">Connecting…</string>
+    <string name="wait">Wait…</string>
+    <string name="connected">Connected</string>
+    <string name="closing">Closing</string>
+    <string name="closed">Closed</string>
 </resources>

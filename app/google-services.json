@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "801493658004",
+    "project_id": "siggy-dispatcher",
+    "storage_bucket": "siggy-dispatcher.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801493658004:android:a895b6ff87adf09a0ec781",
+        "android_client_info": {
+          "package_name": "com.siggytech.utils.communication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "801493658004-12blmt5ea84bj1nbjhfvou9go70599ks.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCI4lhffXkFu8G1xg7fvMqSK3jXl4E9_o8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "801493658004-12blmt5ea84bj1nbjhfvou9go70599ks.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:801493658004:android:6f3d4a9cc7a7af770ec781",
+        "android_client_info": {
+          "package_name": "com.siggytech.utils.notificator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "801493658004-12blmt5ea84bj1nbjhfvou9go70599ks.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCI4lhffXkFu8G1xg7fvMqSK3jXl4E9_o8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "801493658004-12blmt5ea84bj1nbjhfvou9go70599ks.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

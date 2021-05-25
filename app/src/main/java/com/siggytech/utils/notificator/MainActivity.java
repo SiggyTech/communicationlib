@@ -7,59 +7,62 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.telephony.TelephonyManager;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.lifecycle.LifecycleOwner;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
-import com.siggytech.utils.communication.ChatControl;
-import com.siggytech.utils.communication.Conf;
-import com.siggytech.utils.communication.Group;
-import com.siggytech.utils.communication.NotificationAgent;
-import com.siggytech.utils.communication.PTTButton;
+import com.siggytech.utils.communication.model.GroupModel;
+import com.siggytech.utils.communication.model.async.TaskMessage;
+import com.siggytech.utils.communication.presentation.chat.ChatControl;
+import com.siggytech.utils.communication.presentation.ptt.PTTButton;
+import com.siggytech.utils.communication.presentation.register.Siggy;
+import com.siggytech.utils.communication.presentation.register.SiggyRegisterAsync;
+import com.siggytech.utils.communication.presentation.register.SiggyRegisterListener;
+import com.siggytech.utils.communication.util.Conf;
 
 import java.util.List;
 import java.util.Objects;
 
-import static com.siggytech.utils.communication.ChatControl.NOTIFICATION_MESSAGE;
-
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     Toolbar toolbar;
     PTTButton pttButton;
     Boolean keyDown = false;
-    LinearLayout linearLayout;
-    String API_KEY = "";
-    String name = "";
+    FrameLayout frame;
+    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     String username = "";
 
     ChatControl ch;
 
-    boolean isChat = true;
+    boolean isChat = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        linearLayout = findViewById(R.id.linear1);
+        frame = findViewById(R.id.frame);
         toolbar = findViewById(R.id.toolbar);
 
         setSupportActionBar(toolbar);
 
-        Conf.SERVER_IP = ""; //Set dedicated IP server.
-        Conf.SEND_FILES = true;
+        //You need paste this line, is very important
+        Conf.APPLICATION_ID = BuildConfig.APPLICATION_ID;
+
+        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
         Conf.CHAT_BASIC = false;
         Conf.ENABLE_LOG_TRACE = true;  //Only for debug
 
@@ -67,9 +70,7 @@ public class MainActivity extends AppCompatActivity {
         Conf.SERVER_WS_PORT = 9005;
         Conf.TOKEN_PORT = 9004;
 
-        onNewIntent(getIntent());
-
-        name = getIMEINumber();
+        username = Build.MODEL;
 
         //check permissions
         if (Build.VERSION.SDK_INT >= 23) {
@@ -79,37 +80,72 @@ public class MainActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_NETWORK_STATE,
                     Manifest.permission.ACCESS_WIFI_STATE,
                     Manifest.permission.INTERNET,
-                    Manifest.permission.RECORD_AUDIO
-            };
+                    Manifest.permission.RECORD_AUDIO};
 
-            if (!hasPermissions(this, PERMISSIONS)) {
+            if (!hasPermissions(this, PERMISSIONS))
                 ActivityCompat.requestPermissions(this, PERMISSIONS, 112 );
-            } else {
-                System.out.println(getApplicationContext().getPackageName());
-                System.out.println(getResources().getIdentifier("siggy_logo",
-                        "drawable", getPackageName()));
-                if(isChat){
-                    addChatListView();
-                    //subscribeForNotifications();
-                }else {
-                    addPTTButton();
-                    //subscribeForNotifications();
-                }
-            }
-        } else{
-            System.out.println(getApplicationContext().getPackageName());
-            System.out.println(getResources().getIdentifier("siggy_logo",
-                    "drawable", getPackageName()));
-
-            if(isChat){
-                addChatListView();
-                //subscribeForNotifications();
-            }else {
-                addPTTButton();
-               // subscribeForNotifications();
-            }
-
+            else
+                initSiggy();
         }
+        else initSiggy();
+
+    }
+
+
+    /**
+     * You must call this initial method
+     */
+    private void initSiggy(){
+        if(Siggy.isRegister()) startSiggy();
+        else registerSiggy();
+
+        //This call need be called after chat init
+        onNewIntent(getIntent());
+    }
+
+
+    private void registerSiggy(){
+
+        new SiggyRegisterAsync(
+                MainActivity.this,
+                new SiggyRegisterListener() {
+                    @Override
+                    public void onPreExecute() {
+                        //Do your stuff
+                    }
+
+                    @Override
+                    public void onPostExecute(Object result) {
+                        String message;
+
+                        // Registration failed?
+                        if (result instanceof Exception) {
+
+                            // Display error in alert
+                            message = ((Exception) result).getMessage();
+                        }
+                        else {
+                            message = "Siggy device token: " + result.toString() + "\n\n";
+                            startSiggy();
+                        }
+
+                        // Registration succeeded, display an alert with the device token
+                        new android.app.AlertDialog.Builder(MainActivity.this)
+                                .setTitle("Siggy")
+                                .setMessage(message)
+                                .setPositiveButton(android.R.string.ok, null)
+                                .show();
+                    }
+                }
+        ).execute(API_KEY,username);
+    }
+
+    private void startSiggy(){
+        if(isChat)
+            addChatListView();
+        else
+            addPTTButton();
+
     }
 
     @Override
@@ -133,68 +169,59 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            System.out.println(getApplicationContext().getPackageName());
-            System.out.println(getResources().getIdentifier("siggy_logo",
-                    "drawable", getPackageName()));
-            if(isChat){
-                addChatListView();
-                //subscribeForNotifications();
-            }else {
-                addPTTButton();
-                //subscribeForNotifications();
-            }
+            initSiggy();
         } else {
-           //TODO ask permission again or exit app
-            Toast.makeText(MainActivity.this,"Missing implement.",Toast.LENGTH_LONG).show();
+            //TODO ask permission again or exit app
+            Toast.makeText(MainActivity.this, "Missing implement.", Toast.LENGTH_LONG).show();
         }
     }
 
 
     private void addPTTButton(){
-        pttButton = new PTTButton(this, API_KEY, name, username, PTTButton.AudioQuality.LOW, false);
-        linearLayout.addView(pttButton);
-
-        Snackbar.make(linearLayout,getIMEINumber(),Snackbar.LENGTH_INDEFINITE).setAction("Search", new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                List<Group> list = pttButton.getGroupList();
-                if(!list.isEmpty()) {
-                    StringBuilder groups = new StringBuilder();
-                    for(Group g : list){
-                        groups.append(" ").append(g.idGroup);
+        pttButton = new PTTButton(
+                this,
+                API_KEY,
+                username,
+                Build.MODEL,
+                PTTButton.AudioQuality.LOW,
+                false,
+                new PTTButton.CallBack() {
+                    @Override
+                    public void onPreExecute() {
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
                     }
-                    Snackbar.make(linearLayout,groups.toString(),Snackbar.LENGTH_INDEFINITE).show();
-                }
 
+                    @Override
+                    public void onReady(TaskMessage result) {
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage());
+                    }
+                });
+
+        CoordinatorLayout coordinatorLayout = new CoordinatorLayout(this);
+        coordinatorLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        coordinatorLayout.addView(pttButton);
+        frame.addView(coordinatorLayout);
+
+        Snackbar.make(frame,username,Snackbar.LENGTH_INDEFINITE).setAction("Search", v -> {
+            List<GroupModel> list = pttButton.getGroupList();
+            if(!list.isEmpty()) {
+                StringBuilder groups = new StringBuilder();
+                for(GroupModel g : list){
+                    groups.append(" ").append(g.idGroup);
+                }
+                Snackbar.make(frame,groups.toString(),Snackbar.LENGTH_INDEFINITE).show();
             }
+
         }).show();
     }
 
-    @SuppressWarnings("deprecation")
-    private String getIMEINumber() {
-        String IMEINumber = "";
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-            TelephonyManager telephonyMgr = (TelephonyManager) this.getSystemService(TELEPHONY_SERVICE);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                IMEINumber = telephonyMgr.getImei();
-            } else {
-                IMEINumber = telephonyMgr.getDeviceId();
-            }
-        }
-        return IMEINumber;
-    }
 
     @Override
     public void onNewIntent(Intent intent){
-        Bundle extras = intent.getExtras();
-        if(extras != null){
-            if(extras.containsKey(NOTIFICATION_MESSAGE)) {
-                System.out.println("Message from notification: " + extras.getString(NOTIFICATION_MESSAGE));
-                //Do your staff like open chat view
-            }
-        }
+        if(ch!=null) ch.onNewIntent(intent.getExtras());
         super.onNewIntent(intent);
     }
 
@@ -213,40 +240,48 @@ public class MainActivity extends AppCompatActivity {
         Conf.DATE_FORMAT = 2; //dd-mm-yyyy hh24:mm:ss
         Conf.LOCAL_USER = "Yo"; //user name to show in my device. Default: Me
         Conf.CHAT_DARK_MODE = false;
-        ch = new ChatControl(this, API_KEY, getIMEINumber(), Build.MODEL,
-                getApplicationContext().getPackageName(),
-                getResources().getIdentifier("siggy_logo", "drawable", getPackageName()),
-                this);//user name to show to others
-        linearLayout.addView(ch);
 
-        List<Group> list = ch.getGroupList();
 
-        if(!list.isEmpty()) Objects.requireNonNull(getSupportActionBar()).setTitle(""+list.get(0).idGroup);
-        else Objects.requireNonNull(getSupportActionBar()).setTitle("Empty");
+        ch = new ChatControl(
+                this,
+                API_KEY,
+                Build.MODEL, //username
+                getLifecycle(),
+                new ChatControl.CallBack() {
+                    @Override
+                    public void onPreExecute() {
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
+                    }
+
+                    @Override
+                    public void onReady(TaskMessage result) {
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage());
+                    }
+                });
+
+        frame.addView(ch);
 
         if(false) ch.deleteHistory();
     }
 
     /**
      * For change de view to a specific group
-     * @param idGroup
+     * @param idGroup id group to switch
      */
     private void changeGroupView(long idGroup){
-        if(ch!=null) {
+
+        if(isChat && ch!=null)
             ch.setGroupView(idGroup, 10);
-        }else
-            Snackbar.make(linearLayout,"ChatListView null",Snackbar.LENGTH_SHORT).show();
+        else if(!isChat && pttButton!=null)
+            pttButton.setGroup(idGroup);
+
     }
 
-    private void subscribeForNotifications() {
-        NotificationAgent na = new NotificationAgent();
-        na.register(this, 99, API_KEY, getIMEINumber(), "siggy_logo");
-    }
+
 
     @Override
     protected void onResume() {
         if(pttButton!=null) pttButton.onResume();
-
         super.onResume();
     }
 
@@ -256,11 +291,6 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    @Override
-    protected void onDestroy() {
-        if(ch!=null) ch.onDestroy();
-        super.onDestroy();
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -287,16 +317,16 @@ public class MainActivity extends AppCompatActivity {
             TextInputLayout tilHelper = dialog.findViewById(R.id.tilHelper);
             AutoCompleteTextView autoHelper = dialog.findViewById(R.id.autoHelper);
 
-            ArrayAdapter<Group> adapter =
+            ArrayAdapter<GroupModel> adapter =
                     new ArrayAdapter<>(MainActivity.this,
                             R.layout.dropdown_menu_popup_item,
-                            ch.getGroupList());
+                            isChat?ch.getGroupList():pttButton.getGroupList());
 
             autoHelper.setAdapter(adapter);
 
             autoHelper.setOnItemClickListener((parent, view, position, id) -> {
                 tilHelper.setErrorEnabled(false);
-                Group group = (Group) parent.getItemAtPosition(position);
+                GroupModel group = (GroupModel) parent.getItemAtPosition(position);
                 if (group != null) {
                     changeGroupView(group.idGroup);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(""+group.idGroup);

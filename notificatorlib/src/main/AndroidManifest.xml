@@ -4,7 +4,8 @@
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -15,19 +16,29 @@
         android:largeHeap="true"
         android:usesCleartextTraffic="true">
 
+
+
         <service
-            android:name=".WebSocketPTTService"
+            android:name=".presentation.service.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".presentation.service.WebSocketPTTService"
             android:enabled="true"
             android:exported="true"/>
 
         <activity
-            android:name=".ImageActivity"
+            android:name=".presentation.ImageActivity"
             android:theme="@style/BlackTheme" />
         <activity
-            android:name=".VideoActivity"
+            android:name=".presentation.VideoActivity"
             android:theme="@style/BlackTheme" />
         <activity
-            android:name=".UtilActivity"
+            android:name=".presentation.AttachMenuActivity"
             android:theme="@style/ChooserTheme" />
 
         <uses-library

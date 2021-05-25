@@ -20,14 +20,8 @@
     <color name="speech_bubble">#6CDA1E</color>
     <color name="speech_bubble_agent">#EBE7E7</color>
 
-    <dimen name="bt_corner_radius_2">2dp</dimen>
-    <dimen name="bt_corner_radius_4">4dp</dimen>
-    <dimen name="bt_width_100">100dp</dimen>
-    <dimen name="bt_width_120">120dp</dimen>
-    <dimen name="bt_width_200">200dp</dimen>
-    <dimen name="bt_height_56">56dp</dimen>
-    <dimen name="bt_height_8">8dp</dimen>
-    <dimen name="bt_height_4">4dp</dimen>
+
+
 
     <integer name="bt_animation">500</integer>
     <string name="bt_button" translatable="false">Talk</string>
