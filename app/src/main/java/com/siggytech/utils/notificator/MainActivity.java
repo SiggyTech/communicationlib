@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     PTTButton pttButton;
     Boolean keyDown = false;
     FrameLayout frame;
-    String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
+    String API_KEY = "";
     String username = "";
 
     ChatControl ch;
@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         //You need paste this line, is very important
         Conf.APPLICATION_ID = BuildConfig.APPLICATION_ID;
 
-        Conf.SERVER_IP = "35.247.219.199"; //Set dedicated IP server.
+        Conf.SERVER_IP = ""; //Set dedicated IP server.
         Conf.CHAT_BASIC = false;
         Conf.ENABLE_LOG_TRACE = true;  //Only for debug
 
