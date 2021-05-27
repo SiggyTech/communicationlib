@@ -26,14 +26,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -60,9 +57,9 @@ public class ApiService {
             final TrustManager[] trustAllCerts = new TrustManager[] {
                     new X509TrustManager() {
                         @Override
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
+                        public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {}
                         @Override
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {}
+                        public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {}
                         @Override
                         public java.security.cert.X509Certificate[] getAcceptedIssuers() {
                             return new java.security.cert.X509Certificate[]{};
@@ -78,12 +75,7 @@ public class ApiService {
 
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.sslSocketFactory(sslSocketFactory, (X509TrustManager)trustAllCerts[0]);
-            builder.hostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
+            builder.hostnameVerifier((hostname, session) -> true);
 
             return builder.connectTimeout(300, TimeUnit.SECONDS)
                     .writeTimeout(300, TimeUnit.SECONDS)
@@ -105,12 +97,10 @@ public class ApiService {
                     .post(body)
                     .build();
             Response response = clientSSL.build().newCall(request).execute();
-            if(response!=null) {
-                if (response.isSuccessful()) {
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-                    deviceToken = jsonObject.getString("token");
-                    FileUtil.writeToFile(DEVICE_TOKEN,deviceToken,context);
-                }
+            if(response.isSuccessful()) {
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                deviceToken = jsonObject.getString("token");
+                FileUtil.writeToFile(DEVICE_TOKEN,deviceToken,context);
             }
         }finally {
             clientSSL = null;
@@ -167,12 +157,12 @@ public class ApiService {
                     .post(body)
                     .build();
             Response response = clientSSL.build().newCall(request).execute();
-            if (response != null) {
-                if (response.isSuccessful()) {
-                    JSONObject jsonObject = new JSONObject(response.body().string());
-                    taskMessage.setMessage(jsonObject.getString("message"));
-                }
+
+            if (response.isSuccessful()) {
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                taskMessage.setMessage(jsonObject.getString("message"));
             }
+
         }catch (Exception e){
             taskMessage.setMessage("Set pair token failed");
             taskMessage.setError(true);
@@ -196,18 +186,18 @@ public class ApiService {
                     .post(body)
                     .build();
             Response response = clientSSL.build().newCall(request).execute();
-            if (response != null) {
-                if (response.isSuccessful()) {
-                    JSONArray jsonArray =  new JSONArray(response.body().string());
-                    if(jsonArray!=null && jsonArray.length()>0){
-                        List<EventMessageModel> list = new ArrayList<>();
-                        for(int i=0; i<jsonArray.length();i++){
-                            Utils.traces(gson.fromJson(jsonArray.get(i).toString(),EventMessageModel.class).toString());
-                            list.add(gson.fromJson(jsonArray.get(i).toString(),EventMessageModel.class));
-                        }
-                        MessengerHelper.setChatQueue(list);
+            if (response.isSuccessful()) {
+
+                JSONArray jsonArray =  new JSONArray(response.body().string());
+                if(jsonArray.length()>0){
+                    List<EventMessageModel> list = new ArrayList<>();
+                    for(int i=0; i<jsonArray.length();i++){
+                        Utils.traces(gson.fromJson(jsonArray.get(i).toString(),EventMessageModel.class).toString());
+                        list.add(gson.fromJson(jsonArray.get(i).toString(),EventMessageModel.class));
                     }
+                    MessengerHelper.setChatQueue(list);
                 }
+
             }
         }catch (Exception e){
             Utils.traces(Utils.exceptionToString(e));

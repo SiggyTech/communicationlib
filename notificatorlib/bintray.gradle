@@ -13,8 +13,8 @@ artifacts {
 
 // Bintray
 bintray {
-    user = 'siggytech'
-    key = '3a0613ff63ffdbad757ba92a713288e7b3068aba'
+    user = ''
+    key = ''
 
     pkg {
         repo = 'utilities'

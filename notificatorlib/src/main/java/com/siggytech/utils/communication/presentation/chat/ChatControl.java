@@ -83,8 +83,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
     private CallBack callBack;
 
-
-
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack){
         super(context);
@@ -140,8 +138,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     public void initLayout(final Context context){
         inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
         mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_root,null,false);
-
-        //TODO change header to chatListView
 
         MessengerHelper.setChatListView(new ChatListView(
                 context,
@@ -301,7 +297,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = settings.edit();
         settings.edit().remove("pickFile").commit();
-        settings.edit().remove("pathToFile").commit();
         settings.edit().remove("fileType").commit();
         editor.commit();
     }
@@ -395,7 +390,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                             Toast.makeText(context,"CAN'T FIND FILE: "+MessengerHelper.getLastUri().getPath(),Toast.LENGTH_LONG).show();
                         }
                     } catch(Exception e) {
-                        Utils.traces("Pick file ex: "+(e!=null?e.getMessage():"null"));
+                        Utils.traces("Pick file ex: "+Utils.exceptionToString(e));
                     }
                 }
                 else
@@ -421,8 +416,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
             secs = secs % 60;
 
             ar.setDuration((int)(updatedTime / 1000));
-            if (mBinding.tvAudioText != null)
-                mBinding.tvAudioText.setText(String.format(Locale.US,"%02d:%02d", mins, secs));
+            mBinding.tvAudioText.setText(String.format(Locale.US,"%02d:%02d", mins, secs));
             customHandler.postDelayed(this, 0);
         }
 
@@ -492,6 +486,10 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         MessengerHelper.getChatListView().onResume();
     }
 
+    public void onStop(){
+        MessengerHelper.getChatListView().onStop();
+    }
+
     private void clearInstances() {
         ar = null;
         timerHandler = null;
@@ -508,7 +506,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         if(extras != null && extras.containsKey(MESSAGE_GROUP))
             setGroupView(Long.parseLong(extras.getString(MESSAGE_GROUP)), 10);
     }
-
 
 
     @Override
@@ -542,7 +539,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume(){
             if(MessengerHelper.getChatListView()!=null)
-            MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_RESUME);
+                MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_RESUME);
             Utils.traces("onResume de Lifecycle");
             chatControl.onResume();
 
@@ -551,22 +548,22 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
             if(MessengerHelper.getChatListView()!=null)
-            MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_PAUSE);
-            Utils.traces("onPause de Lifecycle");
+                MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_PAUSE);
         }
 
 
         @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
         public void onStop(){
             if(MessengerHelper.getChatListView()!=null)
-            MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_STOP);
+                MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_STOP);
             Utils.traces("onStop de Lifecycle");
+            chatControl.onStop();
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         public void onDestroy(){
             if(MessengerHelper.getChatListView()!=null)
-            MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+                MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_DESTROY);
             Utils.traces("onDestroy de Lifecycle");
             chatControl.onDestroy();
         }

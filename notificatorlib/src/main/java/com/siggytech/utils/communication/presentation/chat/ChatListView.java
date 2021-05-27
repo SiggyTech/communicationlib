@@ -1,10 +1,12 @@
 package com.siggytech.utils.communication.presentation.chat;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
@@ -61,7 +63,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private EventMessageModel eventMessageModel;
     private MessageModel model;
 
-    private Socket socket;
+    private Socket socketSend;
     private final String deviceToken;
     private Gson gson;
 
@@ -86,9 +88,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private Request requestCoinPrice;
     private WebSocketListener webSocketListenerMessenger;
     private MessageRaw messageRaw;
-    private ApiListener<TaskMessage> apiListener;
+    private final ApiListener<TaskMessage> apiListener;
 
     private Lifecycle.Event lifecycleEvent;
+    private InputMethodManager inputMethodManager;
 
 
     public ChatListView (Context context, long idGroup, String API_KEY,String deviceToken){
@@ -104,13 +107,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
         initLayout();
 
-        try {
-            startListenerWebSocket(context);
-            startSocketConnection();
-        } catch(Exception ex){
-            Utils.traces("2 On new ChatListView : "+Utils.exceptionToString(ex));
-        }
-
         addLastMessages();
         setAdapter();
     }
@@ -119,8 +115,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_recycler,null,false);
 
-
-        mBinding.header.tvTitle.setText(String.valueOf(idGroup));
+        try {
+            mBinding.header.tvTitle.setText(String.valueOf(idGroup));
+        }catch (Exception e){
+            Utils.traces("initLayout chatListView :"+Utils.exceptionToString(e));
+        }
 
         this.addView(mBinding.getRoot());
 
@@ -210,6 +209,12 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             public boolean isLoading() {
                 return isLoading;
             }
+
+            @Override
+            public void hideKeyboard() {
+                getInputMethodManager().hideSoftInputFromWindow(getWindowToken(), 0);
+                clearFocus();
+            }
         });
 
         Objects.requireNonNull(mBinding.recyclerChat.getLayoutManager()).scrollToPosition(Objects.requireNonNull(mBinding.recyclerChat.getAdapter()).getItemCount()-1);
@@ -220,6 +225,18 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         Objects.requireNonNull(mBinding.recyclerChat.getLayoutManager()).scrollToPosition(mBinding.recyclerChat.getAdapter().getItemCount()-1);
     }
 
+    /**
+     * Returns an {@link InputMethodManager}
+     *
+     * @return input method manager
+     */
+    public InputMethodManager getInputMethodManager() {
+        if (null == inputMethodManager) {
+            inputMethodManager = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        }
+        return inputMethodManager;
+    }
+
     public long getIdGroup() {
         return idGroup;
     }
@@ -227,10 +244,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     public void sendMessage(String from, String encryptedData, String msgPart, String type, long idGroup){
         try{
             long dateTime = Calendar.getInstance().getTimeInMillis();
-            if(socket==null)
-                startSocketConnection();
+            if(socketSend==null)
+                startSendSocketConnection();
 
-            socket.sendOnOpen(type, "{\n" +
+            socketSend.sendOnOpen(type, "{\n" +
                     "    \"from\": \"" + from + "\",\n" +
                     "    \"text\": \"" + encryptedData + "\", \n" +
                     "    \"dateTime\": \"" + dateTime + "\", \n" +
@@ -344,7 +361,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
             MessengerHelper.setGroupIndex(pos);
 
-           mBinding.header.tvTitle.setText(String.valueOf(idGroup));
+            ((Activity)context).runOnUiThread(() ->
+                mBinding.header.tvTitle.setText(String.valueOf(idGroup))
+            );
+
         }catch (Exception e){
             Utils.traces("setGroupView ChatControl ex: "+Utils.exceptionToString(e));
         }
@@ -420,9 +440,9 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         Utils.traces("ChatListView OnDestroy ");
         try{
             if (dbHelper!=null) dbHelper.close();
-            if (socket != null){
-                socket.checkQueue();
-                socket.terminate();
+            if (socketSend != null){
+                socketSend.checkQueue();
+                socketSend.terminate();
             }
             clearInstances();
         }catch (Exception e){
@@ -430,10 +450,22 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
     }
 
+    public void onStop(){
+        if(socketSend!=null) {
+            Utils.traces("socketSend is not null onStop");
+            socketSend.terminate();
+            socketSend = null;
+        }
+    }
+
     public void onResume(){
-        if(socket!=null)
-            socketState(socket.getState());
-        else startSocketConnection();
+        if(socketSend!=null) {
+            Utils.traces("socketSend is not null onResume");
+            socketSend.terminate();
+            socketSend = null;
+        }
+        startSendSocketConnection();
+        startListenerWebSocket(context);
     }
 
     public Lifecycle.Event getLifecycleEvent() {
@@ -444,15 +476,16 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         this.lifecycleEvent = lifecycleEvent;
     }
 
-    private void startSocketConnection(){
+    private void startSendSocketConnection(){
+        Utils.traces("startSendSocketConnection");
         if(policy==null) policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
         String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?iddevice=" + Siggy.getDeviceToken() + "&groupId=" + idGroup + "&API_KEY="+ apiKey;
 
-        socket = Socket.Builder.with(url).build().connect();
+        socketSend = Socket.Builder.with(url).build().connect();
 
-        socket.setOnChangeStateListener(new Socket.OnStateChangeListener() {
+        socketSend.setOnChangeStateListener(new Socket.OnStateChangeListener() {
             @Override
             public void onChange(Socket.State status) {
                 socketState(status);
@@ -463,17 +496,17 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private void socketState(Socket.State status){
         switch (status){
             case CONNECT_ERROR:
-                Utils.traces("CONNECT_ERROR SOCKET");
-                startSocketConnection();
+                Utils.traces("SEND - CONNECT_ERROR SOCKET");
+                startSendSocketConnection();
             case RECONNECTING:
-                Utils.traces("RECONNECTING SOCKET");
+                Utils.traces("SEND - RECONNECTING SOCKET");
             case CLOSED:
-                Utils.traces("CLOSED SOCKET");
+                Utils.traces("SEND - CLOSED SOCKET");
             case CLOSING:
-                Utils.traces("CLOSING SOCKET");
+                Utils.traces("SEND - CLOSING SOCKET");
             case OPEN:
-                Utils.traces("OPEN SOCKET");
-                socket.checkQueue();
+                Utils.traces("SEND - OPEN SOCKET");
+                socketSend.checkQueue();
 
         }
     }
@@ -496,7 +529,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             if(!state){
                 messengerWebSocketConnection();
             }
-
         }
     }
 
@@ -570,8 +602,8 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 }
 
                 @Override
-                public void onFailure(@NonNull WebSocket webSocket, Throwable t, Response response) {
-                    Utils.traces("messengerWebSocketConnection: onFailure: "+t!=null?t.getMessage():"Throwable null");
+                public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
+                    Utils.traces(Utils.exceptionToString((Exception) t));
                     setHeaderSubtitle(t.getMessage());
                     messengerWebSocketConnection();
                 }
@@ -588,8 +620,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void setHeaderSubtitle(String text) {
         try {
-            if (mBinding != null)
-                mBinding.header.tvSubtitle.setText(text);
+            ((Activity)context).runOnUiThread(() -> {
+                if (mBinding != null)
+                    mBinding.header.tvSubtitle.setText(text);
+            });
+
         }catch (Exception e ){
             Utils.traces("ChatListView subtitle "+Utils.exceptionToString(e));
         }
@@ -637,10 +672,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         eventMessageModel = null;
         model = null;
         context = null;
-        socket = null;
+        socketSend = null;
         gson = null;
         dbHelper = null;
         apiKey = null;
+        inflater = null;
     }
 
 }

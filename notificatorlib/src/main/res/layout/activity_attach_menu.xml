@@ -1,94 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/color_transparent"
-    android:gravity="center_horizontal"
-    android:minWidth="600dp">
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardOptions"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardUseCompatPadding="true"
-        app:cardBackgroundColor="@color/bt_white">
-        <LinearLayout
+        android:layout_height="match_parent"
+        android:background="@color/color_transparent"
+        android:minWidth="600dp">
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center_horizontal">
-            <LinearLayout
-                android:id="@+id/lnCamera"
+            android:layout_gravity="center_vertical">
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardOptions"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="15dp">
-                <ImageView
-                    android:id="@+id/ivCamera"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_photo_camera_24dp" />
-                <TextView
-                    android:id="@+id/tvCameraTitle"
-                    android:layout_width="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="@color/bt_white"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toTopOf="@+id/cardCancel">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginLeft="10dp"
-                    android:text="@string/camera"
-                    android:textColor="@color/bt_black"/>
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/lnPhotoVideo"
-                android:layout_width="match_parent"
+                    android:padding="@dimen/margin_medium">
+
+                    <TextView
+                        android:id="@+id/tvCamera"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/margin_medium"
+                        android:layout_marginBottom="@dimen/margin_medium"
+                        android:textSize="@dimen/text_size_default"
+                        android:layout_marginStart="10dp"
+                        android:layout_marginLeft="10dp"
+                        android:text="@string/camera"
+                        android:textColor="@color/bt_black"
+                        app:drawableLeftCompat="@drawable/ic_photo_camera_24dp"
+                        app:drawableStartCompat="@drawable/ic_photo_camera_24dp"
+                        android:drawablePadding="@dimen/margin_default"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/tvPhoto"/>
+
+                    <TextView
+                        android:id="@+id/tvPhoto"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/margin_medium"
+                        android:layout_marginBottom="@dimen/margin_medium"
+                        android:textSize="@dimen/text_size_default"
+                        android:text="@string/photo"
+                        android:textColor="@color/bt_black"
+                        app:drawableLeftCompat="@drawable/ic_insert_photo_24dp"
+                        app:drawableStartCompat="@drawable/ic_insert_photo_24dp"
+                        android:drawablePadding="@dimen/margin_default"
+                        app:layout_constraintStart_toStartOf="@+id/tvCamera"
+                        app:layout_constraintEnd_toEndOf="@+id/tvCamera"
+                        app:layout_constraintTop_toBottomOf="@+id/tvCamera"
+                        app:layout_constraintBottom_toTopOf="@+id/tvVideo"/>
+
+                    <TextView
+                        android:id="@+id/tvVideo"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/margin_medium"
+                        android:layout_marginBottom="@dimen/margin_medium"
+                        android:textSize="@dimen/text_size_default"
+                        android:text="@string/video"
+                        android:textColor="@color/bt_black"
+                        app:drawableLeftCompat="@drawable/ic_baseline_videocam_24"
+                        app:drawableStartCompat="@drawable/ic_baseline_videocam_24"
+                        android:drawablePadding="@dimen/margin_default"
+                        app:layout_constraintStart_toStartOf="@+id/tvPhoto"
+                        app:layout_constraintEnd_toEndOf="@+id/tvPhoto"
+                        app:layout_constraintTop_toBottomOf="@+id/tvPhoto"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardCancel"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:padding="15dp">
-                <ImageView
-                    android:id="@+id/ivPhotoVideo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_insert_photo_24dp" />
-                <TextView
-                    android:id="@+id/tvPhotoVideoTitle"
-                    android:layout_width="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardUseCompatPadding="true"
+                app:cardBackgroundColor="@color/bt_white"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/cardOptions"
+                app:layout_constraintBottom_toBottomOf="parent">
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="16sp"
-                    android:layout_marginStart="10dp"
-                    android:layout_marginLeft="10dp"
-                    android:text="@string/photo_videos"
-                    android:textColor="@color/bt_black"/>
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:padding="@dimen/margin_default">
+                    <TextView
+                        android:id="@+id/tvCancel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/text_size_default"
+                        android:text="@string/cancel"
+                        android:textColor="@color/bt_black"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"/>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-    </androidx.cardview.widget.CardView>
-
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardCancel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardUseCompatPadding="true"
-        app:cardBackgroundColor="@color/bt_white">
-        <LinearLayout
-            android:id="@+id/lnCancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:padding="15dp">
-            <TextView
-                android:id="@+id/tvCancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:text="@string/cancel"
-                android:textColor="@color/bt_black"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
-</LinearLayout>
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>

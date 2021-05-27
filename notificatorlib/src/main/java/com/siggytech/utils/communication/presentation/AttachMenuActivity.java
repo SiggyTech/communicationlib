@@ -4,6 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,15 +17,15 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
 
 import com.siggytech.utils.communication.R;
+import com.siggytech.utils.communication.databinding.ActivityAttachMenuBinding;
 import com.siggytech.utils.communication.util.Conf;
 import com.siggytech.utils.communication.util.FilePath;
 import com.siggytech.utils.communication.util.Utils;
@@ -38,17 +41,16 @@ import static com.siggytech.utils.communication.util.DateUtil.getDateName;
  */
 public class AttachMenuActivity extends AppCompatActivity {
     private static final String TAG = AttachMenuActivity.class.getSimpleName();
-    private static final int ACTIVITY_START_CAMARA_APP = 0;
+    private static final int ACTIVITY_START_CAMERA_APP = 0;
 
     Context context = this;
+    private ActivityAttachMenuBinding mBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_attach_menu);
-
-        System.out.println("Package name: " + getApplicationContext().getPackageName());
+        mBinding = DataBindingUtil.setContentView(this,R.layout.activity_attach_menu);
 
         if(getWindow()!=null) {
             getWindow().setBackgroundDrawableResource(android.R.color.transparent);
@@ -58,54 +60,67 @@ public class AttachMenuActivity extends AppCompatActivity {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH, WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
         }
 
-        ImageView ivCamera = findViewById(R.id.ivCamera);
-        ivCamera.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
-        ImageView ivPhotoVideo = findViewById(R.id.ivPhotoVideo);
-        ivPhotoVideo.setColorFilter(Conf.CHAT_COLOR_COMPONENTS);
-        TextView tvCancel =  findViewById(R.id.tvCancel);
-        tvCancel.setTextColor(Conf.CHAT_COLOR_COMPONENTS);
+        setComponentsColor();
 
-        LinearLayout lnCamera = findViewById(R.id.lnCamera);
-        LinearLayout lnPhotoVideo = findViewById(R.id.lnPhotoVideo);
-        LinearLayout lnCancel = findViewById(R.id.lnCancel);
+        mBinding.tvCamera.setOnClickListener(this::takePhoto);
 
-        lnCamera.setOnClickListener(this::takePhoto);
-
-        lnPhotoVideo.setOnClickListener(v -> {
-            Intent chooser;
-          if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
-                chooser = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            else chooser = new Intent(Intent.ACTION_GET_CONTENT);
-            chooser.setType("image/*, video/*");
-            if (chooser.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(Intent.createChooser(chooser, "Select File"), SELECT_FILE);
-            }
+        mBinding.tvPhoto.setOnClickListener(v -> {
+           showChooser("image/*",R.string.select_photo);
         });
 
-        lnCancel.setOnClickListener(v -> finish());
+        mBinding.tvVideo.setOnClickListener(v -> {
+            showChooser("video/*",R.string.select_video);
+        });
+
+        mBinding.cardCancel.setOnClickListener(v -> finish());
+    }
+
+    private void showChooser(String type ,int titleRes){
+        Intent chooser;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+            chooser = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        else chooser = new Intent(Intent.ACTION_GET_CONTENT);
+        chooser.setType(type);
+        if (chooser.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(Intent.createChooser(chooser, getString(titleRes)), SELECT_FILE);
+        }
+    }
+
+    private void setComponentsColor() {
+        setTextViewDrawableColor(mBinding.tvCamera,Conf.CHAT_COLOR_COMPONENTS);
+        setTextViewDrawableColor(mBinding.tvPhoto,Conf.CHAT_COLOR_COMPONENTS);
+        setTextViewDrawableColor(mBinding.tvVideo,Conf.CHAT_COLOR_COMPONENTS);
+
+        mBinding.tvCancel.setTextColor(Conf.CHAT_COLOR_COMPONENTS);
 
         if(Conf.CHAT_DARK_MODE) {
-            CardView cardOptions = findViewById(R.id.cardOptions);
-            cardOptions.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
-            CardView cardCancel = findViewById(R.id.cardCancel);
-            cardCancel.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
-            TextView tvPhotoVideoTitle = findViewById(R.id.tvPhotoVideoTitle);
-            tvPhotoVideoTitle.setTextColor(getResources().getColor(R.color.textColorDark));
-            TextView tvCameraTitle = findViewById(R.id.tvCameraTitle);
-            tvCameraTitle.setTextColor(getResources().getColor(R.color.textColorDark));
+            mBinding.cardOptions.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
+            mBinding.cardCancel.setCardBackgroundColor(getResources().getColor(R.color.primaryLightColorDark));
+
+            mBinding.tvPhoto.setTextColor(getResources().getColor(R.color.textColorDark));
+            mBinding.tvVideo.setTextColor(getResources().getColor(R.color.textColorDark));
+            mBinding.tvCamera.setTextColor(getResources().getColor(R.color.textColorDark));
         }
 
+    }
+
+    private void setTextViewDrawableColor(TextView textView, int color) {
+        for (Drawable drawable : textView.getCompoundDrawables()) {
+            if (drawable != null) {
+                drawable.setColorFilter(new PorterDuffColorFilter(ContextCompat.getColor(textView.getContext(), color), PorterDuff.Mode.SRC_IN));
+            }
+        }
     }
 
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_OK){
+        if(requestCode == ACTIVITY_START_CAMERA_APP && resultCode == RESULT_OK){
             getContentResolver().notifyChange(MessengerHelper.getLastUri(), null);
             setPathToFile( Utils.MESSAGE_TYPE.PHOTO);
             finish();
-        }else if(requestCode == ACTIVITY_START_CAMARA_APP && resultCode == RESULT_CANCELED){
+        }else if(requestCode == ACTIVITY_START_CAMERA_APP && resultCode == RESULT_CANCELED){
             finish();
         }else if(requestCode == SELECT_FILE && data!=null){
             MessengerHelper.setLastUri(data.getData());
@@ -156,7 +171,7 @@ public class AttachMenuActivity extends AppCompatActivity {
             MessengerHelper.setLastUri(Uri.fromFile(file));
         }
         captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, MessengerHelper.getLastUri());
-        startActivityForResult(captureIntent, ACTIVITY_START_CAMARA_APP);
+        startActivityForResult(captureIntent, ACTIVITY_START_CAMERA_APP);
     }
 
     @Override

@@ -1,7 +1,7 @@
 <resources>
     <string name="new_message">New message</string>
     <string name="camera">Camera</string>
-    <string name="photo_videos">Photo and Videos</string>
+    <string name="photo">Photo</string>
     <string name="cancel">Cancel</string>
     <string name="not_supported">File not supported.</string>
 
@@ -34,4 +34,7 @@
     <string name="connected">Connected</string>
     <string name="closing">Closing</string>
     <string name="closed">Closed</string>
+    <string name="video">Video</string>
+    <string name="select_photo">Select Photo</string>
+    <string name="select_video">Select Video</string>
 </resources>

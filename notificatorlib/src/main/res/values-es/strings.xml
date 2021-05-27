@@ -2,7 +2,7 @@
 <resources>
     <string name="new_message">Nuevo mensaje</string>
     <string name="camera">Cámara</string>
-    <string name="photo_videos">Fotos y Videos</string>
+    <string name="photo">Fotografía</string>
     <string name="cancel">Cancelar</string>
     <string name="not_supported">Archivo no soportado</string>
     <string name="speech_detected">Speech detected!</string>
@@ -24,4 +24,7 @@
     <string name="connected">Conectado</string>
     <string name="closing">Cerrando conexión</string>
     <string name="closed">Conexión Cerrada</string>
+    <string name="video">Video</string>
+    <string name="select_photo">Select Photo</string>
+    <string name="select_video">Select Video</string>
 </resources>
