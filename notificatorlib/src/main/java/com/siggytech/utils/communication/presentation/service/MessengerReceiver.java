@@ -30,6 +30,7 @@ public class MessengerReceiver extends BroadcastReceiver {
                 Utils.traces("MessengerReceiver onReceive. "+Utils.exceptionToString(e));
             }
         }else if(intent.hasExtra(NEW_MESSAGE)){
+            Utils.traces("MessengerReceiver NEW_MESSAGE");
             if(MessengerHelper.getChatListView()!=null)
                 MessengerHelper.getChatListView().setGroupView(intent.getIntExtra(NEW_MESSAGE,0),10);
             else  Utils.traces("MessengerReceiver onReceive new message chatListView is null");

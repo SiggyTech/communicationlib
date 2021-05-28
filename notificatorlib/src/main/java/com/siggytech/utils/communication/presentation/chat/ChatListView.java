@@ -465,6 +465,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             socketSend = null;
         }
         startSendSocketConnection();
+        Utils.traces("context in onResume is "+(context==null?"null":"not null"));
         startListenerWebSocket(context);
     }
 
@@ -658,7 +659,12 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         messageRaw.setUserKey(apiKey);
         messageRaw.setSend(1);
 
-        if(dbHelper==null) dbHelper = new DbHelper(context);
+        Utils.traces("insertMessage context = "+(context==null?"null":"not null"));
+
+        if(dbHelper==null){
+            Utils.traces("dbHelper is null");
+            dbHelper = new DbHelper(context);
+        }
 
         return dbHelper.insertMessage(messageRaw);
     }
@@ -677,6 +683,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         dbHelper = null;
         apiKey = null;
         inflater = null;
+        messageRaw = null;
+        requestCoinPrice = null;
+        webSocketListenerMessenger = null;
+        messengerClient = null;
     }
 
 }

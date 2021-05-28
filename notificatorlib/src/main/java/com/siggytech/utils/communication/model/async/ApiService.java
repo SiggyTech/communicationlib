@@ -101,6 +101,8 @@ public class ApiService {
                 JSONObject jsonObject = new JSONObject(response.body().string());
                 deviceToken = jsonObject.getString("token");
                 FileUtil.writeToFile(DEVICE_TOKEN,deviceToken,context);
+            }else{
+                Utils.traces("Response registerDevice failed");
             }
         }finally {
             clientSSL = null;
@@ -161,6 +163,8 @@ public class ApiService {
             if (response.isSuccessful()) {
                 JSONObject jsonObject = new JSONObject(response.body().string());
                 taskMessage.setMessage(jsonObject.getString("message"));
+            }else{
+                Utils.traces("Response setFirebaseToken failed");
             }
 
         }catch (Exception e){
@@ -186,8 +190,8 @@ public class ApiService {
                     .post(body)
                     .build();
             Response response = clientSSL.build().newCall(request).execute();
-            if (response.isSuccessful()) {
 
+            if (response.isSuccessful()) {
                 JSONArray jsonArray =  new JSONArray(response.body().string());
                 if(jsonArray.length()>0){
                     List<EventMessageModel> list = new ArrayList<>();
@@ -197,10 +201,12 @@ public class ApiService {
                     }
                     MessengerHelper.setChatQueue(list);
                 }
-
+            }else{
+                Utils.traces("Response Get Queue chat failed");
             }
+
         }catch (Exception e){
-            Utils.traces(Utils.exceptionToString(e));
+            Utils.traces("Get Queue chat failed: "+Utils.exceptionToString(e));
             taskMessage.setMessage("Get Queue chat failed");
             taskMessage.setError(true);
             taskMessage.setException(e);
@@ -247,6 +253,37 @@ public class ApiService {
             Utils.traces("get ppt groups: "+Utils.exceptionToString(e));
         }
         finally {
+            gson = null;
+        }
+
+        return taskMessage;
+    }
+
+    public TaskMessage setFirebaseTokenPtt(PairRegisterModel model) {
+        TaskMessage taskMessage = new TaskMessage();
+        OkHttpClient.Builder clientSSL = getUnsafeOkHttpClient();
+        Gson gson =  Utils.getGson();
+        try {
+            RequestBody body = RequestBody.create(JSON, gson.toJson(model));
+            Request request = new Request.Builder()
+                    .url("http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/pairtoken")
+                    .post(body)
+                    .build();
+            Response response = clientSSL.build().newCall(request).execute();
+
+            if (response.isSuccessful()) {
+                JSONObject jsonObject = new JSONObject(response.body().string());
+                taskMessage.setMessage(jsonObject.getString("message"));
+            }else{
+                Utils.traces("Response Set pair token ptt failed");
+            }
+
+        }catch (Exception e){
+            taskMessage.setMessage("Set pair token ptt failed");
+            taskMessage.setError(true);
+            taskMessage.setException(e);
+        }finally {
+            clientSSL = null;
             gson = null;
         }
 

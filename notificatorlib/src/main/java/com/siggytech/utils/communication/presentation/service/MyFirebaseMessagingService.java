@@ -83,11 +83,10 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     Utils.traces("MyFirebaseMessagingService getChatListView is not null");
                     MessengerHelper.getChatListView().startListenerWebSocket(getApplicationContext());
                 }else Utils.traces("MyFirebaseMessagingService getChatListView is null");
-
             }
 
         }catch (Exception e){
-            Utils.traces(Utils.exceptionToString(e));
+            Utils.traces("MyFirebaseMessagingService: "+Utils.exceptionToString(e));
         }
     }
 

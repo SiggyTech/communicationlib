@@ -7,7 +7,8 @@ public class GroupModel {
     public long idGroup;
     @SerializedName("groupname")
     public String name;
-    public UserModel users;
+    public UserModel usersConnected;
+    public UserModel totalUsers;
 
     public GroupModel() {
     }

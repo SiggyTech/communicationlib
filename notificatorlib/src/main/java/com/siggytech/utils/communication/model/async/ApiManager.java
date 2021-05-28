@@ -48,4 +48,13 @@ public class ApiManager {
 
         return taskMessage;
     }
+
+    public TaskMessage setFirebaseTokenPtt(PairRegisterModel pairRegisterModel) {
+        Thread t = new Thread(() -> taskMessage = service.setFirebaseTokenPtt(pairRegisterModel));
+
+        t.start();
+        try { t.join(); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        return taskMessage;
+    }
 }

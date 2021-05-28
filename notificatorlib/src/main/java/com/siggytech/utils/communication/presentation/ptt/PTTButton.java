@@ -32,12 +32,15 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.res.ResourcesCompat;
 
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.siggytech.utils.communication.R;
 import com.siggytech.utils.communication.model.GroupModel;
 import com.siggytech.utils.communication.model.GroupRequestModel;
+import com.siggytech.utils.communication.model.PairRegisterModel;
 import com.siggytech.utils.communication.model.async.ApiAsyncTask;
 import com.siggytech.utils.communication.model.async.ApiEnum;
 import com.siggytech.utils.communication.model.async.ApiListener;
+import com.siggytech.utils.communication.model.async.ApiManager;
 import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.MessengerHelper;
 import com.siggytech.utils.communication.presentation.chat.CustomButtonAnimation;
@@ -165,6 +168,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                 break;
         }
 
+        setTokenPair();
+
         init();
 
         if(voiceDetection){
@@ -183,6 +188,24 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         getGroups();
 
         MessengerHelper.setPttButton(this);
+    }
+
+    private void setTokenPair() {
+        FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                        return;
+                    }
+
+                    new Thread(() -> {
+                        ApiManager apiManager = new ApiManager();
+                        TaskMessage message = apiManager.setFirebaseTokenPtt(new PairRegisterModel(Siggy.getDeviceToken(),task.getResult(), username));
+                        Utils.traces("Firebase Token: "+task.getResult());
+                        Log.e(TAG,"On Pair register: "+message.getMessage());
+                    }).start();
+
+                });
     }
 
 
@@ -213,8 +236,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private BroadcastReceiver mNetworkReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-            releaseTokenState();
+        public void onReceive(Context context, Intent intent) { releaseTokenState();
         }
     };
 
@@ -680,7 +702,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
             Intent i = new Intent(context, WebSocketPTTService.class);
             i.putExtra("username",username);
             i.putExtra("name",name);
-            i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup); //TODO
+            i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup);
             i.putExtra("imei",Siggy.getDeviceToken());
             i.putExtra("apiKey",API_KEY);
 
