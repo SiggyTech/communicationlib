@@ -36,9 +36,9 @@ public class Socket {
 
     public void checkQueue() {
         if(onOpenMessageQueue!=null && onOpenMessageQueue.size()>0){
-          Utils.traces("OnDestroy Queue size : "+onOpenMessageQueue.size());
+          Utils.traces("Queue size : "+onOpenMessageQueue.size());
           //TODO update send column on DbHelper
-        }else  Utils.traces("OnDestroy Queue null or empty");
+        }else  Utils.traces("Queue null or empty");
     }
 
     /**

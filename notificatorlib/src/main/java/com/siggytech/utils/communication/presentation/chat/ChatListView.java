@@ -69,7 +69,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private ChatRecyclerBinding mBinding;
     private LayoutInflater inflater;
-    private Context context;
     private long idGroup;
     private DbHelper dbHelper;
     private String apiKey;
@@ -96,23 +95,20 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     public ChatListView (Context context, long idGroup, String API_KEY,String deviceToken){
         super(context);
-        this.context = context;
-
         this.gson = Utils.getGson();
         this.idGroup = idGroup;
-        this.dbHelper = new DbHelper(context);
+        this.dbHelper = new DbHelper(getContext());
         this.apiKey = API_KEY;
         this.deviceToken = deviceToken;
         this.apiListener = getApiListener();
 
         initLayout();
-
         addLastMessages();
         setAdapter();
     }
 
     private void initLayout() {
-        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_recycler,null,false);
 
         try {
@@ -181,11 +177,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     }
 
     private void setAdapter(){
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getContext());
         linearLayoutManager.setStackFromEnd(true);
         mBinding.recyclerChat.setLayoutManager(linearLayoutManager);
         mBinding.recyclerChat.setHasFixedSize(true);
-        mBinding.recyclerChat.setAdapter(new CustomAdapterBubble(lsChat,context));
+        mBinding.recyclerChat.setAdapter(new CustomAdapterBubble(lsChat,getContext()));
         mBinding.recyclerChat.addOnScrollListener(new PaginationScrollListener(linearLayoutManager) {
             @Override
             protected void loadMoreItems() {
@@ -286,7 +282,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     public void callToBase64(MessageModel messageModel){
         try{
-            new CallTask(context,this).execute(messageModel);
+            new CallTask(getContext(),this).execute(messageModel);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -331,14 +327,14 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private String getGenericMessage(String type){
         switch (type){
             case Utils.MESSAGE_TYPE.AUDIO:
-                return context.getString(R.string.audio_message);
+                return getContext().getString(R.string.audio_message);
             case Utils.MESSAGE_TYPE.VIDEO:
-                return context.getString(R.string.video_message);
+                return getContext().getString(R.string.video_message);
             case Utils.MESSAGE_TYPE.PHOTO:
-                return context.getString(R.string.image_message);
+                return getContext().getString(R.string.image_message);
             case Utils.MESSAGE_TYPE.FILE:
             default:
-                return context.getString(R.string.file_message);
+                return getContext().getString(R.string.file_message);
 
         }
     }
@@ -361,7 +357,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
             MessengerHelper.setGroupIndex(pos);
 
-            ((Activity)context).runOnUiThread(() ->
+            ((Activity)getContext()).runOnUiThread(() ->
                 mBinding.header.tvTitle.setText(String.valueOf(idGroup))
             );
 
@@ -388,7 +384,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                         , raw.getMine() != 0));
             }
             if(notify) {
-                mBinding.recyclerChat.setAdapter(new CustomAdapterBubble(lsChat, context));
+                mBinding.recyclerChat.setAdapter(new CustomAdapterBubble(lsChat, getContext()));
                 Objects.requireNonNull(mBinding.recyclerChat.getLayoutManager()).scrollToPosition(Objects.requireNonNull(mBinding.recyclerChat.getAdapter()).getItemCount() - 1);
             }
         } catch (Exception e) {
@@ -465,8 +461,8 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             socketSend = null;
         }
         startSendSocketConnection();
-        Utils.traces("context in onResume is "+(context==null?"null":"not null"));
-        startListenerWebSocket(context);
+        Utils.traces("context in onResume is "+(getContext()==null?"null":"not null"));
+        startListenerWebSocket();
     }
 
     public Lifecycle.Event getLifecycleEvent() {
@@ -512,9 +508,9 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
     }
 
-    public void startListenerWebSocket(Context context) {
+    public void startListenerWebSocket() {
 
-        if(this.context==null) this.context = context;
+        Utils.traces("startListenerWebSocket getContext is "+(getContext()==null?"null":"not null"));
 
         if(MessengerHelper.getChatSocket()==null){
             Utils.traces("startListenerWebSocket es null");
@@ -554,7 +550,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 @Override
                 public void onOpen(@NonNull WebSocket webSocket, @NonNull Response response) {
                     Utils.traces("messengerWebSocketConnection onOpen");
-                    setHeaderSubtitle(context.getString(R.string.connected));
+                    setHeaderSubtitle(getContext().getString(R.string.connected));
                 }
 
                 @Override
@@ -570,10 +566,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                             Utils.traces("messengerWebSocketConnection onMessage error on bd insert");
                         }
 
-                        Intent intent = new Intent(context, MessengerReceiver.class);
+                        Intent intent = new Intent(getContext(), MessengerReceiver.class);
                         intent.putExtra(MESSAGE_CHAT, text);
                         intent.putExtra(MESSAGE_CHAT_ID, id);
-                        context.sendBroadcast(intent);
+                        getContext().sendBroadcast(intent);
                     } catch (Exception ex) {
                         Utils.traces("messengerWebSocketConnection onMessage: "+ Utils.exceptionToString(ex));
                     }
@@ -593,13 +589,13 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                     webSocket.close(1000, null);
                     webSocket.cancel();
                     Utils.traces("messengerWebSocketConnection onClosing code:"+code+" reason: "+reason);
-                    setHeaderSubtitle(context.getString(R.string.closing));
+                    setHeaderSubtitle(getContext().getString(R.string.closing));
                 }
 
                 @Override
                 public void onClosed(@NonNull WebSocket webSocket, int code, @NonNull String reason) {
                     Utils.traces("messengerWebSocketConnection onClosed code:"+code+" reason: "+reason);
-                    setHeaderSubtitle(context.getString(R.string.closed));
+                    setHeaderSubtitle(getContext().getString(R.string.closed));
                 }
 
                 @Override
@@ -621,7 +617,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void setHeaderSubtitle(String text) {
         try {
-            ((Activity)context).runOnUiThread(() -> {
+            ((Activity)getContext()).runOnUiThread(() -> {
                 if (mBinding != null)
                     mBinding.header.tvSubtitle.setText(text);
             });
@@ -634,7 +630,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private void getQueue(){
         try {
             if (dbHelper == null){
-                dbHelper = new DbHelper(context);
+                dbHelper = new DbHelper(getContext());
             }
             long timeMark = dbHelper.getTimeMark(9999,apiKey);
             Utils.traces("Chat TIME MARK: "+timeMark);
@@ -659,11 +655,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         messageRaw.setUserKey(apiKey);
         messageRaw.setSend(1);
 
-        Utils.traces("insertMessage context = "+(context==null?"null":"not null"));
+        Utils.traces("insertMessage context = "+(getContext()==null?"null":"not null"));
 
         if(dbHelper==null){
             Utils.traces("dbHelper is null");
-            dbHelper = new DbHelper(context);
+            dbHelper = new DbHelper(getContext());
         }
 
         return dbHelper.insertMessage(messageRaw);
@@ -677,7 +673,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
         eventMessageModel = null;
         model = null;
-        context = null;
         socketSend = null;
         gson = null;
         dbHelper = null;

@@ -75,13 +75,13 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     Utils.traces("MyFirebaseMessagingService web socket still alive");
                 }else {
                     Utils.traces("MyFirebaseMessagingService web socket dead, begin startListenerWebSocket");
-                    MessengerHelper.getChatListView().startListenerWebSocket(this);
+                    MessengerHelper.getChatListView().startListenerWebSocket();
                 }
             }else {
                 Utils.traces("MyFirebaseMessagingService chatSocket is null");
                 if(MessengerHelper.getChatListView()!=null){
                     Utils.traces("MyFirebaseMessagingService getChatListView is not null");
-                    MessengerHelper.getChatListView().startListenerWebSocket(getApplicationContext());
+                    MessengerHelper.getChatListView().startListenerWebSocket();
                 }else Utils.traces("MyFirebaseMessagingService getChatListView is null");
             }
 
