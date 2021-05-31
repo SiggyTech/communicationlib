@@ -239,6 +239,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     public void sendMessage(String from, String encryptedData, String msgPart, String type, long idGroup){
         try{
+            Utils.traces(TAG+" sendMessage");
             long dateTime = Calendar.getInstance().getTimeInMillis();
             if(socketSend==null)
                 startSendSocketConnection();
@@ -292,6 +293,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     public void onTaskCompleted(TaskMessage result) {
         try {
             if (result != null && result.getMessageModel() != null) {
+                Utils.traces(TAG+" onTaskCompleted sendMessage");
                 sendMessage(result.getMessageModel().getFrom()
                         ,AESUtils.encText(gson.toJson(result.getMessageModel()))
                         , AESUtils.encText(getGenericMessage(result.getMessageModel().getType()))
@@ -305,6 +307,8 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     public void onMessageReceiver(String text,long id){
         try {
+
+            Utils.traces(TAG+" onMessageReceiver");
             if(gson==null) gson = Utils.getGson();
 
             eventMessageModel = null;
@@ -375,6 +379,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void addRawList(List<MessageRaw> list, boolean notify){
         try{
+            Utils.traces(TAG+" addRawList");
             lsChat.clear();
             for(MessageRaw raw : list) {
                 lsChat.add(new ChatModel(raw.getId()
@@ -393,7 +398,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     }
 
     private void loadNextPage() {
-        Log.e(TAG, "loadNextPage: " + currentPage+ "; TOTAL_PAGES: "+TOTAL_PAGES);
+        Utils.traces(TAG+ " loadNextPage: " + currentPage+ "; TOTAL_PAGES: "+TOTAL_PAGES);
 
         List<MessageRaw> list = dbHelper.getMessage(
                 idGroup
@@ -454,7 +459,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
         if(MessengerHelper.getChatListenerSocket()!=null){
             MessengerHelper.getChatListenerSocket().cancel();
-            MessengerHelper.clearChatSocket();
         }
     }
 
@@ -512,13 +516,15 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
     }
 
-
-
     /**
      * Manages messenger web socket connection
      */
     public void startListenerWebSocket(){
         try {
+
+            if(MessengerHelper.getChatListenerSocket()!=null){
+                MessengerHelper.getChatListenerSocket().cancel();
+            }
 
             getQueue();
 
@@ -585,7 +591,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
                 @Override
                 public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
-                    Utils.traces(Utils.exceptionToString((Exception) t));
+                    Utils.traces("messengerWebSocketConnection onFailure: "+Utils.exceptionToString((Exception) t));
                     setHeaderSubtitle(t.getMessage());
                 }
             };

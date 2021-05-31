@@ -229,8 +229,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                             timeSwapBuff = 0L;
 
                             boolean deleted = deleteFile(audioFile);
-                            if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!");
-
+                            if (!deleted) Utils.traces(TAG+" CAN'T DELETE AUDIO FILE!");
 
                             mBinding.ivAdd.setVisibility(VISIBLE);
                             mBinding.etOutBox.setVisibility(VISIBLE);
@@ -289,6 +288,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     }
 
     private void clearPersistentVariables(){
+        Utils.traces(TAG+" clearPersistentVariables");
         isPickingFile  = true; //to start timer looking for a file to send.
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
         SharedPreferences.Editor editor = settings.edit();
@@ -379,11 +379,11 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                             isPickingFile = false;
                             if (deleteFile && MessengerHelper.getLastUri().getPath().contains(Conf.ROOT_FOLDER)) {
                                 boolean deleted = deleteFile(file);
-                                if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!");
+                                if (!deleted) Utils.traces(TAG+" CAN'T DELETE FILE!");
                             }
                         }else{
                             isPickingFile = false;
-                            Toast.makeText(getContext(),"CAN'T FIND FILE: "+MessengerHelper.getLastUri().getPath(),Toast.LENGTH_LONG).show();
+                            Toast.makeText(getContext(),"File doesn't exist: "+MessengerHelper.getLastUri().getPath(),Toast.LENGTH_LONG).show();
                         }
                     } catch(Exception e) {
                         Utils.traces("Pick file ex: "+Utils.exceptionToString(e));
