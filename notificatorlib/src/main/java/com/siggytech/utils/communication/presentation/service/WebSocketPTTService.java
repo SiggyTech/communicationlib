@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
@@ -31,7 +32,7 @@ public class WebSocketPTTService extends Service {
     public static final String MESSAGE_PTT = "messagePtt";
     private OkHttpClient pttClient;
     private WebSocket webSocket;
-    private String name,imei,idGroup, apiKey, username;
+    private String imei,idGroup, apiKey, username;
     
     public WebSocketPTTService() {
     }
@@ -50,7 +51,6 @@ public class WebSocketPTTService extends Service {
             Bundle extras = intent.getExtras();
             if (extras != null) {
                 username = extras.getString("username");
-                name = extras.getString("name");
                 idGroup = String.valueOf(extras.getLong("idGroup"));
                 imei = extras.getString("imei");
                 apiKey = extras.getString("apiKey");
@@ -110,23 +110,23 @@ public class WebSocketPTTService extends Service {
         try {
             pttClient = new OkHttpClient();
 
-            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.imei + "&groupId=" + this.idGroup + "&API_KEY=" + this.apiKey + "&clientName=" + this.name + "&username=" + this.username;
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.imei + "&groupId=" + this.idGroup + "&API_KEY=" + this.apiKey + "&clientName=" + this.username + "&username=" + this.username;
             Request requestCoinPrice = new Request.Builder().url(url).build();
 
             WebSocketListener webSocketListener = new WebSocketListener() {
                 @Override
-                public void onOpen(WebSocket webSocket, Response response) {
+                public void onOpen(@NonNull WebSocket webSocket, Response response) {
                     Utils.traces("PttWebSocketConnection onOpen");
                 }
 
                 @Override
-                public void onMessage(WebSocket webSocket, String text) {
+                public void onMessage(@NonNull WebSocket webSocket, String text) {
                     Log.e(TAG, "MESSAGE String: " + text);
                     //here receive the message when the token state is changed.
                 }
 
                 @Override
-                public void onMessage(WebSocket webSocket, ByteString bytes) {
+                public void onMessage(@NonNull WebSocket webSocket, ByteString bytes) {
                     try {
                         Intent intent = new Intent(WebSocketPTTService.this, MessengerReceiver.class);
                         intent.putExtra(MESSAGE_PTT, bytes.toByteArray());
@@ -152,7 +152,7 @@ public class WebSocketPTTService extends Service {
                  * be made
                  */
                 @Override
-                public void onClosed(WebSocket webSocket, int code, String reason) {
+                public void onClosed(@NonNull WebSocket webSocket, int code, String reason) {
                     Utils.traces("PttWebSocketConnection onClosed code: "+code+" reason: "+reason);
                 }
 
@@ -162,7 +162,7 @@ public class WebSocketPTTService extends Service {
                  * to this listener will be made
                  */
                 @Override
-                public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+                public void onFailure(@NonNull WebSocket webSocket, Throwable t, Response response) {
                     pttWebSocketConnection();
                 }
             };

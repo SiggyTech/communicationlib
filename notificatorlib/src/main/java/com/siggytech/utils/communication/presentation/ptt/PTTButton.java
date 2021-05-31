@@ -115,7 +115,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private String deviceToken;
     private String API_KEY;
-    private String name;
+
 
     private final Context context;
     private String username;
@@ -133,11 +133,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private final CallBack callBack;
 
-    public PTTButton(Context context, String API_KEY, String nameClient, String username, int quality, boolean voiceDetection, CallBack callBack) {
+    public PTTButton(Context context, String API_KEY, String username, int quality, boolean voiceDetection, CallBack callBack) {
         super(context);
         this.context = context;
         this.API_KEY = API_KEY;
-        this.name = nameClient;
         this.username = username;
         this.voiceDetectionActivated = voiceDetection;
         this.deviceToken = Siggy.getDeviceToken();
@@ -425,7 +424,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
             stopVoiceActivation();
         }
 
-        String message = "{ \"name\": \"" + this.name + "\",\"imei\": \""+ Siggy.getDeviceToken() +"\", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": \""+ MessengerHelper.getPttGroupList().get(groupIndex).idGroup +"\" }";
+        String message = "{ \"name\": \"" + this.username + "\",\"imei\": \""+ Siggy.getDeviceToken() +"\", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": \""+ MessengerHelper.getPttGroupList().get(groupIndex).idGroup +"\" }";
 
         Thread streamThread = new Thread(new MyRunnable(message) {
 
@@ -627,7 +626,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
      */
     private boolean requestToken(){
         HttpClient httpClient = new DefaultHttpClient();
-        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY="+ API_KEY +"&clientName=" + name + "&username=" + username;
+        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY="+ API_KEY +"&clientName=" + username + "&username=" + username;
 
         HttpPost httpPost = new HttpPost(url);
         List<NameValuePair> params = new ArrayList<>();
@@ -663,7 +662,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         if(Utils.isConnect(context)) {
             try {
                 HttpClient httpClient = new DefaultHttpClient();
-                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY=" + API_KEY + "&clientName=" + name + "&username=" + username;
+                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY=" + API_KEY + "&clientName=" + username + "&username=" + username;
 
                 HttpPost httpPost = new HttpPost(url);
                 List<NameValuePair> params = new ArrayList<>();
@@ -701,7 +700,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         if(!Utils.isServiceRunning(WebSocketPTTService.class,context)){
             Intent i = new Intent(context, WebSocketPTTService.class);
             i.putExtra("username",username);
-            i.putExtra("name",name);
             i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup);
             i.putExtra("imei",Siggy.getDeviceToken());
             i.putExtra("apiKey",API_KEY);

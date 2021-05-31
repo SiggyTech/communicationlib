@@ -183,13 +183,13 @@ public class Socket {
             JSONObject text = new JSONObject();
             text.put("event", event);
             text.put("data", new JSONObject(data));
-            Log.v(TAG,"Try to send data "+text.toString());
+            Utils.traces(TAG+ "Try to send data "+text.toString());
             return realWebSocket.send(text.toString());
         } catch (JSONException e) {
-            Log.e(TAG,"Try to send data with wrong JSON format, data: "+data);
+            Utils.traces(TAG+" Try to send data with wrong JSON format, data: "+data);
         }
         catch (Exception ex){
-            Log.e(TAG, "Error on Socket.send: " + ex.getMessage());
+            Utils.traces(TAG+" Error on Socket.send: " + ex.getMessage());
         }
         return false;
     }

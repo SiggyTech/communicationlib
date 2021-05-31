@@ -184,7 +184,6 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 this,
                 API_KEY,
                 username,
-                Build.MODEL,
                 PTTButton.AudioQuality.LOW,
                 false,
                 new PTTButton.CallBack() {
@@ -244,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         ch = new ChatControl(
                 this,
                 API_KEY,
-                Build.MODEL, //username
+                username,
                 getLifecycle(),
                 new ChatControl.CallBack() {
                     @Override

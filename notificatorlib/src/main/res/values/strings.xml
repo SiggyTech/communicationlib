@@ -1,7 +1,7 @@
 <resources>
     <string name="new_message">New message</string>
     <string name="camera">Camera</string>
-    <string name="photo">Photo</string>
+    <string name="gallery">Gallery</string>
     <string name="cancel">Cancel</string>
     <string name="not_supported">File not supported.</string>
 

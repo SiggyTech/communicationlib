@@ -296,7 +296,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 Utils.traces(TAG+" onTaskCompleted sendMessage");
                 sendMessage(result.getMessageModel().getFrom()
                         ,AESUtils.encText(gson.toJson(result.getMessageModel()))
-                        , AESUtils.encText(getGenericMessage(result.getMessageModel().getType()))
+                        ,getGenericMessage(result.getMessageModel().getType())
                         ,result.getMessageModel().getType(),
                         idGroup);
             }
@@ -547,7 +547,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 @Override
                 public void onMessage(@NonNull WebSocket webSocket, @NonNull String text) {
                     try {
-                        Utils.traces("messengerWebSocketConnection onMessage");
+                        Utils.traces("messengerWebSocketConnection onMessage: "+text);
                         eventMessageModel = null;
                         if(gson==null) gson = Utils.getGson();
                         eventMessageModel = gson.fromJson(text, EventMessageModel.class);

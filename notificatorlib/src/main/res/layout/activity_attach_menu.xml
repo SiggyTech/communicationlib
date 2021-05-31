@@ -57,7 +57,7 @@
                         android:layout_marginTop="@dimen/margin_medium"
                         android:layout_marginBottom="@dimen/margin_medium"
                         android:textSize="@dimen/text_size_default"
-                        android:text="@string/photo"
+                        android:text="@string/gallery"
                         android:textColor="@color/bt_black"
                         app:drawableLeftCompat="@drawable/ic_insert_photo_24dp"
                         app:drawableStartCompat="@drawable/ic_insert_photo_24dp"
