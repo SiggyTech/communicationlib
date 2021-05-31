@@ -68,6 +68,7 @@ public class AttachMenuActivity extends AppCompatActivity {
            showChooser("image/*",R.string.select_photo);
         });
 
+
         mBinding.tvVideo.setOnClickListener(v -> {
             showChooser("video/*",R.string.select_video);
         });

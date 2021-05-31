@@ -9,8 +9,6 @@ import androidx.lifecycle.Lifecycle;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.siggytech.utils.communication.model.DataMessageModel;
-import com.siggytech.utils.communication.model.EventMessageModel;
 import com.siggytech.utils.communication.model.PairRegisterModel;
 import com.siggytech.utils.communication.model.async.ApiManager;
 import com.siggytech.utils.communication.model.async.TaskMessage;
@@ -62,27 +60,6 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
                         showNotification(title,getMessageBody(body, part), idGroup);
                 }
-            }
-
-            if(MessengerHelper.getChatSocket()!=null){
-                Utils.traces("MyFirebaseMessagingService socket is not null");
-
-                EventMessageModel eventMessageModel = new EventMessageModel();
-                eventMessageModel.setEvent("test");
-                eventMessageModel.setData(new DataMessageModel());
-                boolean state = MessengerHelper.getChatSocket().send(Utils.getGson().toJson(eventMessageModel));
-                if(state){
-                    Utils.traces("MyFirebaseMessagingService web socket still alive");
-                }else {
-                    Utils.traces("MyFirebaseMessagingService web socket dead, begin startListenerWebSocket");
-                    MessengerHelper.getChatListView().startListenerWebSocket();
-                }
-            }else {
-                Utils.traces("MyFirebaseMessagingService chatSocket is null");
-                if(MessengerHelper.getChatListView()!=null){
-                    Utils.traces("MyFirebaseMessagingService getChatListView is not null");
-                    MessengerHelper.getChatListView().startListenerWebSocket();
-                }else Utils.traces("MyFirebaseMessagingService getChatListView is null");
             }
 
         }catch (Exception e){

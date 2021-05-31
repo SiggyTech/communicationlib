@@ -71,18 +71,18 @@ public class MessengerHelper {
         lastUri = null;
     }
 
-    private static WebSocket chatSocket;
+    private static WebSocket chatListenerSocket;
 
-    public static WebSocket getChatSocket(){
-        return chatSocket;
+    public static WebSocket getChatListenerSocket(){
+        return chatListenerSocket;
     }
 
-    public static void setChatSocket(WebSocket ws){
-        chatSocket = ws;
+    public static void setChatListenerSocket(WebSocket ws){
+        chatListenerSocket = ws;
     }
 
     public static void clearChatSocket(){
-        chatSocket = null;
+        chatListenerSocket = null;
     }
 
     private static List<EventMessageModel> chatQueueList;

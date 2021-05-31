@@ -84,7 +84,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     //listener socket
     private OkHttpClient messengerClient;
-    private Request requestCoinPrice;
+    private Request requestSocketListener;
     private WebSocketListener webSocketListenerMessenger;
     private MessageRaw messageRaw;
     private final ApiListener<TaskMessage> apiListener;
@@ -452,6 +452,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             socketSend.terminate();
             socketSend = null;
         }
+        if(MessengerHelper.getChatListenerSocket()!=null){
+            MessengerHelper.getChatListenerSocket().cancel();
+            MessengerHelper.clearChatSocket();
+        }
     }
 
     public void onResume(){
@@ -508,31 +512,12 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         }
     }
 
-    public void startListenerWebSocket() {
 
-        Utils.traces("startListenerWebSocket getContext is "+(getContext()==null?"null":"not null"));
-
-        if(MessengerHelper.getChatSocket()==null){
-            Utils.traces("startListenerWebSocket es null");
-            messengerWebSocketConnection();
-        }else{
-            if(gson == null) gson = Utils.getGson();
-            eventMessageModel = null;
-            eventMessageModel = new EventMessageModel();
-            eventMessageModel.setEvent("test");
-
-            boolean state = MessengerHelper.getChatSocket().send(gson.toJson(eventMessageModel));
-            Utils.traces("startListenerWebSocket no es null, state: "+state);
-            if(!state){
-                messengerWebSocketConnection();
-            }
-        }
-    }
 
     /**
      * Manages messenger web socket connection
      */
-    private void messengerWebSocketConnection(){
+    public void startListenerWebSocket(){
         try {
 
             getQueue();
@@ -542,8 +527,8 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
             String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?iddevice=" + this.deviceToken + "&groupId=9999" + "&API_KEY=" + this.apiKey;
 
-            requestCoinPrice = null;
-            requestCoinPrice = new Request.Builder().url(url).build();
+            requestSocketListener = null;
+            requestSocketListener = new Request.Builder().url(url).build();
 
             webSocketListenerMessenger = null;
             webSocketListenerMessenger = new WebSocketListener() {
@@ -602,11 +587,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
                     Utils.traces(Utils.exceptionToString((Exception) t));
                     setHeaderSubtitle(t.getMessage());
-                    messengerWebSocketConnection();
                 }
             };
 
-            MessengerHelper.setChatSocket(messengerClient.newWebSocket(requestCoinPrice, webSocketListenerMessenger));
+            MessengerHelper.setChatListenerSocket(messengerClient.newWebSocket(requestSocketListener, webSocketListenerMessenger));
             Utils.traces("messengerWebSocketConnection: set websocket");
             //messengerClient.dispatcher().executorService().shutdown();
 
@@ -679,7 +663,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         apiKey = null;
         inflater = null;
         messageRaw = null;
-        requestCoinPrice = null;
+        requestSocketListener = null;
         webSocketListenerMessenger = null;
         messengerClient = null;
     }

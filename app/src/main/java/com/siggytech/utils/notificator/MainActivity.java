@@ -174,7 +174,6 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             initSiggy();
         } else {
-            //TODO ask permission again or exit app
             Toast.makeText(MainActivity.this, "Missing implement.", Toast.LENGTH_LONG).show();
         }
     }

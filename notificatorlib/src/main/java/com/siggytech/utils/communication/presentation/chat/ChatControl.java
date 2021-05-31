@@ -5,7 +5,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -18,7 +17,6 @@ import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import androidx.annotation.RequiresApi;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -78,12 +76,11 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     public String api_key;
     public String userName;
 
-    private final Context context;
     private Gson gson;
 
     private CallBack callBack;
 
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+
     public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack){
         super(context);
 
@@ -92,7 +89,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         this.api_key = API_KEY;
         this.deviceToken = Siggy.getDeviceToken();
         this.userName = userName;
-        this.context = context;
         this.gson = new Gson();
         this.callBack = callBack;
 
@@ -106,7 +102,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         groupList.add(new GroupModel(9999, "Every Group"));
         MessengerHelper.setGroupList(groupList);
 
-        initLayout(context);
+        initLayout(getContext());
         getGroups();
         setTokenPair();
     }
@@ -294,7 +290,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
     private void clearPersistentVariables(){
         isPickingFile  = true; //to start timer looking for a file to send.
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
         SharedPreferences.Editor editor = settings.edit();
         settings.edit().remove("pickFile").commit();
         settings.edit().remove("fileType").commit();
@@ -348,7 +344,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         @Override
         public void run() {
             if(isPickingFile) {
-                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
                 boolean pickFile = settings.getBoolean("pickFile", true);
                 boolean deleteFile = true;
                 if(!pickFile){
@@ -357,37 +353,37 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
                         File file = new File(MessengerHelper.getLastUri().getPath());
                         if(!file.exists())
-                            file = new File(FilePath.getPath(context, MessengerHelper.getLastUri()));
+                            file = new File(FilePath.getPath(getContext(), MessengerHelper.getLastUri()));
 
                         if(file.exists()) {
                             MessageModel messageModel = new MessageModel();
                             if (Utils.MESSAGE_TYPE.PHOTO.equals(fileType)) {
-                                messageModel.setMessage(fileToBase64(compressImage(context,MessengerHelper.getLastUri())));
+                                messageModel.setMessage(fileToBase64(compressImage(getContext(),MessengerHelper.getLastUri())));
                             }
                             messageModel.setType(fileType);
                             messageModel.setFrom(userName);
 
                             if (Utils.MESSAGE_TYPE.VIDEO.equals(fileType)) {
-                                String destPath = Conf.ROOT_FOLDER + getDateName() + getFileExt(file.getName());
-                                compressVideo(file.getAbsolutePath(),destPath,messageModel);
+                                String fileName = getDateName() + "." + getFileExt(file.getName());
+                                compressVideo(file.getAbsolutePath(),fileName,messageModel);
                                 deleteFile = false;
                             } else {
                                 MessengerHelper.getChatListView().sendMessage(
                                         userName,
                                         AESUtils.encText(gson.toJson(messageModel)),
-                                        AESUtils.encText(context.getString(R.string.image_message)),
+                                        AESUtils.encText(getContext().getString(R.string.image_message)),
                                         fileType,
                                         MessengerHelper.getGroupList().get(MessengerHelper.getIndexGroup()).idGroup);
                             }
 
                             isPickingFile = false;
-                            if (deleteFile && MessengerHelper.getLastUri().getPath().contains("SIGGI")) {
+                            if (deleteFile && MessengerHelper.getLastUri().getPath().contains(Conf.ROOT_FOLDER)) {
                                 boolean deleted = deleteFile(file);
                                 if (!deleted) Log.d(TAG, "CAN'T DELETE FILE!");
                             }
                         }else{
                             isPickingFile = false;
-                            Toast.makeText(context,"CAN'T FIND FILE: "+MessengerHelper.getLastUri().getPath(),Toast.LENGTH_LONG).show();
+                            Toast.makeText(getContext(),"CAN'T FIND FILE: "+MessengerHelper.getLastUri().getPath(),Toast.LENGTH_LONG).show();
                         }
                     } catch(Exception e) {
                         Utils.traces("Pick file ex: "+Utils.exceptionToString(e));
@@ -423,21 +419,25 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     };
 
 
-    private void compressVideo(String filePath, String destPath, MessageModel messageModel){
-        VideoCompress.compressVideoLow(filePath, destPath, new VideoCompress.CompressListener() {
+    private void compressVideo(String filePath, String fileName, MessageModel messageModel){
+        VideoCompress.compressVideoLow(filePath, filePath, new VideoCompress.CompressListener() {
             private ProgressDialog progressDialog;
 
             @Override
             public void onStart() {
-                progressDialog=new ProgressDialog(context);
-                progressDialog.setMessage(getContext().getString(R.string.wait));
-                progressDialog.setCanceledOnTouchOutside(false);
-                progressDialog.show();
+                try {
+                    progressDialog = new ProgressDialog(getContext());
+                    progressDialog.setMessage(getContext().getString(R.string.wait));
+                    progressDialog.setCanceledOnTouchOutside(false);
+                    progressDialog.show();
+                }catch (Exception e){
+                    Utils.traces("compressVideo onStart "+Utils.exceptionToString(e));
+                }
             }
 
             @Override
             public void onSuccess() {
-                File file = new File(destPath);
+                File file = FileUtil.getFile(Conf.ROOT_FOLDER,fileName);
                 messageModel.setFile(file);
                 MessengerHelper.getChatListView().callToBase64(messageModel);
                 progressDialog.dismiss();
@@ -445,7 +445,8 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
             @Override
             public void onFail() {
-                progressDialog.dismiss();
+                if(progressDialog!=null && progressDialog.isShowing())
+                    progressDialog.dismiss();
             }
 
             @Override
@@ -549,6 +550,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         public void onPause(){
             if(MessengerHelper.getChatListView()!=null)
                 MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_PAUSE);
+            Utils.traces("onPause de Lifecycle");
         }
 
 
