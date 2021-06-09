@@ -2,13 +2,15 @@ package com.siggytech.utils.communication.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 public class GroupModel {
     @SerializedName("idgroup")
     public long idGroup;
     @SerializedName("groupname")
     public String name;
-    public UserModel usersConnected;
-    public UserModel totalUsers;
+    public List<UserModel> usersConnected;
+    public List<UserModel> totalUsers;
 
     public GroupModel() {
     }

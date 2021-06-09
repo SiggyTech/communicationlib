@@ -10,7 +10,7 @@ public class Conf {
     //public static int SERVER_PORT = 7778;
     //public static int SERVER_WS_PORT = 8080;
     public static int SERVER_WS_PORT = 9005;
-    public static int SERVER_MSG_PORT = 8081;
+
     public static int TOKEN_PORT = 9004;
     //public static int TOKEN_PORT = 8082;
 

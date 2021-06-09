@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
     ChatControl ch;
 
-    boolean isChat = true;
+    boolean isChat = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
