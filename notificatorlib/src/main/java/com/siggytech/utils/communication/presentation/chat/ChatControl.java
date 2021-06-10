@@ -36,6 +36,7 @@ import com.siggytech.utils.communication.model.async.ApiManager;
 import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.AttachMenuActivity;
 import com.siggytech.utils.communication.presentation.MessengerHelper;
+import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.util.AESUtils;
 import com.siggytech.utils.communication.util.Conf;
@@ -468,7 +469,8 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     }
 
     public void deleteHistory(){
-        MessengerHelper.getChatListView().deleteHistory();
+        if(MessengerHelper.getChatListView()!=null)
+            MessengerHelper.getChatListView().deleteHistory();
     }
 
     /**
@@ -476,7 +478,8 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
      */
     public void onDestroy(){
         try{
-            MessengerHelper.getChatListView().onDestroy();
+            if(MessengerHelper.getChatListView()!=null)
+                MessengerHelper.getChatListView().onDestroy();
             clearInstances();
         }catch (Exception e){
             Utils.traces("onDestroy ChatControl ex: "+Utils.exceptionToString(e));
@@ -484,11 +487,13 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     }
 
     public void onResume(){
-        MessengerHelper.getChatListView().onResume();
+        if(MessengerHelper.getChatListView()!=null)
+            MessengerHelper.getChatListView().onResume();
     }
 
     public void onStop(){
-        MessengerHelper.getChatListView().onStop();
+        if(MessengerHelper.getChatListView()!=null)
+            MessengerHelper.getChatListView().onStop();
     }
 
     private void clearInstances() {
@@ -523,10 +528,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     }
 
 
-    public interface CallBack{
-        void onPreExecute();
-        void onReady(TaskMessage result);
-    }
+
 
 
     public static class ChatObserver implements LifecycleObserver{

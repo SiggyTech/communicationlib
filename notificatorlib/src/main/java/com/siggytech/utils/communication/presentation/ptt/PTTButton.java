@@ -22,6 +22,7 @@ import android.os.CountDownTimer;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.OnLifecycleEvent;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.siggytech.utils.communication.R;
@@ -45,6 +49,7 @@ import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.MessengerHelper;
 import com.siggytech.utils.communication.presentation.chat.CustomButtonAnimation;
 import com.siggytech.utils.communication.presentation.chat.StrokeGradientDrawable;
+import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.presentation.service.WebSocketPTTService;
 import com.siggytech.utils.communication.util.Conf;
@@ -98,14 +103,10 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
     private String buttonName;
     private String sendingText = "";
 
-
     private int groupIndex = 0;
-
 
     AudioTrack at;
 
-    public static final int MESSAGE_READ = 1;
-    public static final int MESSAGE_WRITE = 2;
     private int sampleRate = 44100 ;
     private int channelConfig = AudioFormat.CHANNEL_IN_MONO;
     private int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
@@ -115,10 +116,8 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private String deviceToken;
     private String API_KEY;
-
-
-    private final Context context;
     private String username;
+    private boolean keyDown;
 
     //TODO private VadConfig.SampleRate DEFAULT_SAMPLE_RATE = VadConfig.SampleRate.SAMPLE_RATE_16K;
     //TODO private VadConfig.FrameSize DEFAULT_FRAME_SIZE = VadConfig.FrameSize.FRAME_SIZE_160;
@@ -133,14 +132,15 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     private final CallBack callBack;
 
-    public PTTButton(Context context, String API_KEY, String username, int quality, boolean voiceDetection, CallBack callBack) {
+    public PTTButton(Context context, String API_KEY, String username, int quality, boolean voiceDetection, CallBack callBack, Lifecycle lifecycle) {
         super(context);
-        this.context = context;
         this.API_KEY = API_KEY;
         this.username = username;
         this.voiceDetectionActivated = voiceDetection;
         this.deviceToken = Siggy.getDeviceToken();
         this.callBack = callBack;
+
+        lifecycle.addObserver(new PttObserver(this));
 
         FileUtil.createFolder(Conf.ROOT_FOLDER,"");
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -239,21 +239,54 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         }
     };
 
-    /**
-     * You must override onResume() at you activity and call this method.
-     */
     public void onResume(){
         IntentFilter filter = new IntentFilter();
         filter.addAction(CONNECTIVITY_ACTION);
-        context.registerReceiver(mNetworkReceiver, filter);
+        getContext().registerReceiver(mNetworkReceiver, filter);
     }
 
     /**
      * You must override onPause() at you activity and call this method.
      */
     public void onPause(){
+        stopTalking();
         if(mNetworkReceiver!=null)
-            context.unregisterReceiver(mNetworkReceiver);
+            getContext().unregisterReceiver(mNetworkReceiver);
+    }
+
+    public void onStop(){
+        //TODO
+    }
+
+    public void onDestroy(){
+        stopTalking();
+        try{
+            getContext().stopService(new Intent(getContext(), WebSocketPTTService.class));
+        }catch (Exception e){
+            Utils.traces(TAG+" onDestroy: "+ Utils.exceptionToString(e));
+        }
+        MessengerHelper.clearPttGroupList();
+        //TODO testing on
+        {
+            MessengerHelper.clearPttClient();
+            MessengerHelper.clearSocketPttListener();
+        }
+    }
+
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(!keyDown && event.getAction() == KeyEvent.ACTION_DOWN)
+            startTalking();
+
+        keyDown = true;
+        return true;
+    }
+
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode == 142 && event.getAction() == KeyEvent.ACTION_UP ) {
+            keyDown = false;
+            stopTalking();
+        }
+        return true;
     }
 
     /**
@@ -262,23 +295,25 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
      */
     public boolean startTalking(){
 
-        if(Utils.isConnect(context)) {
+        if(Utils.isConnect(getContext())) {
             setPressed(true);
             if (requestToken()) {
                 startStreaming();
                 buttonName = getText().toString();
                 setText(sendingText);
 
-                MediaPlayer mp = MediaPlayer.create(context, R.raw.out);
+                MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.out);
                 mp.start();
             } else {
-                MediaPlayer mp = MediaPlayer.create(context, R.raw.busy);
+                MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.busy);
                 mp.start();
                 setPressed(false);
                 releaseTokenState();
                 isTalking = false;
             }
-        }else return false;
+        }else
+            return false;
+
         return true;
     }
 
@@ -293,9 +328,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                 blockTouch();
                 leaveToken();
 
-
-
-                MediaPlayer mp = MediaPlayer.create(context, R.raw.in);
+                MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.in);
                 mp.start();
                 timer = new CountDownTimer(3000, 100) {
                     public void onTick(long millisUntilFinished) {
@@ -331,7 +364,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
      */
     private void releaseTokenState() {
         //checks if token is taken
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         if (preferences!=null && preferences.getBoolean(TOKEN_RELEASED_ERROR, false)) {
             leaveToken();
         }
@@ -483,7 +516,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
                                 if (noiseAux > 50) {//number of packages of noise to stop communication
                                     Log.i("TAG", "no voice detected");
                                     //call stop talking
-                                    ((Activity) context).runOnUiThread(() -> stopTalking());
+                                    ((Activity) getContext()).runOnUiThread(() -> stopTalking());
                                     return;
                                 }
 
@@ -659,7 +692,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
      * release token
      */
     private void leaveToken(){
-        if(Utils.isConnect(context)) {
+        if(Utils.isConnect(getContext())) {
             try {
                 HttpClient httpClient = new DefaultHttpClient();
                 String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY=" + API_KEY + "&clientName=" + username + "&username=" + username;
@@ -678,17 +711,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
                 if (respEntity != null) {
                     if (TOKEN_RELEASED.equals(EntityUtils.toString(respEntity))) {
-                        PreferenceManager.getDefaultSharedPreferences(context)
+                        PreferenceManager.getDefaultSharedPreferences(getContext())
                                 .edit().putBoolean(TOKEN_RELEASED_ERROR, false).apply();
                     }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                PreferenceManager.getDefaultSharedPreferences(context)
+                PreferenceManager.getDefaultSharedPreferences(getContext())
                         .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
             }
         }else{
-            PreferenceManager.getDefaultSharedPreferences(context)
+            PreferenceManager.getDefaultSharedPreferences(getContext())
                     .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
         }
     }
@@ -697,17 +730,17 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
     @SuppressLint("ClickableViewAccessibility")
     private void initView() {
 
-        if(!Utils.isServiceRunning(WebSocketPTTService.class,context)){
-            Intent i = new Intent(context, WebSocketPTTService.class);
+        if(!Utils.isServiceRunning(WebSocketPTTService.class,getContext())){
+            Intent i = new Intent(getContext(), WebSocketPTTService.class);
             i.putExtra("username",username);
             i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup);
             i.putExtra("imei",Siggy.getDeviceToken());
             i.putExtra("apiKey",API_KEY);
 
             if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-                context.startService(i);
+                getContext().startService(i);
             else
-                context.startForegroundService(i);
+                getContext().startForegroundService(i);
 
         }else{
             Utils.traces("PTTButton WebSocketPTTService already exists");
@@ -799,7 +832,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         System.out.println("Speech detected");
         if(!isTalking){
             isTalking = true;
-            ((Activity)context).runOnUiThread(this::startTalking);
+            ((Activity)getContext()).runOnUiThread(this::startTalking);
         }
     }
 
@@ -807,7 +840,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
     public void onNoiseDetected() {
         if(isTalking) {
             isTalking = false;
-            ((Activity) context).runOnUiThread(this::stopTalking);
+            ((Activity) getContext()).runOnUiThread(this::stopTalking);
         }
     }
     private class Padding {
@@ -887,10 +920,44 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     }
 
-    public interface CallBack{
-        void onPreExecute();
-        void onReady(TaskMessage result);
-    }
+    public static class PttObserver implements LifecycleObserver {
 
+        private final PTTButton pttButton;
+
+        public PttObserver(PTTButton pttButton) {
+            this.pttButton = pttButton;
+        }
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        public void onResume(){
+            MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_RESUME);
+            Utils.traces("onResume de Lifecycle");
+            pttButton.onResume();
+
+        }
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        public void onPause(){
+            MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_PAUSE);
+            Utils.traces("onPause de Lifecycle");
+            pttButton.onPause();
+        }
+
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+        public void onStop(){
+            MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_STOP);
+            Utils.traces("onStop de Lifecycle");
+            pttButton.onStop();
+        }
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        public void onDestroy(){
+            MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_DESTROY);
+            Utils.traces("onDestroy de Lifecycle");
+            pttButton.onDestroy();
+        }
+
+    }
 }
 

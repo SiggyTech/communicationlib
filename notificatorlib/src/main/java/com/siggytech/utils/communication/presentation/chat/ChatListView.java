@@ -112,7 +112,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_recycler,null,false);
 
         try {
-            mBinding.header.tvTitle.setText(String.valueOf(idGroup));
+            mBinding.tvTitle.setText(String.valueOf(idGroup));
         }catch (Exception e){
             Utils.traces("initLayout chatListView :"+Utils.exceptionToString(e));
         }
@@ -362,7 +362,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             MessengerHelper.setGroupIndex(pos);
 
             ((Activity)getContext()).runOnUiThread(() ->
-                mBinding.header.tvTitle.setText(String.valueOf(idGroup))
+                mBinding.tvTitle.setText(String.valueOf(idGroup))
             );
 
         }catch (Exception e){
@@ -609,7 +609,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         try {
             ((Activity)getContext()).runOnUiThread(() -> {
                 if (mBinding != null)
-                    mBinding.header.tvSubtitle.setText(text);
+                    mBinding.tvSubtitle.setText(text);
             });
 
         }catch (Exception e ){

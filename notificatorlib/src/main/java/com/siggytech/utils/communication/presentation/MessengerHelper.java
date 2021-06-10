@@ -2,6 +2,8 @@ package com.siggytech.utils.communication.presentation;
 
 import android.net.Uri;
 
+import androidx.lifecycle.Lifecycle;
+
 import com.siggytech.utils.communication.model.EventMessageModel;
 import com.siggytech.utils.communication.model.GroupModel;
 import com.siggytech.utils.communication.presentation.chat.ChatListView;
@@ -9,6 +11,7 @@ import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 
 import java.util.List;
 
+import okhttp3.OkHttpClient;
 import okhttp3.WebSocket;
 
 public class MessengerHelper {
@@ -120,4 +123,43 @@ public class MessengerHelper {
     public static void clearPttGroupList() {
         MessengerHelper.pttGroupList = null;
     }
+
+    private static OkHttpClient pttClient;
+    private static WebSocket socketPttListener;
+
+    public static OkHttpClient getPttClient() {
+        return pttClient;
+    }
+
+    public static void setPttClient(OkHttpClient pttClient) {
+        MessengerHelper.pttClient = pttClient;
+    }
+
+    public static void clearPttClient() {
+        MessengerHelper.pttClient = null;
+    }
+
+    public static WebSocket getSocketPttListener() {
+        return socketPttListener;
+    }
+
+    public static void setSocketPttListener(WebSocket socketPttListener) {
+        MessengerHelper.socketPttListener = socketPttListener;
+    }
+
+    public static void clearSocketPttListener() {
+        MessengerHelper.socketPttListener = null;
+    }
+
+    private static Lifecycle.Event lifecycleEventPtt;
+
+    public static Lifecycle.Event getLifecycleEventPtt() {
+        return lifecycleEventPtt;
+    }
+
+    public static void setLifecycleEventPtt(Lifecycle.Event lifecycleEventPtt) {
+        MessengerHelper.lifecycleEventPtt = lifecycleEventPtt;
+    }
+
+
 }

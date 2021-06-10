@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,6 +30,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.siggytech.utils.communication.model.GroupModel;
 import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.chat.ChatControl;
+import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.presentation.register.SiggyRegisterAsync;
@@ -41,7 +43,6 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     Toolbar toolbar;
     PTTButton pttButton;
-    Boolean keyDown = false;
     FrameLayout frame;
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     String username = "";
@@ -150,20 +151,19 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(!keyDown && keyCode == 142 && event.getAction() == KeyEvent.ACTION_DOWN) //25 down volume key on testing device.
-            if(pttButton!=null)
-                pttButton.startTalking();
-
-        keyDown = true;
+        Log.e("KUSSE","DOWN Key code: "+keyCode);
+        if(keyCode == 142) {
+            if (pttButton != null)
+                return pttButton.onKeyDown(keyCode, event);
+        }
         return true;
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if(keyCode == 142 && event.getAction() == KeyEvent.ACTION_UP ) {
-            keyDown = false;
-            if(pttButton!=null)
-                pttButton.stopTalking();
+        Log.e("KUSSE","UP Key code: "+keyCode);
+        if(keyCode == 142) {
+            if(pttButton!=null) pttButton.onKeyUp(keyCode,event);
         }
         return true;
     }
@@ -186,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 username,
                 PTTButton.AudioQuality.LOW,
                 false,
-                new PTTButton.CallBack() {
+                new CallBack() {
                     @Override
                     public void onPreExecute() {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
@@ -196,7 +196,8 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                     public void onReady(TaskMessage result) {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage());
                     }
-                });
+                },
+                getLifecycle());
 
         CoordinatorLayout coordinatorLayout = new CoordinatorLayout(this);
         coordinatorLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -245,7 +246,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 API_KEY,
                 username,
                 getLifecycle(),
-                new ChatControl.CallBack() {
+                new CallBack() {
                     @Override
                     public void onPreExecute() {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
@@ -273,20 +274,6 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         else if(!isChat && pttButton!=null)
             pttButton.setGroup(idGroup);
 
-    }
-
-
-
-    @Override
-    protected void onResume() {
-        if(pttButton!=null) pttButton.onResume();
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        if(pttButton!=null) pttButton.onPause();
-        super.onPause();
     }
 
 
