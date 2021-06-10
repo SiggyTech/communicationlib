@@ -9,6 +9,7 @@ import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 
 import java.util.List;
 
+import okhttp3.OkHttpClient;
 import okhttp3.WebSocket;
 
 public class MessengerHelper {
@@ -119,5 +120,24 @@ public class MessengerHelper {
     }
     public static void clearPttGroupList() {
         MessengerHelper.pttGroupList = null;
+    }
+
+    private static OkHttpClient pttClient;
+    private static WebSocket socketPttListener;
+
+    public static OkHttpClient getPttClient() {
+        return pttClient;
+    }
+
+    public static void setPttClient(OkHttpClient pttClient) {
+        MessengerHelper.pttClient = pttClient;
+    }
+
+    public static WebSocket getSocketPttListener() {
+        return socketPttListener;
+    }
+
+    public static void setSocketPttListener(WebSocket socketPttListener) {
+        MessengerHelper.socketPttListener = socketPttListener;
     }
 }

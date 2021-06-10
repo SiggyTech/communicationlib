@@ -45,6 +45,7 @@ import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.MessengerHelper;
 import com.siggytech.utils.communication.presentation.chat.CustomButtonAnimation;
 import com.siggytech.utils.communication.presentation.chat.StrokeGradientDrawable;
+import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.presentation.service.WebSocketPTTService;
 import com.siggytech.utils.communication.util.Conf;
@@ -885,11 +886,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         public static final int MEDIUM = 2;
         public static final int LOW = 3;
 
-    }
-
-    public interface CallBack{
-        void onPreExecute();
-        void onReady(TaskMessage result);
     }
 
 }

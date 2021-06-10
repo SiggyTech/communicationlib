@@ -17,6 +17,7 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import com.siggytech.utils.communication.R;
+import com.siggytech.utils.communication.presentation.MessengerHelper;
 import com.siggytech.utils.communication.util.Conf;
 import com.siggytech.utils.communication.util.Utils;
 
@@ -30,9 +31,7 @@ import okio.ByteString;
 public class WebSocketPTTService extends Service {
     public String TAG = WebSocketPTTService.class.getSimpleName();
     public static final String MESSAGE_PTT = "messagePtt";
-    private OkHttpClient pttClient;
-    private WebSocket webSocket;
-    private String imei,idGroup, apiKey, username;
+    private String deviceToken,idGroup, apiKey, username;
     
     public WebSocketPTTService() {
     }
@@ -52,7 +51,7 @@ public class WebSocketPTTService extends Service {
             if (extras != null) {
                 username = extras.getString("username");
                 idGroup = String.valueOf(extras.getLong("idGroup"));
-                imei = extras.getString("imei");
+                deviceToken = extras.getString("imei");
                 apiKey = extras.getString("apiKey");
 
                 new Thread(this::pttWebSocketConnection).start();
@@ -71,7 +70,9 @@ public class WebSocketPTTService extends Service {
         super.onDestroy();
         Utils.traces("WebSocketPTTService onDestroy");
         try {
-            if (webSocket != null) webSocket.close(1000,"onDestroy");
+            if (MessengerHelper.getSocketPttListener() != null){
+                MessengerHelper.getSocketPttListener().close(1000,"onDestroy");
+            }
         }catch (Exception e){
             Utils.traces("WebSocketPTTService onDestroy Ex: "+Utils.exceptionToString(e));
         }
@@ -108,9 +109,9 @@ public class WebSocketPTTService extends Service {
      */
     private void pttWebSocketConnection(){
         try {
-            pttClient = new OkHttpClient();
+            MessengerHelper.setPttClient(new OkHttpClient());
 
-            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.imei + "&groupId=" + this.idGroup + "&API_KEY=" + this.apiKey + "&clientName=" + this.username + "&username=" + this.username;
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_WS_PORT + "?imei=" + this.deviceToken + "&groupId=" + this.idGroup + "&API_KEY=" + this.apiKey + "&clientName=" + this.username + "&username=" + this.username;
             Request requestCoinPrice = new Request.Builder().url(url).build();
 
             WebSocketListener webSocketListener = new WebSocketListener() {
@@ -162,13 +163,14 @@ public class WebSocketPTTService extends Service {
                  * to this listener will be made
                  */
                 @Override
-                public void onFailure(@NonNull WebSocket webSocket, Throwable t, Response response) {
+                public void onFailure(@NonNull WebSocket webSocket, @NonNull Throwable t, Response response) {
+                    Utils.traces("PttWebSocketConnection onFailure: "+Utils.exceptionToString((Exception) t));
                     pttWebSocketConnection();
                 }
             };
 
-            webSocket = pttClient.newWebSocket(requestCoinPrice, webSocketListener);
-            pttClient.dispatcher().executorService().shutdown();
+            MessengerHelper.setSocketPttListener(MessengerHelper.getPttClient().newWebSocket(requestCoinPrice, webSocketListener));
+            //MessengerHelper.getPttClient().dispatcher().executorService().shutdown();
         }catch (Exception e){
             Utils.traces("PttWebSocketConnection catch: "+Utils.exceptionToString(e));
         }

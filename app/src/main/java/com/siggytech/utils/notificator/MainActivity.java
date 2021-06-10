@@ -29,6 +29,7 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.siggytech.utils.communication.model.GroupModel;
 import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.chat.ChatControl;
+import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.presentation.register.SiggyRegisterAsync;
@@ -186,7 +187,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 username,
                 PTTButton.AudioQuality.LOW,
                 false,
-                new PTTButton.CallBack() {
+                new CallBack() {
                     @Override
                     public void onPreExecute() {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
@@ -245,7 +246,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 API_KEY,
                 username,
                 getLifecycle(),
-                new ChatControl.CallBack() {
+                new CallBack() {
                     @Override
                     public void onPreExecute() {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
