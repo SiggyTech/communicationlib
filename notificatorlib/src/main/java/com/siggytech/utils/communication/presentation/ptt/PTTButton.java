@@ -920,6 +920,7 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
 
     }
 
+
     public static class PttObserver implements LifecycleObserver {
 
         private final PTTButton pttButton;
@@ -959,5 +960,6 @@ public class PTTButton extends AppCompatButton implements View.OnTouchListener, 
         }
 
     }
+
 }
 

@@ -95,6 +95,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
         lifecycle.addObserver(new ChatObserver(this));
 
+
         init();
     }
 
