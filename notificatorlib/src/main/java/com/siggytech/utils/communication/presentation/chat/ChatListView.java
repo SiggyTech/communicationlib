@@ -1,6 +1,5 @@
 package com.siggytech.utils.communication.presentation.chat;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.StrictMode;
@@ -16,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.R;
-import com.siggytech.utils.communication.databinding.ChatRecyclerBinding;
+import com.siggytech.utils.communication.databinding.ChatRecyclerTestBinding;
 import com.siggytech.utils.communication.model.ChatModel;
 import com.siggytech.utils.communication.model.EventMessageModel;
 import com.siggytech.utils.communication.model.GroupModel;
@@ -67,7 +66,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private final String deviceToken;
     private Gson gson;
 
-    private ChatRecyclerBinding mBinding;
+    private ChatRecyclerTestBinding mBinding;
     private LayoutInflater inflater;
     private long idGroup;
     private DbHelper dbHelper;
@@ -108,16 +107,21 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     }
 
     private void initLayout() {
-        inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_recycler,null,false);
-
         try {
-            mBinding.tvTitle.setText(String.valueOf(idGroup));
-        }catch (Exception e){
-            Utils.traces("initLayout chatListView :"+Utils.exceptionToString(e));
-        }
+            inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            mBinding = DataBindingUtil.inflate(inflater, R.layout.chat_recycler_test, null, false);
 
-        this.addView(mBinding.getRoot());
+            try {
+               //TODO mBinding.tvTitle.setText(String.valueOf(idGroup));
+            } catch (Exception e) {
+                Utils.traces("initLayout chatListView :" + Utils.exceptionToString(e));
+            }
+
+            this.addView(mBinding.getRoot());
+        }catch (Exception e){
+            e.printStackTrace();
+            Utils.traces("Error on chatListView init layout: "+Utils.exceptionToString(e));
+        }
 
     }
 
@@ -361,9 +365,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
             MessengerHelper.setGroupIndex(pos);
 
-            ((Activity)getContext()).runOnUiThread(() ->
-                mBinding.tvTitle.setText(String.valueOf(idGroup))
-            );
+            //Todo uncomment
+               /* ((Activity) getContext()).runOnUiThread(() ->
+                        mBinding.tvTitle.setText(String.valueOf(idGroup))
+                );*/
+
 
         }catch (Exception e){
             Utils.traces("setGroupView ChatControl ex: "+Utils.exceptionToString(e));
@@ -607,10 +613,13 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void setHeaderSubtitle(String text) {
         try {
-            ((Activity)getContext()).runOnUiThread(() -> {
-                if (mBinding != null)
-                    mBinding.tvSubtitle.setText(text);
-            });
+            //TODO uncomment
+
+              /*  ((Activity) getContext()).runOnUiThread(() -> {
+                    if (mBinding != null)
+                        mBinding.tvSubtitle.setText(text);
+                });*/
+
 
         }catch (Exception e ){
             Utils.traces("ChatListView subtitle "+Utils.exceptionToString(e));

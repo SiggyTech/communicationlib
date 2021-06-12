@@ -26,11 +26,11 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatButton;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
@@ -84,7 +84,7 @@ import static android.net.ConnectivityManager.CONNECTIVITY_ACTION;
  *
  * @author Siggy Technologies
  */
-public class PTTButton extends AppCompatButton implements View.OnTouchListener, VoiceRecorder.Listener, ApiListener<TaskMessage> {
+public class PTTButton extends Button implements View.OnTouchListener, VoiceRecorder.Listener, ApiListener<TaskMessage> {
     public static final String TOKEN_RELEASED_ERROR = "tokenReleasedError";
     private final String TAG = PTTButton.class.getSimpleName();
     private static final String TOKEN_TAKEN = "token taked";

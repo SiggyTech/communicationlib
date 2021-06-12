@@ -65,9 +65,11 @@ public class Utils {
         return gsonBuilder.serializeNulls().create();
     }
 
-
-
     public static String exceptionToString(Exception e){
+        return exceptionToString(e,false);
+    }
+
+    public static String exceptionToString(Exception e,boolean full){
         if(e!=null) {
             StringBuilder sb = new StringBuilder();
             sb.append("Excepción: ");
@@ -94,7 +96,7 @@ public class Utils {
                     sb.append("Line number: ");
                     sb.append(element.getLineNumber());
                     sb.append("\n");
-                    break;
+                    if(!full)break;
                 }
             }
             return sb.toString();
