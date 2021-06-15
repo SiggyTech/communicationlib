@@ -50,6 +50,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static android.content.Context.LAYOUT_INFLATER_SERVICE;
 import static com.siggytech.utils.communication.presentation.service.MyFirebaseMessagingService.MESSAGE_GROUP;
@@ -78,11 +79,10 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     public String userName;
 
     private Gson gson;
-
     private CallBack callBack;
 
 
-    public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack){
+    public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack, HeaderListener headerListener){
         super(context);
 
         FileUtil.createFolder(Conf.ROOT_FOLDER,"");
@@ -95,16 +95,15 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
         lifecycle.addObserver(new ChatObserver(this));
 
-
-        init();
+        init(headerListener);
     }
 
-    private void init() {
+    private void init(HeaderListener headerListener) {
         List<GroupModel> groupList = new ArrayList<>();
         groupList.add(new GroupModel(9999, "Every Group"));
         MessengerHelper.setGroupList(groupList);
 
-        initLayout(getContext());
+        initLayout(headerListener);
         getGroups();
         setTokenPair();
     }
@@ -133,15 +132,16 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    public void initLayout(final Context context){
-        inflater = (LayoutInflater) context.getSystemService(LAYOUT_INFLATER_SERVICE);
+    public void initLayout(HeaderListener headerListener){
+        inflater = (LayoutInflater) getContext().getSystemService(LAYOUT_INFLATER_SERVICE);
         mBinding = DataBindingUtil.inflate(inflater,R.layout.chat_root,null,false);
 
         MessengerHelper.setChatListView(new ChatListView(
-                context,
+                getContext(),
                 MessengerHelper.getGroupList().get(MessengerHelper.getIndexGroup()).idGroup,
                 api_key,
-                deviceToken));
+                deviceToken,
+                headerListener));
 
         mBinding.frame.addView(MessengerHelper.getChatListView());
 
@@ -218,11 +218,11 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                                 messageModel.setMessage(fileToBase64(audioFile));
                                 messageModel.setDuration(ar.getDuration());
 
-                                if (audioFile != null && audioFile.length() > 0)
+                                if (audioFile.length() > 0)
                                     MessengerHelper.getChatListView().sendMessage(
                                             userName,
                                             AESUtils.encText(gson.toJson(messageModel)),
-                                            AESUtils.encText(context.getString(R.string.audio_message)),
+                                            AESUtils.encText(getContext().getString(R.string.audio_message)),
                                             Utils.MESSAGE_TYPE.AUDIO,
                                             MessengerHelper.getGroupList().get(MessengerHelper.getIndexGroup()).idGroup);
 
@@ -265,7 +265,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
         mBinding.ivAdd.setOnClickListener(view -> {
             try {
-                context.startActivity(new Intent(context, AttachMenuActivity.class));
+                getContext().startActivity(new Intent(getContext(), AttachMenuActivity.class));
 
                 clearPersistentVariables();
 
@@ -336,7 +336,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                 deleted = file.delete();
             }
         }catch (Exception e){
-            deleted = false;
             e.printStackTrace();
         }
         return deleted;
@@ -497,6 +496,11 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
             MessengerHelper.getChatListView().onStop();
     }
 
+    public void setHeaderListener(HeaderListener listener){
+        if(MessengerHelper.getChatListView()!=null)
+            MessengerHelper.getChatListView().setHeaderListener(listener);
+    }
+
     private void clearInstances() {
         ar = null;
         timerHandler = null;
@@ -511,7 +515,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
     public void onNewIntent(Bundle extras) {
         if(extras != null && extras.containsKey(MESSAGE_GROUP))
-            setGroupView(Long.parseLong(extras.getString(MESSAGE_GROUP)), 10);
+            setGroupView(Long.parseLong(Objects.requireNonNull(extras.getString(MESSAGE_GROUP))), 10);
     }
 
 

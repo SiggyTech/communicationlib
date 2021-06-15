@@ -20,9 +20,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.app.ActivityCompat;
+import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -30,35 +30,36 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.siggytech.utils.communication.model.GroupModel;
 import com.siggytech.utils.communication.model.async.TaskMessage;
 import com.siggytech.utils.communication.presentation.chat.ChatControl;
+import com.siggytech.utils.communication.presentation.chat.HeaderListener;
 import com.siggytech.utils.communication.presentation.common.CallBack;
 import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 import com.siggytech.utils.communication.presentation.register.Siggy;
 import com.siggytech.utils.communication.presentation.register.SiggyRegisterAsync;
 import com.siggytech.utils.communication.presentation.register.SiggyRegisterListener;
 import com.siggytech.utils.communication.util.Conf;
+import com.siggytech.utils.notificator.databinding.ActivityMainBinding;
 
 import java.util.List;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner {
-    Toolbar toolbar;
+
     PTTButton pttButton;
-    FrameLayout frame;
+    ChatControl ch;
+
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     String username = "";
 
-    ChatControl ch;
-
     boolean isChat = true;
+    ActivityMainBinding mBinding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        frame = findViewById(R.id.frame);
-        toolbar = findViewById(R.id.toolbar);
+        mBinding = DataBindingUtil.setContentView(this,R.layout.activity_main);
 
-        setSupportActionBar(toolbar);
+
+        setSupportActionBar(mBinding.toolbar);
 
         //You need paste this line, is very important
         Conf.APPLICATION_ID = BuildConfig.APPLICATION_ID;
@@ -202,16 +203,16 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
         CoordinatorLayout coordinatorLayout = new CoordinatorLayout(this);
         coordinatorLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         coordinatorLayout.addView(pttButton);
-        frame.addView(coordinatorLayout);
+        mBinding.frame.addView(coordinatorLayout);
 
-        Snackbar.make(frame,username,Snackbar.LENGTH_INDEFINITE).setAction("Search", v -> {
+        Snackbar.make(mBinding.frame,username,Snackbar.LENGTH_INDEFINITE).setAction("Search", v -> {
             List<GroupModel> list = pttButton.getGroupList();
             if(!list.isEmpty()) {
                 StringBuilder groups = new StringBuilder();
                 for(GroupModel g : list){
                     groups.append(" ").append(g.idGroup);
                 }
-                Snackbar.make(frame,groups.toString(),Snackbar.LENGTH_INDEFINITE).show();
+                Snackbar.make(mBinding.frame,groups.toString(),Snackbar.LENGTH_INDEFINITE).show();
             }
 
         }).show();
@@ -249,16 +250,27 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 new CallBack() {
                     @Override
                     public void onPreExecute() {
-                        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
+                       Toast.makeText(getApplicationContext(),getString(R.string.connecting),Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void onReady(TaskMessage result) {
-                        Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage());
+                        Toast.makeText(getApplicationContext(),result.getMessage(),Toast.LENGTH_SHORT).show();
+                    }
+                },
+                new HeaderListener() {
+                    @Override
+                    public void onTitleChanged(String result) {
+                        Objects.requireNonNull(getSupportActionBar()).setTitle(result);
+                    }
+
+                    @Override
+                    public void onSubtitleChanged(String result) {
+                        Objects.requireNonNull(getSupportActionBar()).setSubtitle(result);;
                     }
                 });
 
-        frame.addView(ch);
+        mBinding.frame.addView(ch);
 
         if(false) ch.deleteHistory();
     }

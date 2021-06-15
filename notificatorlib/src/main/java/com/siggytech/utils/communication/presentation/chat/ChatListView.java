@@ -1,5 +1,6 @@
 package com.siggytech.utils.communication.presentation.chat;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.StrictMode;
@@ -15,7 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.gson.Gson;
 import com.siggytech.utils.communication.R;
-import com.siggytech.utils.communication.databinding.ChatRecyclerTestBinding;
+import com.siggytech.utils.communication.databinding.ChatRecyclerViewBinding;
 import com.siggytech.utils.communication.model.ChatModel;
 import com.siggytech.utils.communication.model.EventMessageModel;
 import com.siggytech.utils.communication.model.GroupModel;
@@ -66,7 +67,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private final String deviceToken;
     private Gson gson;
 
-    private ChatRecyclerTestBinding mBinding;
+    private ChatRecyclerViewBinding mBinding;
     private LayoutInflater inflater;
     private long idGroup;
     private DbHelper dbHelper;
@@ -90,9 +91,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private Lifecycle.Event lifecycleEvent;
     private InputMethodManager inputMethodManager;
+    private HeaderListener headerListener;
 
 
-    public ChatListView (Context context, long idGroup, String API_KEY,String deviceToken){
+    public ChatListView (Context context, long idGroup, String API_KEY,String deviceToken, HeaderListener headerListener){
         super(context);
         this.gson = Utils.getGson();
         this.idGroup = idGroup;
@@ -100,6 +102,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         this.apiKey = API_KEY;
         this.deviceToken = deviceToken;
         this.apiListener = getApiListener();
+        this.headerListener = headerListener;
 
         initLayout();
         addLastMessages();
@@ -109,13 +112,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private void initLayout() {
         try {
             inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            mBinding = DataBindingUtil.inflate(inflater, R.layout.chat_recycler_test, null, false);
+            mBinding = DataBindingUtil.inflate(inflater, R.layout.chat_recycler_view, null, false);
 
-            try {
-               //TODO mBinding.tvTitle.setText(String.valueOf(idGroup));
-            } catch (Exception e) {
-                Utils.traces("initLayout chatListView :" + Utils.exceptionToString(e));
-            }
+            if(headerListener!=null)
+               headerListener.onTitleChanged(getNameGroup());
 
             this.addView(mBinding.getRoot());
         }catch (Exception e){
@@ -365,10 +365,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
             MessengerHelper.setGroupIndex(pos);
 
-            //Todo uncomment
-               /* ((Activity) getContext()).runOnUiThread(() ->
-                        mBinding.tvTitle.setText(String.valueOf(idGroup))
-                );*/
+             ((Activity) getContext()).runOnUiThread(() -> {
+               if(headerListener!=null)
+                   headerListener.onTitleChanged(getNameGroup());
+             });
 
 
         }catch (Exception e){
@@ -517,7 +517,8 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                 Utils.traces("SEND - CLOSING SOCKET");
             case OPEN:
                 Utils.traces("SEND - OPEN SOCKET");
-                socketSend.checkQueue();
+                if(socketSend!=null)
+                    socketSend.checkQueue();
 
         }
     }
@@ -613,14 +614,10 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void setHeaderSubtitle(String text) {
         try {
-            //TODO uncomment
-
-              /*  ((Activity) getContext()).runOnUiThread(() -> {
-                    if (mBinding != null)
-                        mBinding.tvSubtitle.setText(text);
-                });*/
-
-
+           ((Activity) getContext()).runOnUiThread(() -> {
+                if (headerListener != null)
+                    headerListener.onSubtitleChanged(text);
+            });
         }catch (Exception e ){
             Utils.traces("ChatListView subtitle "+Utils.exceptionToString(e));
         }
@@ -664,7 +661,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         return dbHelper.insertMessage(messageRaw);
     }
 
-
     private void clearInstances() {
         if(lsChat!=null) {
             lsChat.clear();
@@ -683,4 +679,18 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         messengerClient = null;
     }
 
+    public void setHeaderListener(HeaderListener listener) {
+        this.headerListener = listener;
+    }
+
+    private String getNameGroup(){
+        String name = null;
+        for(GroupModel g : MessengerHelper.getGroupList()){
+            if(g.idGroup == this.idGroup){
+                name = g.name;
+                break;
+            }
+        }
+        return name;
+    }
 }
