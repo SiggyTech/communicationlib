@@ -426,7 +426,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
     public void setGroup(long idGroup) {
         try{
             int pos = 0;
-            for(GroupModel g : MessengerHelper.getGroupList()){
+            for(GroupModel g : MessengerHelper.getPttGroupList()){
                 if(g.idGroup == idGroup){
                     break;
                 }
