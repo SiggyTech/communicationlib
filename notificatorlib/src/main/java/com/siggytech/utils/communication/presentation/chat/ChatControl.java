@@ -80,6 +80,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
     private Gson gson;
     private CallBack callBack;
+    private final ChatObserver mChatObserver;
 
 
     public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack, HeaderListener headerListener){
@@ -93,7 +94,8 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         this.gson = new Gson();
         this.callBack = callBack;
 
-        lifecycle.addObserver(new ChatObserver(this));
+        mChatObserver = new ChatObserver(this);
+        lifecycle.addObserver(mChatObserver);
 
         init(headerListener);
     }
@@ -499,6 +501,10 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     public void setHeaderListener(HeaderListener listener){
         if(MessengerHelper.getChatListView()!=null)
             MessengerHelper.getChatListView().setHeaderListener(listener);
+    }
+
+    public void setLifecycle(Lifecycle lifecycle){
+        lifecycle.addObserver(mChatObserver);
     }
 
     private void clearInstances() {

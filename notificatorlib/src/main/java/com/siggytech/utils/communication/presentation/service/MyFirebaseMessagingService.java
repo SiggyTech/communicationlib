@@ -21,11 +21,15 @@ import com.siggytech.utils.communication.util.Utils;
 import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
+    public static final String MESSAGE_ORIGIN = "origin";
     public static final String MESSAGE_GROUP = "idGroup";
     public static final String MESSAGE_TITLE = "title";
     public static final String MESSAGE_BODY = "body";
     public static final String MESSAGE_PART = "msgpart";
     public static final String NEW_MESSAGE = "newMessage";
+
+    public static final int PTT_ORIGIN = 1;
+    public static final int CHAT_ORIGIN = 2;
 
 
     @Override
@@ -35,7 +39,9 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             if(a!=null && !"".equals(a)) {
                 ApiManager apiManager = new ApiManager();
                 TaskMessage message = apiManager.setFirebaseToken(new PairRegisterModel(a, s));
-                Utils.traces( "On Pair register service: " + message.getMessage());
+                Utils.traces( "On Pair register service chat: " + message.getMessage());
+                message = apiManager.setFirebaseTokenPtt(new PairRegisterModel(a, s));
+                Utils.traces( "On Pair register service ptt: " + message.getMessage());
             } else  Utils.traces( "On Pair register service: device token null");
         }).start();
     }
@@ -49,6 +55,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Map<String, String> data = remoteMessage.getData();
 
             if(data!=null){
+                String origin = data.get(MESSAGE_ORIGIN);
                 String title = data.get(MESSAGE_TITLE);
                 String body = data.get(MESSAGE_BODY);
                 String part = data.get(MESSAGE_PART);
@@ -101,5 +108,11 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Utils.traces("MyFirebaseMessagingService getIdGroup "+Utils.exceptionToString(e));
         }
         return id;
+    }
+
+    @Override
+    public void onDestroy() {
+        Utils.traces("MyFirebaseMessagingService onDestroy");
+        super.onDestroy();
     }
 }

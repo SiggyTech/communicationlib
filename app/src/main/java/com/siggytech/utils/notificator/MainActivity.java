@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     String username = "";
 
-    boolean isChat = true;
+    boolean isChat = false;
     ActivityMainBinding mBinding;
 
     @Override

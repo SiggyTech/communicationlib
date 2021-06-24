@@ -193,7 +193,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         FirebaseMessaging.getInstance().getToken()
                 .addOnCompleteListener(task -> {
                     if (!task.isSuccessful()) {
-                        Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                        Utils.traces( "Fetching FCM registration token failed "+Utils.exceptionToString(task.getException()));
                         return;
                     }
 
@@ -201,7 +201,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                         ApiManager apiManager = new ApiManager();
                         TaskMessage message = apiManager.setFirebaseTokenPtt(new PairRegisterModel(Siggy.getDeviceToken(),task.getResult(), username));
                         Utils.traces("Firebase Token: "+task.getResult());
-                        Log.e(TAG,"On Pair register: "+message.getMessage());
+                        Utils.traces("On Pair register: "+message.getMessage());
                     }).start();
 
                 });
