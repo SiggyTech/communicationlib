@@ -50,6 +50,7 @@ public class FileUtil {
 		
 		BufferedWriter bwEscritor = new BufferedWriter(new FileWriter(file));
 		bwEscritor.write(text);
+		bwEscritor.newLine();
 		bwEscritor.close();
 	}
 

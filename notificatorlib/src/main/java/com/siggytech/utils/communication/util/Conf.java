@@ -4,6 +4,8 @@ import android.graphics.Color;
 
 public class Conf {
 
+    public static String API_KEY;
+    public static String DEVICE_TOKEN;
     public static String SERVER_IP;
 
     public static int SERVER_PORT = 9006;

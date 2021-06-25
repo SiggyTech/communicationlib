@@ -22,6 +22,10 @@ public class ApiAsyncTask extends AsyncTask<Object, Void, TaskMessage> {
                     return ApiEnum.GET_CHAT_QUEUE.callRest(manager,objects[1]);
                 case GET_PTT_GROUPS:
                     return ApiEnum.GET_PTT_GROUPS.callRest(manager,objects[1]);
+                case REQUEST_TOKEN:
+                    return ApiEnum.REQUEST_TOKEN.callRest(manager,objects[1],objects[2]);
+                case LEAVE_TOKEN:
+                    return ApiEnum.LEAVE_TOKEN.callRest(manager,objects[1],objects[2]);
                 default:
                     TaskMessage taskMessage = new TaskMessage();
                     taskMessage.setError(true);

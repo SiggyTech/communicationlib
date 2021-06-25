@@ -20,6 +20,7 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.CountDownTimer;
 import android.os.StrictMode;
+import android.os.Trace;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -114,9 +115,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
     public AudioRecord recorder;
     CountDownTimer timer;
 
-    private String deviceToken;
-    private String API_KEY;
-    private String username;
+    private final String username;
     private boolean keyDown;
 
     //TODO private VadConfig.SampleRate DEFAULT_SAMPLE_RATE = VadConfig.SampleRate.SAMPLE_RATE_16K;
@@ -134,10 +133,13 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
 
     public PTTButton(Context context, String API_KEY, String username, int quality, boolean voiceDetection, CallBack callBack, Lifecycle lifecycle) {
         super(context);
-        this.API_KEY = API_KEY;
+
+        Conf.API_KEY = API_KEY;
+        Conf.DEVICE_TOKEN = Siggy.getDeviceToken();
+
         this.username = username;
         this.voiceDetectionActivated = voiceDetection;
-        this.deviceToken = Siggy.getDeviceToken();
+
         this.callBack = callBack;
 
         lifecycle.addObserver(new PttObserver(this));
@@ -167,9 +169,15 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                 break;
         }
 
+        initGroups();
+
+        startSocketListener();
+
+        initView();
+
         setTokenPair();
 
-        init();
+        MessengerHelper.setPttButton(this);
 
         if(voiceDetection){
             setVadRecorder();
@@ -177,17 +185,30 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         }
     }
 
-    private void init() {
+    private void initGroups() {
         List<GroupModel> groupList = new ArrayList<>();
         groupList.add(new GroupModel(9999, "Every Group"));
         MessengerHelper.setPttGroupList(groupList);
-
-        initView();
-
-        getGroups();
-
-        MessengerHelper.setPttButton(this);
     }
+
+    private void startSocketListener() {
+        if(!Utils.isServiceRunning(WebSocketPTTService.class,getContext())){
+            Intent i = new Intent(getContext(), WebSocketPTTService.class);
+            i.putExtra("username",username);
+            i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup);
+            i.putExtra("imei",Siggy.getDeviceToken());
+            i.putExtra("apiKey",Conf.API_KEY);
+
+            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+                getContext().startService(i);
+            else
+                getContext().startForegroundService(i);
+
+        }else{
+            Utils.traces("PTTButton WebSocketPTTService already exists");
+        }
+    }
+
 
     private void setTokenPair() {
         FirebaseMessaging.getInstance().getToken()
@@ -202,8 +223,8 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                         TaskMessage message = apiManager.setFirebaseTokenPtt(new PairRegisterModel(Siggy.getDeviceToken(),task.getResult(), username));
                         Utils.traces("Firebase Token: "+task.getResult());
                         Utils.traces("On Pair register: "+message.getMessage());
+                        ((Activity)getContext()).runOnUiThread(this::getGroups);
                     }).start();
-
                 });
     }
 
@@ -230,10 +251,10 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
 
 
     private void getGroups(){
-        new ApiAsyncTask(this).execute(ApiEnum.GET_PTT_GROUPS,new GroupRequestModel(deviceToken,API_KEY));
+        new ApiAsyncTask(this).execute(ApiEnum.GET_PTT_GROUPS,new GroupRequestModel(Conf.DEVICE_TOKEN,Conf.API_KEY));
     }
 
-    private BroadcastReceiver mNetworkReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mNetworkReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) { releaseTokenState();
         }
@@ -245,9 +266,6 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         getContext().registerReceiver(mNetworkReceiver, filter);
     }
 
-    /**
-     * You must override onPause() at you activity and call this method.
-     */
     public void onPause(){
         stopTalking();
         if(mNetworkReceiver!=null)
@@ -275,53 +293,61 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if(!keyDown && event.getAction() == KeyEvent.ACTION_DOWN)
-            startTalking();
+            requestToken();
 
         keyDown = true;
         return true;
     }
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if(keyCode == 142 && event.getAction() == KeyEvent.ACTION_UP ) {
+        if(event.getAction() == KeyEvent.ACTION_UP ) {
             keyDown = false;
             stopTalking();
         }
         return true;
     }
 
+    public void requestToken(){
+        Utils.traces("start requestToken");
+        if(Utils.isConnect(getContext())) {
+            new ApiAsyncTask(this).execute(
+                    ApiEnum.REQUEST_TOKEN
+                    , MessengerHelper.getPttGroupList().get(groupIndex).idGroup
+                    , username);
+        }
+    }
+
     /**
      * Starts recording
-     * @return returns true if has internet connection.
      */
-    public boolean startTalking(){
+    public void startTalking(boolean ready){
+        Utils.traces("start startTalking");
+        setPressed(true);
+        if (ready) {
+            startStreaming();
+            buttonName = getText().toString();
+            setText(sendingText);
 
-        if(Utils.isConnect(getContext())) {
-            setPressed(true);
-            if (requestToken()) {
-                startStreaming();
-                buttonName = getText().toString();
-                setText(sendingText);
+            MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.out);
+            mp.start();
+        } else {
+            MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.busy);
+            mp.start();
+            setPressed(false);
+            releaseTokenState();
+            isTalking = false;
+        }
 
-                MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.out);
-                mp.start();
-            } else {
-                MediaPlayer mp = MediaPlayer.create(getContext(), R.raw.busy);
-                mp.start();
-                setPressed(false);
-                releaseTokenState();
-                isTalking = false;
-            }
-        }else
-            return false;
-
-        return true;
+        Utils.traces("end startTalking");
     }
 
     /**
      * Stops recording
      */
     public boolean stopTalking(){
+        Utils.traces("start stopTalking");
         if(isRecording()) {
+            Utils.traces("stopTalking was recording");
             try {
                 isTalking = false;
                 recorder.release();
@@ -343,7 +369,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                     }
                 }.start();
             } catch (Exception e) {
-                Log.e("log", "stopTalking: " + e.getMessage()); //here new line
+                Utils.traces("stopTalking: " + Utils.exceptionToString(e));
             }
             setPressed(false);
             return true;
@@ -374,7 +400,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
-                startTalking();
+                requestToken();
                 return true;
             }
 
@@ -408,22 +434,9 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                     stopTalking();
     }
 
-    @Override
-    public void onPreExecute() {
-        callBack.onPreExecute();
-    }
-
-    @Override
-    public void onPostExecute(TaskMessage result) {
-        callBack.onReady(result);
-    }
-
-    @Override
-    public void onCancelled(TaskMessage result) {
-        callBack.onReady(result);
-    }
 
     public void setGroup(long idGroup) {
+        Utils.traces("start setGroup "+idGroup);
         try{
             int pos = 0;
             for(GroupModel g : MessengerHelper.getPttGroupList()){
@@ -437,6 +450,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         }catch (Exception e){
             Utils.traces("setGroup PTT ex: "+Utils.exceptionToString(e));
         }
+        Utils.traces("end setGroup "+idGroup);
     }
 
 
@@ -450,14 +464,14 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
     }
 
     private void startStreaming() {
-
+        Utils.traces("start startStreaming");
         float[] tempFloatBuffer = new float[3];
 
         if(isVoiceDetectionActivated()){
             stopVoiceActivation();
         }
 
-        String message = "{ \"name\": \"" + this.username + "\",\"imei\": \""+ Siggy.getDeviceToken() +"\", \"api_key\": \"" + this.API_KEY + "\",\"idgroup\": \""+ MessengerHelper.getPttGroupList().get(groupIndex).idGroup +"\" }";
+        String message = "{ \"name\": \"" + this.username + "\",\"imei\": \""+ Siggy.getDeviceToken() +"\", \"api_key\": \"" + Conf.API_KEY + "\",\"idgroup\": \""+ MessengerHelper.getPttGroupList().get(groupIndex).idGroup +"\" }";
 
         Thread streamThread = new Thread(new MyRunnable(message) {
 
@@ -467,7 +481,6 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
 
                     int noiseAux = 0;
                     DatagramSocket socket = new DatagramSocket();
-                    Log.d("VS", "Socket Created");
 
                     DatagramPacket packet;
 
@@ -479,10 +492,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                     minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
                     byte[] buffer = new byte[minBufSize];
 
-                    Log.d("VS","Buffer created of size " + minBufSize);
-
                     recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,sampleRate,channelConfig,audioFormat,minBufSize*10);
-                    Log.d("VS", "Recorder initialized");
 
                     recorder.startRecording();
 
@@ -492,7 +502,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                         minBufSize = recorder.read(buffer, 0, buffer.length);
                         packet = new DatagramPacket(buffer, buffer.length, destination, Conf.SERVER_PORT);
                         socket.send(packet);
-                        //System.out.println("MinBufferSize: " +minBufSize);
+
                         float totalAbsValue = 0.0f;
                         short sample        = 0;
 
@@ -500,7 +510,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
                             // Analyze Sound.
                             for (int i = 0; i < buffer.length; i += 2) {
                                 sample = (short) ((buffer[i]) | buffer[i + 1] << 8);
-                                totalAbsValue += Math.abs(sample) / (minBufSize / 2);
+                                totalAbsValue += Math.abs(sample) / (minBufSize / 2f);
                             }
 
                             // Analyze temp buffer.
@@ -538,6 +548,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
 
         });
         streamThread.start();
+        Utils.traces("end startStreaming");
     }
 
     /**
@@ -640,7 +651,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         this.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN: {
-                    startTalking();
+                    requestToken();
                     return true;
                 }
 
@@ -653,98 +664,26 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         });
     }
 
-    /**
-     * Request token for talking
-     * @return true if granted otherwise false.
-     */
-    private boolean requestToken(){
-        HttpClient httpClient = new DefaultHttpClient();
-        String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/gettoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY="+ API_KEY +"&clientName=" + username + "&username=" + username;
-
-        HttpPost httpPost = new HttpPost(url);
-        List<NameValuePair> params = new ArrayList<>();
-
-        try {
-            httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        try {
-
-            HttpResponse response = httpClient.execute(httpPost);
-            HttpEntity respEntity = response.getEntity();
-
-            if (respEntity != null) {
-                String content =  EntityUtils.toString(respEntity);
-                Log.e(TAG, content);
-                return TOKEN_TAKEN.equals(content);
-            }
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
     /**
      * release token
      */
     private void leaveToken(){
+        Utils.traces("start leaveToken");
         if(Utils.isConnect(getContext())) {
-            try {
-                HttpClient httpClient = new DefaultHttpClient();
-                String url = "http://" + Conf.SERVER_IP + ":" + Conf.TOKEN_PORT + "/releasetoken?imei=" + deviceToken + "&groupId=" + MessengerHelper.getPttGroupList().get(groupIndex).idGroup + "&API_KEY=" + API_KEY + "&clientName=" + username + "&username=" + username;
-
-                HttpPost httpPost = new HttpPost(url);
-                List<NameValuePair> params = new ArrayList<>();
-
-                try {
-                    httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-
-                HttpResponse response = httpClient.execute(httpPost);
-                HttpEntity respEntity = response.getEntity();
-
-                if (respEntity != null) {
-                    if (TOKEN_RELEASED.equals(EntityUtils.toString(respEntity))) {
-                        PreferenceManager.getDefaultSharedPreferences(getContext())
-                                .edit().putBoolean(TOKEN_RELEASED_ERROR, false).apply();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                PreferenceManager.getDefaultSharedPreferences(getContext())
-                        .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
-            }
+            new ApiAsyncTask(this).execute(ApiEnum.LEAVE_TOKEN
+                    , MessengerHelper.getPttGroupList().get(groupIndex).idGroup
+                    , username);
         }else{
             PreferenceManager.getDefaultSharedPreferences(getContext())
                     .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
         }
+        Utils.traces("end leaveToken");
     }
 
 
     @SuppressLint("ClickableViewAccessibility")
     private void initView() {
-
-        if(!Utils.isServiceRunning(WebSocketPTTService.class,getContext())){
-            Intent i = new Intent(getContext(), WebSocketPTTService.class);
-            i.putExtra("username",username);
-            i.putExtra("idGroup",MessengerHelper.getPttGroupList().get(groupIndex).idGroup);
-            i.putExtra("imei",Siggy.getDeviceToken());
-            i.putExtra("apiKey",API_KEY);
-
-            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-                getContext().startService(i);
-            else
-                getContext().startForegroundService(i);
-
-        }else{
-            Utils.traces("PTTButton WebSocketPTTService already exists");
-        }
 
         int intSize = android.media.AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO,
                 audioFormat);
@@ -755,7 +694,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
        this.setOnTouchListener((v, event) -> {
            switch (event.getAction()) {
                case MotionEvent.ACTION_DOWN: {
-                   startTalking();
+                   requestToken();
                    return true;
                }
                case MotionEvent.ACTION_UP: {
@@ -797,13 +736,8 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         return drawable;
     }
 
-    @SuppressWarnings("deprecation")
     public void setBackgroundCompat(@Nullable Drawable drawable) {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN) {
-            setBackgroundDrawable(drawable);
-        } else {
-            setBackground(drawable);
-        }
+        setBackground(drawable);
     }
 
     public void setIcon(@DrawableRes final int icon) {
@@ -829,10 +763,9 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
     }
     @Override
     public void onSpeechDetected() {
-        System.out.println("Speech detected");
         if(!isTalking){
             isTalking = true;
-            ((Activity)getContext()).runOnUiThread(this::startTalking);
+            ((Activity)getContext()).runOnUiThread(this::requestToken);
         }
     }
 
@@ -843,96 +776,55 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
             ((Activity) getContext()).runOnUiThread(this::stopTalking);
         }
     }
-    private class Padding {
-        public int left;
-        public int right;
-        public int top;
-        public int bottom;
+
+    @Override
+    public void onPreExecute() {
+        callBack.onPreExecute();
     }
 
-    public static class Params {
-        private int cornerRadius;
-        private int width;
-        private int height;
-        private int color;
-        private int colorPressed;
-        private int duration;
-        private int icon;
-        private int strokeWidth;
-        private int strokeColor;
-        private String text;
-        private CustomButtonAnimation.Listener animationListener;
-        private Params() {
-        }
-        public static Params create() {
-            return new Params();
-        }
-        public Params text(@NonNull String text) {
-            this.text = text;
-            return this;
-        }
-        public Params icon(@DrawableRes int icon) {
-            this.icon = icon;
-            return this;
-        }
-        public Params cornerRadius(int cornerRadius) {
-            this.cornerRadius = cornerRadius;
-            return this;
-        }
-        public Params width(int width) {
-            this.width = width;
-            return this;
-        }
-        public Params height(int height) {
-            this.height = height;
-            return this;
-        }
-        public Params color(int color) {
-            this.color = color;
-            return this;
-        }
-        public Params colorPressed(int colorPressed) {
-            this.colorPressed = colorPressed;
-            return this;
-        }
-        public Params duration(int duration) {
-            this.duration = duration;
-            return this;
-        }
-        public Params strokeWidth(int strokeWidth) {
-            this.strokeWidth = strokeWidth;
-            return this;
-        }
-        public Params strokeColor(int strokeColor) {
-            this.strokeColor = strokeColor;
-            return this;
-        }
-        public Params animationListener(CustomButtonAnimation.Listener animationListener) {
-            this.animationListener = animationListener;
-            return this;
-        }
+    @Override
+    public void onPostExecute(TaskMessage result) {
+        callBack.onReady(result);
+
+         if (result.getApiEnum() == ApiEnum.REQUEST_TOKEN)
+            startTalking(TOKEN_TAKEN.equals(result.getMessage()));
+         if (result.getApiEnum() == ApiEnum.LEAVE_TOKEN){
+             if (!result.isError() && TOKEN_RELEASED.equals(result.getMessage())) {
+                 PreferenceManager.getDefaultSharedPreferences(getContext())
+                         .edit().putBoolean(TOKEN_RELEASED_ERROR, false).apply();
+             }else {
+                 PreferenceManager.getDefaultSharedPreferences(getContext())
+                         .edit().putBoolean(TOKEN_RELEASED_ERROR, true).apply();
+             }
+         }
     }
 
-    public final class AudioQuality {
-        public static final int HIGH = 1;
-        public static final int MEDIUM = 2;
-        public static final int LOW = 3;
-
+    @Override
+    public void onCancelled(TaskMessage result) {
+        callBack.onReady(result);
     }
+
 
 
     public static class PttObserver implements LifecycleObserver {
 
         private final PTTButton pttButton;
+        private final Boolean destroy;
 
         public PttObserver(PTTButton pttButton) {
             this.pttButton = pttButton;
+            this.destroy = true;
+        }
+
+        public PttObserver(PTTButton pttButton, boolean destroy) {
+            this.pttButton = pttButton;
+            this.destroy = destroy;
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume(){
             MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_RESUME);
-            Utils.traces("onResume de Lifecycle");
+            Utils.traces(" ptt onResume de Lifecycle ["+destroy+"]");
             pttButton.onResume();
 
         }
@@ -940,7 +832,7 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
         public void onPause(){
             MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_PAUSE);
-            Utils.traces("onPause de Lifecycle");
+            Utils.traces(" ptt onPause de Lifecycle ["+destroy+"]");
             pttButton.onPause();
         }
 
@@ -948,16 +840,25 @@ public class PTTButton extends Button implements View.OnTouchListener, VoiceReco
         @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
         public void onStop(){
             MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_STOP);
-            Utils.traces("onStop de Lifecycle");
+            Utils.traces(" ptt onStop de Lifecycle ["+destroy+"]");
             pttButton.onStop();
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         public void onDestroy(){
-            MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_DESTROY);
-            Utils.traces("onDestroy de Lifecycle");
-            pttButton.onDestroy();
+            Utils.traces("ptt onDestroy de Lifecycle ["+destroy+"]");
+            if(destroy) {
+                MessengerHelper.setLifecycleEventPtt(Lifecycle.Event.ON_DESTROY);
+                pttButton.onDestroy();
+            }
         }
+
+    }
+
+    public static final class AudioQuality {
+        public static final int HIGH = 1;
+        public static final int MEDIUM = 2;
+        public static final int LOW = 3;
 
     }
 

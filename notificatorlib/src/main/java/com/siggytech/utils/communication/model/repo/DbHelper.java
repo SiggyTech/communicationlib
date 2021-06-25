@@ -106,6 +106,7 @@ public class DbHelper extends SQLiteOpenHelper {
                 raw.setSend(cursor.getInt(cursor.getColumnIndex(COLUMN_SEND)));
                 list.add(raw);
             }while (cursor.moveToNext());
+            cursor.close();
         }
         db.close();
         return list;
@@ -138,6 +139,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         if(cursor!=null && cursor.moveToFirst()){
             timeMark = cursor.getLong(cursor.getColumnIndex(COLUMN_TIME_MARK));
+            cursor.close();
         }
 
         db.close();

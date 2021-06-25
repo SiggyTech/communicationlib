@@ -64,14 +64,12 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private MessageModel model;
 
     private Socket socketSend;
-    private final String deviceToken;
     private Gson gson;
 
     private ChatRecyclerViewBinding mBinding;
     private LayoutInflater inflater;
     private long idGroup;
     private DbHelper dbHelper;
-    private String apiKey;
     private int limitCount = 10;
     private StrictMode.ThreadPolicy policy = null;
 
@@ -94,13 +92,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     private HeaderListener headerListener;
 
 
-    public ChatListView (Context context, long idGroup, String API_KEY,String deviceToken, HeaderListener headerListener){
+    public ChatListView (Context context, long idGroup, HeaderListener headerListener){
         super(context);
         this.gson = Utils.getGson();
         this.idGroup = idGroup;
         this.dbHelper = new DbHelper(getContext());
-        this.apiKey = API_KEY;
-        this.deviceToken = deviceToken;
         this.apiListener = getApiListener();
         this.headerListener = headerListener;
 
@@ -162,7 +158,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
     private void addLastMessages() {
         getTotalPagesCount();
-        addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limitCount),false);
+        addRawList(dbHelper.getMessage(idGroup,Conf.API_KEY, 0, limitCount),false);
     }
 
     /**
@@ -170,7 +166,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
      */
     private void getTotalPagesCount() {
         try {
-            long rowCount = dbHelper.getMessageCount(idGroup, apiKey);
+            long rowCount = dbHelper.getMessageCount(idGroup, Conf.API_KEY);
             if(rowCount>0)
                 TOTAL_PAGES = (int) Math.ceil((double)rowCount / limitCount);
 
@@ -257,7 +253,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
                     "}");
 
             MessageRaw messageRaw = new MessageRaw();
-            messageRaw.setUserKey(apiKey);
+            messageRaw.setUserKey(Conf.API_KEY);
             messageRaw.setIdGroup(String.valueOf(idGroup));
             messageRaw.setFrom(from);
             messageRaw.setMessage(encryptedData);
@@ -379,7 +375,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         getTotalPagesCount();
         if(this.idGroup != idGroup){
             this.idGroup = idGroup;
-            addRawList(dbHelper.getMessage(idGroup,apiKey, 0, limit),true);
+            addRawList(dbHelper.getMessage(idGroup,Conf.API_KEY, 0, limit),true);
         }
     }
 
@@ -408,7 +404,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
 
         List<MessageRaw> list = dbHelper.getMessage(
                 idGroup
-                ,apiKey
+                ,Conf.API_KEY
                 , lsChat.size()-1
                 , limitCount);
 
@@ -492,7 +488,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         if(policy==null) policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?iddevice=" + Siggy.getDeviceToken() + "&groupId=" + idGroup + "&API_KEY="+ apiKey;
+        String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT_IN + "?iddevice=" + Siggy.getDeviceToken() + "&groupId=" + idGroup + "&API_KEY="+ Conf.API_KEY;
 
         socketSend = Socket.Builder.with(url).build().connect();
 
@@ -538,7 +534,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             messengerClient = null;
             messengerClient = new OkHttpClient();
 
-            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?iddevice=" + this.deviceToken + "&groupId=9999" + "&API_KEY=" + this.apiKey;
+            String url = "ws://" + Conf.SERVER_IP + ":" + Conf.SERVER_CHAT_PORT + "?iddevice=" + Conf.DEVICE_TOKEN + "&groupId=9999" + "&API_KEY=" + Conf.API_KEY;
 
             requestSocketListener = null;
             requestSocketListener = new Request.Builder().url(url).build();
@@ -628,14 +624,15 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             if (dbHelper == null){
                 dbHelper = new DbHelper(getContext());
             }
-            long timeMark = dbHelper.getTimeMark(9999,apiKey);
+            Utils.traces("Chat api key: "+Conf.API_KEY);
+            long timeMark = dbHelper.getTimeMark(9999,Conf.API_KEY);
             Utils.traces("Chat TIME MARK: "+timeMark);
             if(timeMark>0) {
-                QueueRequestModel model = new QueueRequestModel(deviceToken, apiKey, "9999", String.valueOf(timeMark));
+                QueueRequestModel model = new QueueRequestModel(Conf.DEVICE_TOKEN, Conf.API_KEY, "9999", String.valueOf(timeMark));
                 new ApiAsyncTask(apiListener).execute(ApiEnum.GET_CHAT_QUEUE, model);
             }
         }catch (Exception e){
-            Utils.traces("Chat Control getQueue catch: "+Utils.exceptionToString(e));
+            Utils.traces("Chat Control getQueue catch: "+Utils.exceptionToString(e,true));
         }
     }
 
@@ -648,7 +645,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         messageRaw.setMessage(eventMessageModel.getData().getText());
         messageRaw.setTimeMark(eventMessageModel.getTimeMark());
         messageRaw.setMine(0);
-        messageRaw.setUserKey(apiKey);
+        messageRaw.setUserKey(Conf.API_KEY);
         messageRaw.setSend(1);
 
         Utils.traces("insertMessage context = "+(getContext()==null?"null":"not null"));
@@ -662,6 +659,7 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
     }
 
     private void clearInstances() {
+        Utils.traces(TAG+" clearInstances");
         if(lsChat!=null) {
             lsChat.clear();
             lsChat = null;
@@ -671,7 +669,6 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
         socketSend = null;
         gson = null;
         dbHelper = null;
-        apiKey = null;
         inflater = null;
         messageRaw = null;
         requestSocketListener = null;

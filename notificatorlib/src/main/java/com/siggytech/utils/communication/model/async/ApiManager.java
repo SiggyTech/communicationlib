@@ -57,4 +57,22 @@ public class ApiManager {
 
         return taskMessage;
     }
+
+    public TaskMessage requestToken(long idGroup, String username) {
+        Thread t = new Thread(() -> taskMessage = service.requestToken( idGroup, username));
+
+        t.start();
+        try { t.join(); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        return taskMessage;
+    }
+
+    public TaskMessage leaveToken(long idGroup, String username) {
+        Thread t = new Thread(() -> taskMessage = service.leaveToken( idGroup, username));
+
+        t.start();
+        try { t.join(); } catch (InterruptedException e) { e.printStackTrace(); }
+
+        return taskMessage;
+    }
 }

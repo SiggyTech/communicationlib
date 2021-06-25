@@ -74,26 +74,24 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
     Handler timerHandler = new Handler();
 
     private String fileName;
-    public String deviceToken;
-    public String api_key;
     public String userName;
 
     private Gson gson;
     private CallBack callBack;
 
-
-
     public ChatControl(Context context, String API_KEY, String userName, Lifecycle lifecycle, CallBack callBack, HeaderListener headerListener){
         super(context);
 
+        Conf.API_KEY = API_KEY;
+
         FileUtil.createFolder(Conf.ROOT_FOLDER,"");
 
-        this.api_key = API_KEY;
-        this.deviceToken = Siggy.getDeviceToken();
+        Conf.DEVICE_TOKEN = Siggy.getDeviceToken();
+
         this.userName = userName;
         this.gson = new Gson();
         this.callBack = callBack;
-        
+
         lifecycle.addObserver(new ChatObserver(this));
 
         init(headerListener);
@@ -105,7 +103,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         MessengerHelper.setGroupList(groupList);
 
         initLayout(headerListener);
-        getGroups();
         setTokenPair();
     }
 
@@ -122,6 +119,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
                         TaskMessage message = apiManager.setFirebaseToken(new PairRegisterModel(Siggy.getDeviceToken(),task.getResult()));
                         Utils.traces("Firebase Token: "+task.getResult());
                         Log.e(TAG,"On Pair register: "+message.getMessage());
+                        getGroups();
                     }).start();
 
                 });
@@ -129,7 +127,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
 
     private void getGroups(){
-        new ApiAsyncTask(this).execute(ApiEnum.GET_GROUPS,deviceToken,api_key);
+        new ApiAsyncTask(this).execute(ApiEnum.GET_GROUPS,Conf.DEVICE_TOKEN, Conf.API_KEY);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -140,8 +138,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         MessengerHelper.setChatListView(new ChatListView(
                 getContext(),
                 MessengerHelper.getGroupList().get(MessengerHelper.getIndexGroup()).idGroup,
-                api_key,
-                deviceToken,
                 headerListener));
 
         mBinding.frame.addView(MessengerHelper.getChatListView());
@@ -474,9 +470,6 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
             MessengerHelper.getChatListView().deleteHistory();
     }
 
-    /**
-     * You need override onDestroy method and call it.
-     */
     public void onDestroy(){
         try{
             if(MessengerHelper.getChatListView()!=null)
@@ -502,16 +495,20 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
             MessengerHelper.getChatListView().setHeaderListener(listener);
     }
 
-    public void setLifecycle(Lifecycle lifecycle){
-        lifecycle.addObserver(new ChatObserver(this));
+    /**
+     * Use this method to create a new instance of chat observer, do not forget null this
+     * on destroy event by your self. Is normal used when you have more than one activity
+     * @param destroy if destroy instances of chat control.
+     * @return chat observer
+     */
+    public ChatObserver getChatObserver(boolean destroy){
+        return new ChatObserver(this, destroy);
     }
 
     private void clearInstances() {
         ar = null;
         timerHandler = null;
         fileName = null;
-        deviceToken = null;
-        api_key = null;
         userName = null;
         gson = null;
         callBack = null;
@@ -539,21 +536,26 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
 
 
-
-
     public static class ChatObserver implements LifecycleObserver{
 
         private final ChatControl chatControl;
+        private final Boolean destroy;
 
         public ChatObserver(ChatControl chatControl) {
             this.chatControl = chatControl;
+            this.destroy = true;
+        }
+
+        public ChatObserver(ChatControl chatControl, boolean destroy) {
+            this.chatControl = chatControl;
+            this.destroy = destroy;
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
         public void onResume(){
             if(MessengerHelper.getChatListView()!=null)
                 MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_RESUME);
-            Utils.traces("onResume de Lifecycle");
+            Utils.traces("chat onResume de Lifecycle ["+destroy+"]");
             chatControl.onResume();
 
         }
@@ -562,7 +564,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         public void onPause(){
             if(MessengerHelper.getChatListView()!=null)
                 MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_PAUSE);
-            Utils.traces("onPause de Lifecycle");
+            Utils.traces("chat onPause de Lifecycle ["+destroy+"]");
         }
 
 
@@ -570,16 +572,18 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         public void onStop(){
             if(MessengerHelper.getChatListView()!=null)
                 MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_STOP);
-            Utils.traces("onStop de Lifecycle");
+            Utils.traces("chat onStop de Lifecycle ["+destroy+"]");
             chatControl.onStop();
         }
 
         @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         public void onDestroy(){
-            if(MessengerHelper.getChatListView()!=null)
-                MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_DESTROY);
-            Utils.traces("onDestroy de Lifecycle");
-            chatControl.onDestroy();
+            Utils.traces("chat onDestroy de Lifecycle ["+destroy+"]");
+            if(destroy) {
+                if (MessengerHelper.getChatListView() != null)
+                    MessengerHelper.getChatListView().setLifecycleEvent(Lifecycle.Event.ON_DESTROY);
+                chatControl.onDestroy();
+            }
         }
 
     }

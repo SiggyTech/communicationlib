@@ -8,6 +8,7 @@ public class TaskMessage {
     private boolean error;
     private boolean isAlerta;
     private MessageModel messageModel;
+    private ApiEnum apiEnum;
 
     public TaskMessage() {
     }
@@ -55,5 +56,13 @@ public class TaskMessage {
 
     public void setMessageModel(MessageModel messageModel) {
         this.messageModel = messageModel;
+    }
+
+    public ApiEnum getApiEnum() {
+        return apiEnum;
+    }
+
+    public void setApiEnum(ApiEnum apiEnum) {
+        this.apiEnum = apiEnum;
     }
 }

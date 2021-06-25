@@ -190,12 +190,13 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 new CallBack() {
                     @Override
                     public void onPreExecute() {
-                        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting));
+                        Objects.requireNonNull(getSupportActionBar()).setSubtitle(getString(R.string.connecting));
                     }
 
                     @Override
                     public void onReady(TaskMessage result) {
                         Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage());
+                        Objects.requireNonNull(getSupportActionBar()).setSubtitle(getString(R.string.connected));
                     }
                 },
                 getLifecycle());
