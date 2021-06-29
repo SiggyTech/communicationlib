@@ -92,7 +92,8 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         this.gson = new Gson();
         this.callBack = callBack;
 
-        lifecycle.addObserver(new ChatObserver(this));
+        MessengerHelper.setChatObserver(new ChatObserver(this));
+        lifecycle.addObserver(MessengerHelper.getChatObserver());
 
         init(headerListener);
     }
@@ -501,8 +502,16 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
      * @param destroy if destroy instances of chat control.
      * @return chat observer
      */
-    public ChatObserver getChatObserver(boolean destroy){
+    public ChatObserver getNewChatObserver(boolean destroy){
         return new ChatObserver(this, destroy);
+    }
+
+    /**
+     * This method returns the main chat Observer
+     * @return Main Chat Observer
+     */
+    public ChatObserver getMainChatObserver(){
+        return MessengerHelper.getChatObserver();
     }
 
     private void clearInstances() {
@@ -513,6 +522,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
         gson = null;
         callBack = null;
         inflater = null;
+        MessengerHelper.clearChatObserver();
     }
 
     public void onNewIntent(Bundle extras) {

@@ -6,6 +6,7 @@ import androidx.lifecycle.Lifecycle;
 
 import com.siggytech.utils.communication.model.EventMessageModel;
 import com.siggytech.utils.communication.model.GroupModel;
+import com.siggytech.utils.communication.presentation.chat.ChatControl;
 import com.siggytech.utils.communication.presentation.chat.ChatListView;
 import com.siggytech.utils.communication.presentation.ptt.PTTButton;
 
@@ -161,4 +162,17 @@ public class MessengerHelper {
         MessengerHelper.lifecycleEventPtt = lifecycleEventPtt;
     }
 
+    private static ChatControl.ChatObserver chatObserver;
+
+    public static ChatControl.ChatObserver getChatObserver() {
+        return chatObserver;
+    }
+
+    public static void setChatObserver(ChatControl.ChatObserver chatObserver) {
+        MessengerHelper.chatObserver = chatObserver;
+    }
+
+    public static void clearChatObserver() {
+        MessengerHelper.chatObserver = null;
+    }
 }
