@@ -624,11 +624,11 @@ public class ChatListView extends FrameLayout implements AsyncTaskCompleteListen
             if (dbHelper == null){
                 dbHelper = new DbHelper(getContext());
             }
-            Utils.traces("Chat api key: "+Conf.API_KEY);
-            long timeMark = dbHelper.getTimeMark(9999,Conf.API_KEY);
+            Utils.traces("idGroup: "+idGroup);
+            long timeMark = dbHelper.getTimeMark(idGroup,Conf.API_KEY);
             Utils.traces("Chat TIME MARK: "+timeMark);
             if(timeMark>0) {
-                QueueRequestModel model = new QueueRequestModel(Conf.DEVICE_TOKEN, Conf.API_KEY, "9999", String.valueOf(timeMark));
+                QueueRequestModel model = new QueueRequestModel(Conf.DEVICE_TOKEN, Conf.API_KEY, String.valueOf(idGroup), String.valueOf(timeMark));
                 new ApiAsyncTask(apiListener).execute(ApiEnum.GET_CHAT_QUEUE, model);
             }
         }catch (Exception e){

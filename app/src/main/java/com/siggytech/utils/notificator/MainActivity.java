@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
     String API_KEY = "HGDJLGOPQJZGMIPEHBSJ";
     String username = "";
 
-    boolean isChat = false;
+    boolean isChat = true;
     ActivityMainBinding mBinding;
 
     @Override
@@ -251,12 +251,13 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner {
                 new CallBack() {
                     @Override
                     public void onPreExecute() {
-                       Toast.makeText(getApplicationContext(),getString(R.string.connecting),Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() -> Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.connecting)));
                     }
 
                     @Override
                     public void onReady(TaskMessage result) {
-                        Toast.makeText(getApplicationContext(),result.getMessage(),Toast.LENGTH_SHORT).show();
+                        runOnUiThread(() ->  Objects.requireNonNull(getSupportActionBar()).setTitle(result.getMessage()));
+
                     }
                 },
                 new HeaderListener() {

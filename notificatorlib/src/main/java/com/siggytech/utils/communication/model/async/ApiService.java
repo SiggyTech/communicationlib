@@ -338,7 +338,7 @@ public class ApiService {
             }
 
         }catch (Exception e){
-            taskMessage.setMessage("Set pair token ptt failed");
+            taskMessage.setMessage("Request token ptt failed");
             taskMessage.setError(true);
             taskMessage.setException(e);
         }finally {

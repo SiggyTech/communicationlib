@@ -21,6 +21,7 @@ import com.siggytech.utils.communication.util.Utils;
 import java.util.Map;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
+    public static final String TAG = MyFirebaseMessagingService.class.getSimpleName();
     public static final String MESSAGE_ORIGIN = "origin";
     public static final String MESSAGE_GROUP = "idGroup";
     public static final String MESSAGE_TITLE = "title";
@@ -34,6 +35,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     @Override
     public void onNewToken(@NonNull String s) {
+        Utils.traces(TAG+" onNewToken: "+s);
         new Thread(() -> {
             String a = Siggy.getDeviceToken();
             if(a!=null && !"".equals(a)) {
@@ -49,7 +51,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
-        Utils.traces("MyFirebaseMessagingService onMessageReceived");
+        Utils.traces(TAG+" onMessageReceived");
         try {
 
             Map<String, String> data = remoteMessage.getData();
@@ -70,7 +72,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             }
 
         }catch (Exception e){
-            Utils.traces("MyFirebaseMessagingService: "+Utils.exceptionToString(e));
+            Utils.traces(TAG+" "+Utils.exceptionToString(e));
         }
     }
 
@@ -105,14 +107,14 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                 id = Integer.parseInt(idGroup);
             }
         }catch (Exception e){
-            Utils.traces("MyFirebaseMessagingService getIdGroup "+Utils.exceptionToString(e));
+            Utils.traces(TAG+" getIdGroup "+Utils.exceptionToString(e));
         }
         return id;
     }
 
     @Override
     public void onDestroy() {
-        Utils.traces("MyFirebaseMessagingService onDestroy");
+        Utils.traces(TAG+" onDestroy");
         super.onDestroy();
     }
 }

@@ -138,7 +138,7 @@ public class ChatControl extends FrameLayout implements ApiListener<TaskMessage>
 
         MessengerHelper.setChatListView(new ChatListView(
                 getContext(),
-                MessengerHelper.getGroupList().get(MessengerHelper.getIndexGroup()).idGroup,
+                MessengerHelper.getGroupList().get(0).idGroup,
                 headerListener));
 
         mBinding.frame.addView(MessengerHelper.getChatListView());
